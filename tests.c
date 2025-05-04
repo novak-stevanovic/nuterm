@@ -16,16 +16,17 @@ int main(int argc, char *argv[])
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 
-    unsigned char c;
-    while(true)
-    {
-        c = getchar();
-        if(c == 'q') break;
-        printf("%d ", c);
-    }
-    printf("\n");
-
-    return 0;
+    // unsigned char c;
+    // while(true)
+    // {
+    //     c = getchar();
+    //     if(c == 'q') break;
+    //     printf("%d ", c);
+    // }
+    // printf("\n");
+    //
+    // tcsetattr(STDIN_FILENO, TCSAFLUSH, &init);
+    // return 0;
 
     nt_status_t _status;
     nt_init(NULL);
@@ -36,9 +37,14 @@ int main(int argc, char *argv[])
         {
             if(event.key_data.type == NT_KEY_EVENT_UTF32)
             {
-                if(event.key_data.codepoint_data.codepoint == 'q') break;
-                if(event.key_data.codepoint_data.alt == true) printf("A");
-                printf("%d ", event.key_data.codepoint_data.codepoint);
+                if(event.key_data.input_code == 'q') break;
+                if(event.key_data.alt == true) printf("A");
+                printf("u%zu ", event.key_data.input_code);
+                fflush(stdout);
+            }
+            else
+            {
+                printf("s%zu ", event.key_data.input_code);
                 fflush(stdout);
             }
         }

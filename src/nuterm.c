@@ -33,22 +33,22 @@ struct nt_key
 };
 
 static struct nt_key _keys[23] = {
-    { .id = NT_KEY_ESC_ARROW_UP,    .seq = { 0x1B, 0x5B, 0x41, 0x00 } },
-    { .id = NT_KEY_ESC_ARROW_RIGHT, .seq = { 0x1B, 0x5B, 0x43, 0x00 } },
-    { .id = NT_KEY_ESC_ARROW_DOWN,  .seq = { 0x1B, 0x5B, 0x42, 0x00 } },
-    { .id = NT_KEY_ESC_ARROW_LEFT,  .seq = { 0x1B, 0x5B, 0x44, 0x00 } },
-    { .id = NT_KEY_ESC_F1,          .seq = { 0x1B, 0x4F, 0x50, 0x00 } },
-    { .id = NT_KEY_ESC_F2,          .seq = { 0x1B, 0x4F, 0x51, 0x00 } },
-    { .id = NT_KEY_ESC_F3,          .seq = { 0x1B, 0x4F, 0x52, 0x00 } },
-    { .id = NT_KEY_ESC_F4,          .seq = { 0x1B, 0x4F, 0x53, 0x00 } },
-    { .id = NT_KEY_ESC_F5,          .seq = { 0x1B, 0x5B, 0x31, 0x35, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F6,          .seq = { 0x1B, 0x5B, 0x31, 0x37, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F7,          .seq = { 0x1B, 0x5B, 0x31, 0x38, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F8,          .seq = { 0x1B, 0x5B, 0x31, 0x39, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F9,          .seq = { 0x1B, 0x5B, 0x32, 0x30, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F10,         .seq = { 0x1B, 0x5B, 0x32, 0x31, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F11,         .seq = { 0x1B, 0x5B, 0x32, 0x33, 0x7E, 0x00 } },
-    { .id = NT_KEY_ESC_F12,         .seq = { 0x1B, 0x5B, 0x32, 0x34, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_ARROW_UP,    .seq = { 0x1B, 0x5B, 0x41, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_ARROW_RIGHT, .seq = { 0x1B, 0x5B, 0x43, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_ARROW_DOWN,  .seq = { 0x1B, 0x5B, 0x42, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_ARROW_LEFT,  .seq = { 0x1B, 0x5B, 0x44, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F1,          .seq = { 0x1B, 0x4F, 0x50, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F2,          .seq = { 0x1B, 0x4F, 0x51, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F3,          .seq = { 0x1B, 0x4F, 0x52, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F4,          .seq = { 0x1B, 0x4F, 0x53, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F5,          .seq = { 0x1B, 0x5B, 0x31, 0x35, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F6,          .seq = { 0x1B, 0x5B, 0x31, 0x37, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F7,          .seq = { 0x1B, 0x5B, 0x31, 0x38, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F8,          .seq = { 0x1B, 0x5B, 0x31, 0x39, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F9,          .seq = { 0x1B, 0x5B, 0x32, 0x30, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F10,         .seq = { 0x1B, 0x5B, 0x32, 0x31, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F11,         .seq = { 0x1B, 0x5B, 0x32, 0x33, 0x7E, 0x00 } },
+    { .id = NT_SPECIAL_INPUT_CODE_F12,         .seq = { 0x1B, 0x5B, 0x32, 0x34, 0x7E, 0x00 } },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -98,7 +98,7 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     } while((poll_status == -1) && (errno == EINTR));
     if(poll_status == -1)
     {
-        _RETURN(_NT_EVENT_EMPTY, out_status, NT_ERR_POLL);
+        _RETURN(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
      struct nt_event event;
@@ -131,7 +131,7 @@ static struct nt_key_event _handle_key_event(nt_status_t* out_status)
     } while((read_status < 0) && (errno == EINTR));
     if(read_status < 0)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_READ);
+        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     if(buff[0] == 27) // ESC or ESC SEQ or ALT + PRINTABLE
@@ -142,17 +142,15 @@ static struct nt_key_event _handle_key_event(nt_status_t* out_status)
         } while((poll_status == -1) && (errno == EINTR));
         if(poll_status == -1)
         {
-            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_POLL);
+            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
 
         if(poll_status == 0) // timeout - no extra data
         {
             return (struct nt_key_event) {
                 .type = NT_KEY_EVENT_UTF32,
-                .codepoint_data = (struct nt_key_event_utf32) {
-                    .codepoint = 27,
-                    .alt = false
-                }
+                .input_code = 27,
+                .alt = false,
             };
         }
         else // data present - ESC SEQ or ALT + PRINTABLE
@@ -163,9 +161,11 @@ static struct nt_key_event _handle_key_event(nt_status_t* out_status)
             } while((read_status < 0) && (errno == EINTR));
             if(read_status < 0)
             {
-                _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_READ);
+                _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
             }
 
+            // printf("A: %d %c %d\n", read_status, buff[1], buff[1]);
+            // fflush(stdout);
             if(buff[1] == '[') // CSI
             {
                 do // poll()
@@ -174,22 +174,23 @@ static struct nt_key_event _handle_key_event(nt_status_t* out_status)
                 } while((poll_status == -1) && (errno == EINTR));
                 if(poll_status == -1)
                 {
-                    _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_POLL);
+                    _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
                 }
 
                 if(poll_status == 0)
                 {
                     return (struct nt_key_event) {
                         .type = NT_KEY_EVENT_UTF32,
-                        .codepoint_data = (struct nt_key_event_utf32) {
-                            .codepoint = '[',
-                            .alt = true
-                        }
+                        .input_code = '[',
+                        .alt = true,
                     };
                 }
 
-                _handle_key_event_csi(buff, NULL);
-                // handle status
+                struct nt_key_event key_event =
+                    _handle_key_event_csi(buff, NULL);
+
+                _RETURN(key_event, out_status, NT_SUCCESS);
+                // TODO: handle status
             }
             else // ALT + PRINTABLE ?
             {
@@ -231,13 +232,13 @@ static struct nt_key_event _handle_key_event_utf32(uint8_t buff[], bool alt,
     } while((read_status < 0) && (errno == EINTR));
     if(read_status < 0)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_READ);
+        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     
     if(read_status != (utf32_len - 1))
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_READ); // ?
+        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED); // ?
     }
 
     uint32_t utf32;
@@ -248,10 +249,8 @@ static struct nt_key_event _handle_key_event_utf32(uint8_t buff[], bool alt,
 
     return (struct nt_key_event) {
         .type = NT_KEY_EVENT_UTF32,
-        .codepoint_data = (struct nt_key_event_utf32) {
-            .codepoint = utf32,
-            .alt = alt
-        }
+        .input_code = utf32,
+        .alt = alt
     };
 }
 
@@ -274,7 +273,7 @@ static struct nt_key_event _handle_key_event_csi(uint8_t buff[],
         nt_status_t* out_status)
 {
     int read_status;
-    int read_count = 1;
+    int read_count = 2;
     while(true)
     {
         do // read()
@@ -283,31 +282,40 @@ static struct nt_key_event _handle_key_event_csi(uint8_t buff[],
         } while((read_status < 0) && (errno == EINTR));
         if(read_status < 0)
         {
-            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_READ);
+            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
 
-        read_count++;
         if((buff[read_count] >= 0x40) && (buff[read_count] <= 0x7E))
             break;
-
+        read_count++;
     }
 
+    buff[read_count + 1] = 0;
+
     size_t i;
-    size_t len = sizeof(_keys) / sizeof(struct nt_key);
+    size_t len = sizeof(_keys) / sizeof(struct nt_key) - 1;
+    struct nt_key_event ret;
     for(i = 0; i < len; i++)
     {
         if(_esc_are_equal(buff, _keys[i].seq))
         {
-            return (struct nt_key_event) {
+            ret = (struct nt_key_event) {
                 .type = NT_KEY_EVENT_SPECIAL,
-                .esc_seq_data = (struct nt_key_event_esc_seq) {
-                    .key_id = _keys[i].id
-                }
+                .input_code = _keys[i].id,
+                .alt = false
             };
+
+            _RETURN(ret, out_status, NT_SUCCESS);
         }
     }
 
-    _RETURN();
+    ret = (struct nt_key_event) {
+        .type = NT_KEY_EVENT_SPECIAL,
+        .input_code = NT_SPECIAL_INPUT_CODE_UNKNOWN,
+        .alt = false
+    };
+
+    _RETURN(ret, out_status, NT_SUCCESS);
 }
 
 // find esc seq

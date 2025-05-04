@@ -17,11 +17,9 @@ typedef int nt_status_t;
 
 #define NT_SUCCESS 0
 #define NT_ERR_PIPE 1
-#define NT_ERR_POLL 2
-#define NT_ERR_READ 3
-#define NT_ERR_WRITE 4
-#define NT_ERR_UNHANDLED 5
-#define NT_ERR_INVALID_UTF8 6
+#define NT_ERR_UNEXPECTED 2
+#define NT_ERR_UNHANDLED 3
+#define NT_ERR_INVALID_UTF8 4
 
 void nt_init(nt_status_t* out_status);
 void nt_destroy();
@@ -97,32 +95,34 @@ void nt_flush_ansi();
 /* EVENT */
 /* ------------------------------------------------------------------------- */
 
-/* Special Key Combinations */
+/* Special Keys */
 
-#define NT_KEY_ESC_ARROW_UP 0
-#define NT_KEY_ESC_ARROW_RIGHT 1
-#define NT_KEY_ESC_ARROW_DOWN 2
-#define NT_KEY_ESC_ARROW_LEFT 3
-#define NT_KEY_ESC_F1 4
-#define NT_KEY_ESC_F2 5
-#define NT_KEY_ESC_F3 6
-#define NT_KEY_ESC_F4 7
-#define NT_KEY_ESC_F5 8
-#define NT_KEY_ESC_F6 9
-#define NT_KEY_ESC_F7 10
-#define NT_KEY_ESC_F8 11
-#define NT_KEY_ESC_F9 12
-#define NT_KEY_ESC_F10 13
-#define NT_KEY_ESC_F11 14
-#define NT_KEY_ESC_F12 15
-#define NT_KEY_ESC_DELETE 16
-#define NT_KEY_ESC_INSERT 17
-#define NT_KEY_ESC_END 18
-#define NT_KEY_ESC_HOME 19 
-#define NT_KEY_ESC_PAGE_DOWN 20
-#define NT_KEY_ESC_PAGE_UP 21
-#define NT_KEY_ESC_STAB 22
-#define NT_KEY_ESC_UNKNOWN 23
+#define NT_SPECIAL_INPUT_CODE_BASE 0x10FFFF // Last unicode codepoint
+
+#define NT_SPECIAL_INPUT_CODE_ARROW_UP (NT_SPECIAL_INPUT_CODE_BASE + 1)
+#define NT_SPECIAL_INPUT_CODE_ARROW_RIGHT (NT_SPECIAL_INPUT_CODE_BASE + 2)
+#define NT_SPECIAL_INPUT_CODE_ARROW_DOWN (NT_SPECIAL_INPUT_CODE_BASE + 3)
+#define NT_SPECIAL_INPUT_CODE_ARROW_LEFT (NT_SPECIAL_INPUT_CODE_BASE + 4)
+#define NT_SPECIAL_INPUT_CODE_F1 (NT_SPECIAL_INPUT_CODE_BASE + 5)
+#define NT_SPECIAL_INPUT_CODE_F2 (NT_SPECIAL_INPUT_CODE_BASE + 6)
+#define NT_SPECIAL_INPUT_CODE_F3 (NT_SPECIAL_INPUT_CODE_BASE + 8)
+#define NT_SPECIAL_INPUT_CODE_F4 (NT_SPECIAL_INPUT_CODE_BASE + 8)
+#define NT_SPECIAL_INPUT_CODE_F5 (NT_SPECIAL_INPUT_CODE_BASE + 9)
+#define NT_SPECIAL_INPUT_CODE_F6 (NT_SPECIAL_INPUT_CODE_BASE + 10)
+#define NT_SPECIAL_INPUT_CODE_F7 (NT_SPECIAL_INPUT_CODE_BASE + 11)
+#define NT_SPECIAL_INPUT_CODE_F8 (NT_SPECIAL_INPUT_CODE_BASE + 12)
+#define NT_SPECIAL_INPUT_CODE_F9 (NT_SPECIAL_INPUT_CODE_BASE + 13)
+#define NT_SPECIAL_INPUT_CODE_F10 (NT_SPECIAL_INPUT_CODE_BASE + 14)
+#define NT_SPECIAL_INPUT_CODE_F11 (NT_SPECIAL_INPUT_CODE_BASE + 15)
+#define NT_SPECIAL_INPUT_CODE_F12 (NT_SPECIAL_INPUT_CODE_BASE + 16)
+#define NT_SPECIAL_INPUT_CODE_DELETE (NT_SPECIAL_INPUT_CODE_BASE + 17)
+#define NT_SPECIAL_INPUT_CODE_INSERT (NT_SPECIAL_INPUT_CODE_BASE + 18)
+#define NT_SPECIAL_INPUT_CODE_END (NT_SPECIAL_INPUT_CODE_BASE + 19)
+#define NT_SPECIAL_INPUT_CODE_HOME (NT_SPECIAL_INPUT_CODE_BASE + 20)
+#define NT_SPECIAL_INPUT_CODE_PAGE_DOWN (NT_SPECIAL_INPUT_CODE_BASE + 21)
+#define NT_SPECIAL_INPUT_CODE_PAGE_UP (NT_SPECIAL_INPUT_CODE_BASE + 22)
+#define NT_SPECIAL_INPUT_CODE_STAB (NT_SPECIAL_INPUT_CODE_BASE + 23)
+#define NT_SPECIAL_INPUT_CODE_UNKNOWN (NT_SPECIAL_INPUT_CODE_BASE + 24)
 
 /* Key Event */
 
@@ -135,17 +135,8 @@ typedef enum nt_key_event_type
 struct nt_key_event
 {
     nt_key_event_type_t type;
-    union
-    {
-        struct nt_key_event_utf32 {
-            uint32_t codepoint;
-            bool alt;
-        } codepoint_data;
-
-        struct nt_key_event_esc_seq {
-            uint8_t key_id;
-        } esc_seq_data;
-    };
+    size_t input_code;
+    bool alt;
 };
 
 /* Resize Event */
