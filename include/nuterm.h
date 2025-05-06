@@ -35,10 +35,10 @@ struct nt_rgb { uint8_t r, g, b; };
 
 typedef struct nt_color
 {
-    bool __default;
     uint8_t _color_c8;
     uint8_t _color_c256;
     struct nt_rgb _color_rgb;
+    bool __default;
 } nt_color_t;
 
 extern const nt_color_t NT_COLOR_DEFAULT;
@@ -72,8 +72,8 @@ void nt_cursor_set_pos(struct nt_xy pos);
 void nt_cursor_hide();
 void nt_cursor_show();
 
-void nt_paint_screen(nt_color_t color);
-void nt_paint_line(nt_color_t color);
+void nt_erase_screen(nt_color_t color);
+void nt_erase_line(nt_color_t color);
 
 struct nt_xy nt_display_get_size();
 
@@ -124,7 +124,7 @@ void nt_flush_ansi();
 #define NT_SPECIAL_INPUT_CODE_STAB (NT_SPECIAL_INPUT_CODE_BASE + 23)
 #define NT_SPECIAL_INPUT_CODE_UNKNOWN (NT_SPECIAL_INPUT_CODE_BASE + 24)
 
-/* Key Event */
+/* Key Event & Resize Event */
 
 typedef enum nt_key_event_type
 { 
@@ -136,10 +136,8 @@ struct nt_key_event
 {
     nt_key_event_type_t type;
     size_t input_code;
-    bool alt;
+    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32 */
 };
-
-/* Resize Event */
 
 struct nt_resize_event
 {

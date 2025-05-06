@@ -26,31 +26,6 @@
 static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 
-struct nt_key
-{
-    size_t id;
-    uint8_t seq[10];
-};
-
-static struct nt_key _keys[23] = {
-    { .id = NT_SPECIAL_INPUT_CODE_ARROW_UP,    .seq = { 0x1B, 0x5B, 0x41, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_ARROW_RIGHT, .seq = { 0x1B, 0x5B, 0x43, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_ARROW_DOWN,  .seq = { 0x1B, 0x5B, 0x42, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_ARROW_LEFT,  .seq = { 0x1B, 0x5B, 0x44, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F1,          .seq = { 0x1B, 0x4F, 0x50, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F2,          .seq = { 0x1B, 0x4F, 0x51, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F3,          .seq = { 0x1B, 0x4F, 0x52, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F4,          .seq = { 0x1B, 0x4F, 0x53, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F5,          .seq = { 0x1B, 0x5B, 0x31, 0x35, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F6,          .seq = { 0x1B, 0x5B, 0x31, 0x37, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F7,          .seq = { 0x1B, 0x5B, 0x31, 0x38, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F8,          .seq = { 0x1B, 0x5B, 0x31, 0x39, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F9,          .seq = { 0x1B, 0x5B, 0x32, 0x30, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F10,         .seq = { 0x1B, 0x5B, 0x32, 0x31, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F11,         .seq = { 0x1B, 0x5B, 0x32, 0x33, 0x7E, 0x00 } },
-    { .id = NT_SPECIAL_INPUT_CODE_F12,         .seq = { 0x1B, 0x5B, 0x32, 0x34, 0x7E, 0x00 } },
-};
-
 /* -------------------------------------------------------------------------- */
 
 /* Assume there is at least 1 byte of data for reading */
