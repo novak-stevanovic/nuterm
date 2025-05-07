@@ -1,6 +1,8 @@
+// TODO: Merge into src/_xterm.c
+
 #include <stdio.h>
 #include <assert.h>
-#include "_ansi.h"
+#include <stdint.h>
 
 #define CODE_BUFFER_SIZE 30
 
