@@ -52,6 +52,6 @@ int main(int argc, char *argv[])
     printf("Done\n");
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &init);
-
-    return EXIT_SUCCESS;
+    
+    return 0;;
 }
