@@ -9,17 +9,15 @@
 extern "C" {
 #endif
 
-/* ------------------------------------------------------------------------- */
-/* START */
-/* ------------------------------------------------------------------------- */
-
 typedef int nt_status_t;
 
 #define NT_SUCCESS 0
 #define NT_ERR_PIPE 1
 #define NT_ERR_UNEXPECTED 2
-#define NT_ERR_UNHANDLED 3
-#define NT_ERR_INVALID_UTF8 4
+
+/* ------------------------------------------------------------------------- */
+/* START */
+/* ------------------------------------------------------------------------- */
 
 void nt_init(nt_status_t* out_status);
 void nt_destroy();
@@ -100,14 +98,14 @@ void nt_flush_ansi();
 typedef enum nt_key_event_type
 { 
     NT_KEY_EVENT_UTF32,
-    NT_KEY_EVENT_SPECIAL
+    NT_KEY_EVENT_ESC_KEY
 } nt_key_event_type_t;
 
 struct nt_key_event
 {
     nt_key_event_type_t type;
-    size_t input_code;
-    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32 */
+    size_t codepoint;
+    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32, otherwise false */
 };
 
 struct nt_resize_event

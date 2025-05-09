@@ -1,20 +1,15 @@
 #include "nuterm.h"
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <unistd.h>
 #include <poll.h>
 
 int main(int argc, char *argv[])
 {
 
-    struct termios init, raw;
-    cfmakeraw(&raw);
-    tcgetattr(STDIN_FILENO, &init);
-
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-
+    //
     // unsigned char c;
     // while(true)
     // {
@@ -26,32 +21,42 @@ int main(int argc, char *argv[])
     //
     // tcsetattr(STDIN_FILENO, TCSAFLUSH, &init);
     // return 0;
-
+    //
     nt_status_t _status;
     nt_init(NULL);
     while(true)
     {
         struct nt_event event = nt_wait_for_event(-1, &_status);
+        assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_TYPE_KEY)
         {
-            if(event.key_data.type == NT_KEY_EVENT_UTF32)
-            {
-                if(event.key_data.input_code == 'q') break;
-                if(event.key_data.alt == true) printf("A");
-                printf("u%zu ", event.key_data.input_code);
-                fflush(stdout);
-            }
-            else
-            {
-                printf("s%zu ", event.key_data.input_code);
-                fflush(stdout);
-            }
+            printf("K(");
+
+            if(event.key_data.type == NT_KEY_EVENT_ESC_KEY)
+                printf("e-");
+            printf("cp:%zu) ", event.key_data.codepoint);
+
+            printf(" | ");
+            fflush(stdout);
+
+            if(event.key_data.codepoint == 'q')
+                break;
+        }
+        else
+        {
+            printf("R(%ld,%ld->%ld,%ld) ", 
+                    event.resize_data.old_size.x, event.resize_data.old_size.y,
+                    event.resize_data.new_size.x, event.resize_data.new_size.y);
+
+            printf(" | ");
+
+            fflush(stdout);
         }
     }
 
     printf("Done\n");
 
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &init);
-    
+    nt_destroy();
+
     return 0;;
 }
