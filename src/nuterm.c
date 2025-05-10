@@ -86,7 +86,7 @@ static struct termios _init_term_opts;
 static void _sa_handler(int signum)
 {
     char c;
-    int status = _awrite(_resize_fds[1], &c, 1);
+    _awrite(_resize_fds[1], &c, 1);
 }
 
 void nt_init(nt_status_t* out_status)
@@ -157,6 +157,19 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     if(poll_status == -1)
     {
         _RETURN(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+    }
+    if(poll_status == 0)
+    {
+        struct nt_timeout_event timeout_event = {
+            .elapsed = timeout
+        };
+
+        struct nt_event ret = {
+            .type = NT_EVENT_TYPE_TIMEOUT,
+            .timeout_data = timeout_event
+        };
+
+        _RETURN(ret, out_status, NT_SUCCESS);
     }
 
     struct nt_event event;
@@ -364,13 +377,13 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
     size_t i;
     struct nt_key_event ret;
     const struct nt_term* term = nt_term_get_used();
-    for(i = 0; i < __NT_ESC_KEY_END; i++)
+    for(i = 0; i < _NT_ESC_KEY_COUNT; i++)
     {
         if(strcmp(_buff, term->esc_key_seqs[i]) == 0)
         {
             ret = (struct nt_key_event) {
                 .type = NT_KEY_EVENT_ESC_KEY,
-                .codepoint = _NT_ESC_KEY_TO_CODEPOINT(i),
+                .codepoint = nt_esc_key_to_codepoint(i),
                 .alt = false
             };
 

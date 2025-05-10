@@ -8,8 +8,6 @@
 
 int main(int argc, char *argv[])
 {
-
-    //
     // unsigned char c;
     // while(true)
     // {
@@ -26,7 +24,7 @@ int main(int argc, char *argv[])
     nt_init(NULL);
     while(true)
     {
-        struct nt_event event = nt_wait_for_event(-1, &_status);
+        struct nt_event event = nt_wait_for_event(0, &_status);
         assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_TYPE_KEY)
         {
@@ -34,7 +32,9 @@ int main(int argc, char *argv[])
 
             if(event.key_data.type == NT_KEY_EVENT_ESC_KEY)
                 printf("e-");
-            printf("cp:%zu) ", event.key_data.codepoint);
+            else if(event.key_data.alt == true)
+                printf("a+");
+            printf("cp:%zu)", event.key_data.codepoint);
 
             printf(" | ");
             fflush(stdout);
@@ -42,14 +42,19 @@ int main(int argc, char *argv[])
             if(event.key_data.codepoint == 'q')
                 break;
         }
-        else
+        else if(event.type == NT_EVENT_TYPE_RESIZE)
         {
-            printf("R(%ld,%ld->%ld,%ld) ", 
+            printf("R(%ld,%ld->%ld,%ld)", 
                     event.resize_data.old_size.x, event.resize_data.old_size.y,
                     event.resize_data.new_size.x, event.resize_data.new_size.y);
 
             printf(" | ");
 
+            fflush(stdout);
+        }
+        else
+        {
+            printf("T | ");
             fflush(stdout);
         }
     }

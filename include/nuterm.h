@@ -66,17 +66,19 @@ bool nt_style_are_equal(nt_style_t s1, nt_style_t s2);
 /* ENV */
 /* ------------------------------------------------------------------------- */
 
-void nt_cursor_set_pos(struct nt_xy pos);
-void nt_cursor_hide();
-void nt_cursor_show();
+/* The following functions return 0 if the function is supported by the
+ * terminal emulator and 1 if the action is not. */
 
-void nt_erase_screen(nt_color_t color);
-void nt_erase_line(nt_color_t color);
+int nt_cursor_hide();
+int nt_cursor_show();
 
-struct nt_xy nt_display_get_size();
+int nt_erase_screen(nt_color_t color);
+int nt_erase_line(nt_color_t color);
 
-void nt_alt_screen_enable();
-void nt_alt_screen_disable();
+int nt_alt_screen_enable();
+int nt_alt_screen_disable();
+
+/* ------------------------------------------------------ */
 
 struct nt_cell
 {
@@ -85,15 +87,15 @@ struct nt_cell
     nt_style_t style;
 };
 
-void nt_write_cell(struct nt_cell cell);
+void nt_write_cell(struct nt_cell, size_t x, size_t y);
 
-void nt_flush_ansi();
+void nt_flush();
+
+struct nt_xy nt_display_get_size();
 
 /* ------------------------------------------------------------------------- */
 /* EVENT */
 /* ------------------------------------------------------------------------- */
-
-/* Key Event & Resize Event */
 
 typedef enum nt_key_event_type
 { 
@@ -105,7 +107,7 @@ struct nt_key_event
 {
     nt_key_event_type_t type;
     size_t codepoint;
-    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32, otherwise false */
+    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32, otherwise false. */
 };
 
 struct nt_resize_event
@@ -114,12 +116,18 @@ struct nt_resize_event
     struct nt_xy new_size;
 };
 
+struct nt_timeout_event
+{
+    uint64_t elapsed;
+};
+
 /* Event */
 
 typedef enum nt_event_type
 {
     NT_EVENT_TYPE_KEY,
-    NT_EVENT_TYPE_RESIZE
+    NT_EVENT_TYPE_RESIZE,
+    NT_EVENT_TYPE_TIMEOUT
 } nt_event_type_t;
 
 struct nt_event
@@ -129,6 +137,7 @@ struct nt_event
     {
         struct nt_key_event key_data;
         struct nt_resize_event resize_data;
+        struct nt_timeout_event timeout_data;
     };
 };
 
