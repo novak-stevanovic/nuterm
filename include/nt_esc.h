@@ -1,5 +1,5 @@
-#ifndef _NT_ESC_DEFS_H_
-#define _NT_ESC_DEFS_H_
+#ifndef _NT_ESC_H_
+#define _NT_ESC_H_
 
 /* Escape keys */
 
@@ -28,18 +28,8 @@ typedef enum nt_esc_key
     NT_ESC_KEY_PG_UP,
     NT_ESC_KEY_PG_DOWN,
     NT_ESC_KEY_STAB,
-    _NT_ESC_KEY_COUNT,
+    NT_ESC_KEY_OTHER // Must be last because internally used as count
 } nt_esc_key_t;
-
-/* Escape keys encoded into codepoints(after the unicode characters) */
-
-#define _NT_ESC_CODEPOINT_BASE 0x10FFFF // Last unicode codepoint
-
-#define nt_esc_key_to_codepoint(key) ((key) + 1 + _NT_ESC_CODEPOINT_BASE)
-#define nt_esc_codepoint_to_key(cp) ((cp) - 1 - _NT_ESC_CODEPOINT_BASE)
-#define NT_ESC_CODEPOINT_UNKNOWN (_NT_ESC_KEY_COUNT + 1 + _NT_ESC_CODEPOINT_BASE)
-
-/* Escape functions */
 
 typedef enum nt_esc_func
 {
@@ -66,7 +56,7 @@ typedef enum nt_esc_func
     NT_ESC_FUNC_ERASE_LINE,
     NT_ESC_FUNC_ENTER_ALT_BUFF,
     NT_ESC_FUNC_EXIT_ALT_BUFF,
-    _NT_ESC_FUNC_COUNT,
+    NT_ESC_FUNC_OTHER // Must be last because internally used as count
 } nt_esc_func_t;
 
-#endif // _NT_ESC_DEFS_H_
+#endif // _NT_ESC_H_

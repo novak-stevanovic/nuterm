@@ -1,19 +1,22 @@
+/* TODO:
+ * 1. Implement detection of terminal & colors
+ * 2. Implement conversion functions between colors
+ * 3. Implement other functions inside the API
+ * 4. Implement keybind sets that depend on key events
+ * 5. Re-think error handling inside nt_wait_for_event()
+ * 6. Add other terminal support */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
+#include "nt_esc.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include "nt_shared.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef int nt_status_t;
-
-#define NT_SUCCESS 0
-#define NT_ERR_PIPE 1
-#define NT_ERR_UNEXPECTED 2
 
 /* ------------------------------------------------------------------------- */
 /* START */
@@ -66,28 +69,35 @@ bool nt_style_are_equal(nt_style_t s1, nt_style_t s2);
 /* ENV */
 /* ------------------------------------------------------------------------- */
 
-/* The following functions return 0 if the function is supported by the
- * terminal emulator and 1 if the action is not. */
+void nt_cursor_hide(nt_status_t* out_status);
+void nt_cursor_show(nt_status_t* out_status);
 
-int nt_cursor_hide();
-int nt_cursor_show();
+void nt_erase_screen(nt_status_t* out_status);
+void nt_erase_line(nt_status_t* out_status);
 
-int nt_erase_screen(nt_color_t color);
-int nt_erase_line(nt_color_t color);
-
-int nt_alt_screen_enable();
-int nt_alt_screen_disable();
+void nt_alt_screen_enable(nt_status_t* out_status);
+void nt_alt_screen_disable(nt_status_t* out_status);
 
 /* ------------------------------------------------------ */
 
+#define NT_CELL_EMPTY ' '
+
 struct nt_cell
 {
-    uint32_t codepoint;
+    uint32_t codepoint; // utf32
+    nt_color_t foreground, background;
+    nt_style_t style;
+};
+
+struct nt_text
+{
+    const char* text; // utf8
     nt_color_t foreground, background;
     nt_style_t style;
 };
 
 void nt_write_cell(struct nt_cell, size_t x, size_t y);
+void nt_write_text(struct nt_text, size_t x, size_t y);
 
 void nt_flush();
 
@@ -106,8 +116,19 @@ typedef enum nt_key_event_type
 struct nt_key_event
 {
     nt_key_event_type_t type;
-    size_t codepoint;
-    bool alt; /* Relevant when type == NT_KEY_EVENT_UTF32, otherwise false. */
+    union
+    {
+        struct
+        {
+            size_t codepoint;
+            bool alt;
+        } utf32_data;
+
+        struct
+        {
+            nt_esc_key_t esc_key;
+        } esc_key_data;
+    };
 };
 
 struct nt_resize_event

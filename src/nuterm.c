@@ -12,7 +12,7 @@
 
 #include "_nt_term.h"
 #include "_uconv.h"
-#include "nt_esc_defs.h"
+#include "nt_esc.h"
 
 /* -------------------------------------------------------------------------- */
 /* HELPER */
@@ -85,21 +85,34 @@ static struct termios _init_term_opts;
 
 static void _sa_handler(int signum)
 {
-    char c;
+    char c = 'a';
     _awrite(_resize_fds[1], &c, 1);
 }
 
 void nt_init(nt_status_t* out_status)
 {
+    int status;
     struct termios raw_term_opts;
     cfmakeraw(&raw_term_opts);
 
-    tcgetattr(STDIN_FILENO, &_init_term_opts);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_term_opts);
+    status = tcgetattr(STDIN_FILENO, &_init_term_opts);
+    if(status == -1)
+    {
+        _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
+    status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_term_opts);
+    if(status == -1)
+    {
+        _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
 
     struct sigaction sw_sa = {0};
     sw_sa.sa_handler = _sa_handler;
-    sigaction(SIGWINCH, &sw_sa, NULL);
+    status = sigaction(SIGWINCH, &sw_sa, NULL);
+    if(status == -1)
+    {
+        _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
 
     int pipe_status = pipe(_resize_fds);
     if(pipe_status != 0)
@@ -121,7 +134,7 @@ void nt_init(nt_status_t* out_status)
     nt_term_init();
 
     struct nt_xy term_size;
-    int status = _get_term_size(&term_size);
+    status = _get_term_size(&term_size);
     if(status == -1)
     {
         _VRETURN(out_status, NT_ERR_UNEXPECTED);
@@ -236,8 +249,10 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
         {
             struct nt_key_event key_event = {
                 .type = NT_KEY_EVENT_UTF32,
-                .codepoint = 27,
-                .alt = false,
+                .utf32_data = {
+                    .codepoint = 27,
+                    .alt = false
+                }
             };
 
             _RETURN(key_event, out_status, NT_SUCCESS);
@@ -262,8 +277,10 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
             {
                 struct nt_key_event key_event = {
                     .type = NT_KEY_EVENT_UTF32,
-                    .alt = true,
-                    .codepoint = buff[1]
+                    .utf32_data = {
+                        .codepoint = buff[1],
+                        .alt = true,
+                    }
                 };
                 _RETURN(key_event, out_status, NT_SUCCESS);
             }
@@ -344,8 +361,10 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
 
     struct nt_key_event key_event = {
         .type = NT_KEY_EVENT_UTF32,
-        .codepoint = utf32,
-        .alt = alt
+        .utf32_data = {
+            .codepoint = utf32,
+            .alt = alt
+        }
     };
 
     _RETURN(key_event, out_status, NT_SUCCESS);
@@ -374,17 +393,18 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
 
     char* _buff = (char*)buff;
 
-    size_t i;
+    int i;
     struct nt_key_event ret;
     const struct nt_term* term = nt_term_get_used();
-    for(i = 0; i < _NT_ESC_KEY_COUNT; i++)
+    for(i = 0; i < NT_ESC_KEY_OTHER; i++)
     {
         if(strcmp(_buff, term->esc_key_seqs[i]) == 0)
         {
             ret = (struct nt_key_event) {
                 .type = NT_KEY_EVENT_ESC_KEY,
-                .codepoint = nt_esc_key_to_codepoint(i),
-                .alt = false
+                .esc_key_data = {
+                    .esc_key = i
+                }
             };
 
             _RETURN(ret, out_status, NT_SUCCESS);
@@ -393,8 +413,9 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
 
     ret = (struct nt_key_event) {
         .type = NT_KEY_EVENT_ESC_KEY,
-        .codepoint = NT_ESC_CODEPOINT_UNKNOWN,
-        .alt = false
+        .esc_key_data = {
+            .esc_key = NT_ESC_KEY_OTHER
+        }
     };
 
     _RETURN(ret, out_status, NT_SUCCESS);
