@@ -69,6 +69,15 @@ bool nt_style_are_equal(nt_style_t s1, nt_style_t s2);
 /* ENV */
 /* ------------------------------------------------------------------------- */
 
+void nt_buffer_enable();
+void nt_buffer_flush();
+
+typedef enum nt_buffact { NT_BUFF_FLUSH, NT_BUFF_DISCARD } nt_buffact_t;
+
+void nt_buffer_disable(nt_buffact_t action);
+
+/* ------------------------------------------------------ */
+
 void nt_cursor_hide(nt_status_t* out_status);
 void nt_cursor_show(nt_status_t* out_status);
 
@@ -99,8 +108,6 @@ struct nt_text
 
 void nt_draw(struct nt_cell, size_t x, size_t y);
 void nt_write(struct nt_text, size_t x, size_t y);
-
-void nt_flush();
 
 struct nt_xy nt_display_get_size();
 

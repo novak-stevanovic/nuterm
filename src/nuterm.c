@@ -75,6 +75,8 @@ static struct nt_xy _term_size = {0};
 static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
+
+bool _buff_enabled;
 static nt_charbuff_t _buff;
 
 static void _sa_handler(int signum)
@@ -85,6 +87,7 @@ static void _sa_handler(int signum)
 
 void nt_init(nt_status_t* out_status)
 {
+    nt_status_t _status;
     int status;
     struct termios raw_term_opts;
     cfmakeraw(&raw_term_opts);
@@ -125,7 +128,16 @@ void nt_init(nt_status_t* out_status)
         .revents = 0
     };
 
-    nt_term_init();
+    nt_term_init(&_status);
+    switch(_status)
+    {
+        case NT_SUCCESS:
+            break;
+        case NT_ERR_TERM_INIT_ENV_FAIL:
+            _VRETURN(out_status, NT_ERR_TERM_INIT_ENV_FAIL);
+        default:
+            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
 
     struct nt_xy term_size;
     status = _get_term_size(&term_size);
@@ -136,13 +148,13 @@ void nt_init(nt_status_t* out_status)
 
     _term_size = term_size;
 
-    nt_status_t _status;
     nt_charbuff_init(&_buff, &_status);
-
     if(_status != NT_SUCCESS)
     {
         _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
     }
+
+    _buff_enabled = false;
 
     _VRETURN(out_status, NT_SUCCESS);
 }
@@ -504,13 +516,43 @@ bool nt_style_are_equal(nt_style_t s1, nt_style_t s2)
     return (s1 == s2);
 }
 
-void nt_cursor_hide(nt_status_t* out_status)
+/* -------------------------------------------------------------------------- */
+/* TERM FUNCS */
+/* -------------------------------------------------------------------------- */
+
+void nt_buffer_enable()
 {
+    _buff_enabled = true;
+}
+
+void nt_buffer_flush()
+{
+    // Assume write() doesn't fail.
+    _awrite(STDOUT_FILENO, _buff.data, _buff.len);
+
+    nt_charbuff_rewind(&_buff, NULL);
+}
+
+void nt_buffer_disable(nt_buffact_t action)
+{
+    if(action == NT_BUFF_FLUSH)
+        nt_buffer_flush();
+    else
+        nt_charbuff_rewind(&_buff, NULL);
+
+    _buff_enabled = false;
+}
+
+static void _execute_term_func(const char* func, nt_status_t* out_status)
+{
+    if(func == NULL)
+    {
+        _VRETURN(out_status, NT_ERR_INVALID_ARG);
+    }
+
     nt_status_t _status;
-    const struct nt_term_info* used = nt_term_get_used();
     
-    const char* func = used->esc_func_seqs[NT_ESC_FUNC_HIDE_CURSOR];
-    if(func != NULL)
+    if(_buff_enabled == true)
     {
         nt_charbuff_append(&_buff, func, &_status);
         if(_status == NT_ERR_ALLOC_FAIL)
@@ -520,65 +562,129 @@ void nt_cursor_hide(nt_status_t* out_status)
     }
     else
     {
-        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+        int write_status = _awrite(STDIN_FILENO, func, strlen(func));
+        if(write_status == -1)
+        {
+            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+        }
+    }
+
+    _VRETURN(out_status, NT_SUCCESS);
+
+}
+
+void nt_cursor_hide(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
+    {
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_CURSOR_HIDE],
+                &_status);
+
+        _VRETURN(out_status, _status);
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
     }
 }
 
 void nt_cursor_show(nt_status_t* out_status)
 {
     nt_status_t _status;
-    const struct nt_term_info* used = nt_term_get_used();
-    
-    const char* func = used->esc_func_seqs[NT_ESC_FUNC_SHOW_CURSOR];
-    if(func != NULL)
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
     {
-        nt_charbuff_append(&_buff, func, &_status);
-        if(_status == NT_ERR_ALLOC_FAIL)
-        {
-            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-        }
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_CURSOR_SHOW],
+                &_status);
+
+        _VRETURN(out_status, _status);
     }
     else
     {
-        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
     }
 }
 
 void nt_erase_screen(nt_status_t* out_status)
 {
     nt_status_t _status;
-    const struct nt_term_info* used = nt_term_get_used();
-    
-    const char* func = used->esc_func_seqs[NT_ESC_FUNC_ERASE_SCREEN];
-    if(func != NULL)
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
     {
-        nt_charbuff_append(&_buff, func, &_status);
-        if(_status == NT_ERR_ALLOC_FAIL)
-        {
-            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-        }
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_SCREEN],
+                &_status);
     }
     else
     {
-        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
     }
 }
 
 void nt_erase_line(nt_status_t* out_status)
 {
-    const struct nt_term_info* used = nt_term_get_used();
+    nt_status_t _status;
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
+    {
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_LINE],
+                &_status);
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
+    }
 }
 
 void nt_erase_scrollback(nt_status_t* out_status)
 {
+    nt_status_t _status;
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
+    {
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_SCROLLBACK],
+                &_status);
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
+    }
 }
 
 void nt_alt_screen_enable(nt_status_t* out_status)
 {
-    const struct nt_term_info* used = nt_term_get_used();
+    nt_status_t _status;
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
+    {
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_ALT_BUFF_ENTER],
+                &_status);
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
+    }
 }
 
 void nt_alt_screen_disable(nt_status_t* out_status)
 {
-    const struct nt_term_info* used = nt_term_get_used();
+    nt_status_t _status;
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term != NULL)
+    {
+        _execute_term_func(
+                used_term->esc_func_seqs[NT_ESC_FUNC_ALT_BUFF_EXIT],
+                &_status);
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
+    }
 }

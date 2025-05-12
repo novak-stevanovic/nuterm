@@ -1,5 +1,7 @@
 #include "_nt_term.h"
+#include "_nt_shared.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,13 +61,15 @@ static struct nt_term_info _terms[] = {
     },
 };
 
-int nt_term_init()
+void nt_term_init(nt_status_t* out_status)
 {
     char* env_term = getenv("TERM");
     char* env_colorterm = getenv("COLORTERM");
 
     if(env_term == NULL)
-        return NT_TERM_INIT_ERR_ENV;
+    {
+        _VRETURN(out_status, NT_ERR_TERM_INIT_ENV_FAIL);
+    }
 
     size_t i;
     for(i = 0; i < NT_TERM_OTHER; i++)
@@ -85,12 +89,12 @@ int nt_term_init()
     }
 
     // printf("T: %d C: %d\n", _term, _color);
-    return 0;
+    _VRETURN(out_status, NT_SUCCESS);
 }
 
 const struct nt_term_info* nt_term_get_used()
 {
-    return &_terms[_term];
+    return (_term == NT_TERM_OTHER) ? NULL : &_terms[_term];
 }
 
 nt_term_color_t nt_term_get_color_count()

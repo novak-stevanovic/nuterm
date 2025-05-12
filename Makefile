@@ -18,10 +18,6 @@ ifndef PREFIX
     PREFIX = /usr/local
 endif
 
-ifndef PC_PREFIX
-    PC_PREFIX = /usr/local/lib/pkgconfig
-endif
-
 ifneq ($(LIB_TYPE),shared)
     ifneq ($(LIB_TYPE),archive)
         $(error Invalid LIB_TYPE. USAGE: make [TARGET] [LIB_TYPE=shared/archive])
@@ -30,9 +26,6 @@ endif
 
 LIB_NAME = nuterm
 _LIB_NAME = _$(LIB_NAME) # internal
-
-PC_FILE = $(LIB_NAME).pc
-_PC_FILE = _$(PC_FILE) # internal
 
 CC = gcc
 # CC = /opt/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64_be-none-linux-gnu/bin/aarch64_be-none-linux-gnu-gcc
@@ -43,17 +36,6 @@ C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 # -----------------------------------------------------------------------------
 # Build Flags
 # -----------------------------------------------------------------------------
-
-# ---------------------------------------------------------
-# PKGConfig Dependency Flags
-# ---------------------------------------------------------
-
-PC_DEPS = $(shell PKG_CONFIG_PATH=$(PWD):$PC_CONFIG_PATH \
-pkg-config --print-requires $(_LIB_NAME))
-
-PC_DEPS_CFLAGS = $(foreach dep,$(PC_DEPS),$(shell pkg-config --cflags $(dep)))
-
-PC_DEPS_LIBS = $(foreach dep,$(PC_DEPS),$(shell pkg-config --libs $(dep)))
 
 # ---------------------------------------------------------
 # Base Flags
@@ -68,8 +50,6 @@ BASE_CFLAGS_INCLUDE = -Iinclude
 BASE_CFLAGS = -c -fPIC $(BASE_CFLAGS_INCLUDE) $(BASE_CFLAGS_MAKE) \
 $(BASE_CFLAGS_WARN) $(BASE_CFLAGS_DEBUG) $(BASE_CFLAGS_OPTIMIZATION)
 
-BASE_CFLAGS += $(PC_DEPS_CFLAGS)
-
 # ---------------------------------------------------------
 # C Source Flags
 # ---------------------------------------------------------
@@ -82,8 +62,7 @@ SRC_CFLAGS = $(BASE_CFLAGS)
 
 TEST_CFLAGS = $(BASE_CFLAGS)
 
-TEST_LFLAGS = -L. -l$(LIB_NAME)
-TEST_LFLAGS += $(PC_DEPS_LIBS)
+TEST_LFLAGS = -L. -l$(LIB_NAME) -lm
 
 ifeq ($(LIB_TYPE),shared)
 TEST_LFLAGS += -Wl,-rpath,.
@@ -130,26 +109,18 @@ build/tests.o: tests.c
 
 # install --------------------------------------------------
 
-install: $(PC_FILE)
+install:
 	@mkdir -p $(PREFIX)/lib
 	cp $(LIB_FILE) $(PREFIX)/lib
 
 	@mkdir -p $(PREFIX)/include/$(LIB_NAME)
 	cp -r include/* $(PREFIX)/include/$(LIB_NAME)
 
-	@mkdir -p $(PC_PREFIX)
-	cp $(PC_FILE) $(PC_PREFIX)
-
-$(PC_FILE): $(__PC_FILE)
-	@sed 's|@prefix@|$(PREFIX)|g' $< > $@
-
 # uninstall ------------------------------------------------
 
 uninstall:
-	rm -f $(PREFIX)/lib/$(LIB_SO_FILE)
-	rm -f $(PREFIX)/lib/$(LIB_AR_FILE)
+	rm -f $(PREFIX)/lib/$(LIB_FILE)
 	rm -rf $(PREFIX)/include/$(LIB_NAME)
-	rm -f $(PC_PREFIX)/$(PC_FILE)
 
 # clean ----------------------------------------------------
 
@@ -159,4 +130,3 @@ clean:
 	rm -f $(LIB_SO_FILE)
 	rm -f test
 	rm -f compile_commands.json
-	rm -f $(PC_FILE)

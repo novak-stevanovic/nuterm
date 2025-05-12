@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CHARBUFF_INIT_CAP 10
+#define CHARBUFF_INIT_CAP 100
 
 void nt_charbuff_init(nt_charbuff_t* buff, nt_status_t* out_status)
 {
@@ -12,7 +12,7 @@ void nt_charbuff_init(nt_charbuff_t* buff, nt_status_t* out_status)
         _VRETURN(out_status, NT_ERR_INVALID_ARG);
     }
 
-    buff->data = malloc(CHARBUFF_INIT_CAP * sizeof(char));
+    buff->data = malloc(CHARBUFF_INIT_CAP + 1);
     if(buff->data == NULL)
     {
         buff->len = 0;
@@ -21,6 +21,7 @@ void nt_charbuff_init(nt_charbuff_t* buff, nt_status_t* out_status)
     }
 
     buff->len = 0;
+    buff->data[0] = '\0';
     buff->capacity = CHARBUFF_INIT_CAP;
 
     _VRETURN(out_status, NT_SUCCESS);
@@ -48,9 +49,9 @@ void nt_charbuff_append(nt_charbuff_t* buff, const char* text,
 
     size_t len = strlen(text);
 
-    if((buff->len + len) > buff->capacity)
+    if((buff->len + len) >= buff->capacity)
     {
-        void* new_data = realloc(buff->data, buff->capacity * 2);
+        void* new_data = realloc(buff->data, buff->capacity * 2 + 1);
         if(new_data == NULL)
         {
             _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
@@ -61,4 +62,22 @@ void nt_charbuff_append(nt_charbuff_t* buff, const char* text,
     }
 
     memcpy(buff->data + buff->len, text, len);
+    buff->len += len;
+    buff->data[buff->len] = '\0';
+
+    _VRETURN(out_status, NT_SUCCESS);
+}
+
+void nt_charbuff_rewind(nt_charbuff_t* buff, nt_status_t* out_status)
+{
+    if(buff == NULL)
+    {
+        _VRETURN(out_status, NT_ERR_INVALID_ARG);
+    }
+    
+    buff->len = 0;
+    if(buff->data != NULL)
+        buff->data[0] = '\0';
+
+    _VRETURN(out_status, NT_SUCCESS);
 }

@@ -8,23 +8,22 @@
 #include <unistd.h>
 #include <poll.h>
 
-int main(int argc, char *argv[])
+void loop_basic()
 {
-    // nt_init(NULL);
-    // unsigned char c;
-    // while(true)
-    // {
-    //     c = getchar();
-    //     if(c == 'q') break;
-    //     printf("%x ", c);
-    // }
-    // printf("\n");
-    //
-    // nt_destroy();
-    // return 0;
+    unsigned char c;
+    while(true)
+    {
+        c = getchar();
+        if(c == 'q') break;
+        printf("%x ", c);
+        fflush(stdout);
+    }
+    printf("\n");
+}
 
+void loop_lib()
+{
     nt_status_t _status;
-    nt_init(NULL);
     bool loop = true;
     while(loop)
     {
@@ -70,8 +69,30 @@ int main(int argc, char *argv[])
     }
 
     printf("Done\n");
+}
 
+int main(int argc, char *argv[])
+{
+    nt_status_t _status;
+    nt_init(&_status);
+    assert(_status == NT_SUCCESS);
+
+    nt_buffer_enable();
+
+    nt_alt_screen_enable(&_status);
+    nt_cursor_hide(&_status);
+    assert(_status == NT_SUCCESS);
+
+    nt_buffer_flush();
+    // nt_buffer_flush();
+
+    loop_basic();
+
+    // nt_buffer_disable(NT_BUFF_DISCARD);
+    nt_cursor_show(&_status);
+    nt_alt_screen_disable(&_status);
+    nt_buffer_flush();
+    //
     nt_destroy();
-
     return 0;;
 }
