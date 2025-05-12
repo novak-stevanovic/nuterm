@@ -1,5 +1,5 @@
 /* TODO:
- * 1. Implement detection of terminal & colors
+ * 1. Implement detection of terminal & colors | (done for xterm)
  * 2. Implement conversion functions between colors
  * 3. Implement other functions inside the API
  * 4. Implement keybind sets that depend on key events
@@ -74,6 +74,7 @@ void nt_cursor_show(nt_status_t* out_status);
 
 void nt_erase_screen(nt_status_t* out_status);
 void nt_erase_line(nt_status_t* out_status);
+void nt_erase_scrollback(nt_status_t* out_status);
 
 void nt_alt_screen_enable(nt_status_t* out_status);
 void nt_alt_screen_disable(nt_status_t* out_status);
@@ -96,8 +97,8 @@ struct nt_text
     nt_style_t style;
 };
 
-void nt_write_cell(struct nt_cell, size_t x, size_t y);
-void nt_write_text(struct nt_text, size_t x, size_t y);
+void nt_draw(struct nt_cell, size_t x, size_t y);
+void nt_write(struct nt_text, size_t x, size_t y);
 
 void nt_flush();
 

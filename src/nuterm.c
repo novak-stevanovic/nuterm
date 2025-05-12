@@ -1,6 +1,7 @@
 #include "nuterm.h"
 
 #include <errno.h>
+#include <math.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -10,9 +11,11 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
+#include "_nt_charbuff.h"
 #include "_nt_term.h"
 #include "_uconv.h"
 #include "nt_esc.h"
+#include "_nt_shared.h"
 
 /* -------------------------------------------------------------------------- */
 /* HELPER */
@@ -28,16 +31,6 @@ static inline int _get_term_size(struct nt_xy* out_xy)
     out_xy->y = size.ws_row;
     return 0;
 }
-
-#define _RETURN(ret_val, out_status_param, out_status)                         \
-    if((out_status_param) != NULL)                                             \
-        (*out_status_param) = (out_status);                                    \
-    return (ret_val)                                                           \
-
-#define _VRETURN(out_status_param, out_status)                                 \
-    if((out_status_param) != NULL)                                             \
-        (*out_status_param) = out_status;                                      \
-    return                                                                     \
 
 /* -------------------------------------------------------------------------- */
 
@@ -82,6 +75,7 @@ static struct nt_xy _term_size = {0};
 static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
+static nt_charbuff_t _buff;
 
 static void _sa_handler(int signum)
 {
@@ -142,12 +136,22 @@ void nt_init(nt_status_t* out_status)
 
     _term_size = term_size;
 
+    nt_status_t _status;
+    nt_charbuff_init(&_buff, &_status);
+
+    if(_status != NT_SUCCESS)
+    {
+        _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
+    }
+
     _VRETURN(out_status, NT_SUCCESS);
 }
 
 void nt_destroy()
 {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
+    nt_term_destroy();
+    nt_charbuff_destroy(&_buff);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -395,7 +399,7 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
 
     int i;
     struct nt_key_event ret;
-    const struct nt_term* term = nt_term_get_used();
+    const struct nt_term_info* term = nt_term_get_used();
     for(i = 0; i < NT_ESC_KEY_OTHER; i++)
     {
         if(strcmp(_buff, term->esc_key_seqs[i]) == 0)
@@ -452,4 +456,129 @@ static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
     _term_size = term_size;
 
     _RETURN(resize_event, out_status, NT_SUCCESS);
+}
+
+/* -------------------------------------------------------------------------- */
+/* COLOR & STYLE */
+/* -------------------------------------------------------------------------- */
+
+static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, int8_t b)
+{
+    // TODO
+    //
+    return 1;
+}
+
+static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, int8_t b)
+{
+    // TODO
+    if((r == g) && (g == b)) // gray
+    {
+        uint8_t val_adj = floor(r / 10.667);
+
+    }
+
+    uint8_t r_adj = floor(r / 42.6667);
+    uint8_t g_adj = floor(g / 42.6667);
+    uint8_t b_adj = floor(b / 42.6667);
+
+    return 16 + (36 * r_adj) + 6 * (6 * g_adj) + b_adj;
+}
+
+nt_color_t nt_color_create(uint8_t r, uint8_t g, int8_t b)
+{
+    return (nt_color_t) {
+        ._color_rgb = (struct nt_rgb) { .r = r, .g = g, .b = b },
+        ._color_c256 = _rgb_to_c256(r, g, b),
+        ._color_c8 = _rgb_to_c8(r, g, b)
+    };
+}
+
+bool nt_color_are_equal(nt_color_t c1, nt_color_t c2)
+{
+    return (memcmp(&c1, &c2, sizeof(nt_color_t)) == 0);
+}
+
+bool nt_style_are_equal(nt_style_t s1, nt_style_t s2)
+{
+    return (s1 == s2);
+}
+
+void nt_cursor_hide(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    const struct nt_term_info* used = nt_term_get_used();
+    
+    const char* func = used->esc_func_seqs[NT_ESC_FUNC_HIDE_CURSOR];
+    if(func != NULL)
+    {
+        nt_charbuff_append(&_buff, func, &_status);
+        if(_status == NT_ERR_ALLOC_FAIL)
+        {
+            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
+        }
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+    }
+}
+
+void nt_cursor_show(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    const struct nt_term_info* used = nt_term_get_used();
+    
+    const char* func = used->esc_func_seqs[NT_ESC_FUNC_SHOW_CURSOR];
+    if(func != NULL)
+    {
+        nt_charbuff_append(&_buff, func, &_status);
+        if(_status == NT_ERR_ALLOC_FAIL)
+        {
+            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
+        }
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+    }
+}
+
+void nt_erase_screen(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    const struct nt_term_info* used = nt_term_get_used();
+    
+    const char* func = used->esc_func_seqs[NT_ESC_FUNC_ERASE_SCREEN];
+    if(func != NULL)
+    {
+        nt_charbuff_append(&_buff, func, &_status);
+        if(_status == NT_ERR_ALLOC_FAIL)
+        {
+            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
+        }
+    }
+    else
+    {
+        _VRETURN(out_status, NT_ERR_UNSUPPORTED);
+    }
+}
+
+void nt_erase_line(nt_status_t* out_status)
+{
+    const struct nt_term_info* used = nt_term_get_used();
+}
+
+void nt_erase_scrollback(nt_status_t* out_status)
+{
+}
+
+void nt_alt_screen_enable(nt_status_t* out_status)
+{
+    const struct nt_term_info* used = nt_term_get_used();
+}
+
+void nt_alt_screen_disable(nt_status_t* out_status)
+{
+    const struct nt_term_info* used = nt_term_get_used();
 }

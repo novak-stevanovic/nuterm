@@ -1,56 +1,10 @@
 #include "_nt_term.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
-static struct nt_term* _used = NULL;
-
-static char* _xterm256_esc_key_seqs[] = {
-    // F keys
-    "\x1b\x4f\x50", "\x1b\x4f\x51", "\x1b\x4f\x52", "\x1b\x4f\x53",
-    "\x1b\x5b\x31\x35\x7e", "\x1b\x5b\x31\x37\x7e", "\x1b\x5b\x31\x38\x7e",
-    "\x1b\x5b\x31\x39\x7e", "\x1b\x5b\x32\x30\x7e", "\x1b\x5b\x32\x31\x7e",
-    "\x1b\x5b\x32\x33\x7e", "\x1b\x5b\x32\x34\x7e",
-
-    // Arrow keys
-    "\x1b\x5b\x41", "\x1b\x5b\x43", "\x1b\x5b\x42", "\x1b\x5b\x44",
-
-    // INS, DEL...
-    "\x1b\x5b\x32\x7e", "\x1b\x5b\x33\x7e",
-    "\x1b\x5b\x48", "\x1b\x5b\x46",
-    "\x1b\x5b\x35\x7e", "\x1b\x5b\x36\x7e",
-
-    // STAB
-    "\x1b\x5b\x5a"
-};
-
-static char* _xterm256_esc_func_seqs[] = {
-    // Show/hide/move cursor
-    "\x1b[?25h", "\x1b[?25l", "\x1b[%d;%dH",
-
-    // FG(c8, c256, tc)
-    "\x1b[3%dm", "\x1b[38;5;%dm", "\x1b[38;2;%d;%d;%dm",
-
-    // BG(c8, c256, tc)
-    "\x1b[4%dm", "\x1b[48;5;%dm", "\x1b[48;2;%d;%d;%dm",
-
-    // Style funcs
-    "\x1b[1m", "\x1b[2m", "\x1b[3m", "\x1b[4m",
-    "\x1b[5m", "\x1b[7m", "\x1b[8m", "\x1b[9m",
-
-    // Reset GFX
-    "\x1b[0m",
-
-    // Erase
-    "\x1b[2J", "\x1b[3J", "\x1b[2K",
-
-    // Alt buffer
-    "\x1b[?1049h", "\x1b[?1049l"
-};
-
-static struct nt_term _xterm256 = {
-    .esc_key_seqs = _xterm256_esc_key_seqs,
-    .esc_func_seqs = _xterm256_esc_func_seqs
-};
+static nt_term_color_t _color = NT_TERM_COLOR_OTHER;
+static nt_term_t _term = NT_TERM_OTHER;
 
 static char* _xterm_esc_key_seqs[] = {
     // F keys
@@ -76,10 +30,10 @@ static char* _xterm_esc_func_seqs[] = {
     "\x1b[?25h", "\x1b[?25l", "\x1b[%d;%dH",
 
     // FG(c8, c256, tc)
-    "\x1b[3%dm", NULL, NULL,
+    "\x1b[3%dm", "\x1b[38;5;%dm", "\x1b[38;2;%d;%d;%dm",
 
     // BG(c8, c256, tc)
-    "\x1b[4%dm", NULL, NULL,
+    "\x1b[4%dm", "\x1b[48;5;%dm", "\x1b[48;2;%d;%d;%dm",
 
     // Style funcs
     "\x1b[1m", "\x1b[2m", "\x1b[3m", "\x1b[4m",
@@ -95,24 +49,57 @@ static char* _xterm_esc_func_seqs[] = {
     "\x1b[?1049h", "\x1b[?1049l"
 };
 
-static struct nt_term _xterm = {
-    .esc_key_seqs = _xterm_esc_key_seqs,
-    .esc_func_seqs = _xterm_esc_func_seqs
+static char _xterm_name[] = "xterm";
+
+static struct nt_term_info _terms[] = {
+    { 
+        .esc_key_seqs = _xterm_esc_key_seqs,
+        .esc_func_seqs = _xterm_esc_func_seqs,
+        .name = _xterm_name
+    },
 };
 
 int nt_term_init()
 {
-    _used = &_xterm256;
+    char* env_term = getenv("TERM");
+    char* env_colorterm = getenv("COLORTERM");
 
+    if(env_term == NULL)
+        return NT_TERM_INIT_ERR_ENV;
+
+    size_t i;
+    for(i = 0; i < NT_TERM_OTHER; i++)
+    {
+        if(strstr(env_term, _terms[i].name) != NULL)
+            _term = i;
+    }
+
+    if((env_colorterm != NULL) && strstr(env_colorterm, "truecolor"))
+        _color = NT_TERM_COLOR_TC;
+    else
+    {
+        if(strstr(env_term, "256"))
+            _color = NT_TERM_COLOR_C256;
+        else
+            _color = NT_TERM_COLOR_C8;
+    }
+
+    // printf("T: %d C: %d\n", _term, _color);
     return 0;
 }
 
-const struct nt_term* nt_term_get_used()
+const struct nt_term_info* nt_term_get_used()
 {
-    return _used;
+    return &_terms[_term];
+}
+
+nt_term_color_t nt_term_get_color_count()
+{
+    return _color;
 }
 
 void nt_term_destroy()
 {
-    _used = NULL;
+    _color = NT_TERM_COLOR_OTHER;
+    _term = NT_TERM_OTHER;
 }
