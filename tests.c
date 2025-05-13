@@ -53,8 +53,7 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_TYPE_RESIZE)
         {
-            printf("R(%ld,%ld->%ld,%ld)", 
-                    event.resize_data.old_size.x, event.resize_data.old_size.y,
+            printf("R(%ld,%ld)", 
                     event.resize_data.new_size.x, event.resize_data.new_size.y);
 
             printf(" | ");
@@ -77,22 +76,12 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_buffer_enable();
-
-    nt_alt_screen_enable(&_status);
-    nt_cursor_hide(&_status);
-    assert(_status == NT_SUCCESS);
-
-    nt_buffer_flush();
-    // nt_buffer_flush();
+    nt_alt_screen_enable(NULL);
 
     loop_basic();
 
-    // nt_buffer_disable(NT_BUFF_DISCARD);
-    nt_cursor_show(&_status);
-    nt_alt_screen_disable(&_status);
-    nt_buffer_flush();
-    //
+    nt_alt_screen_disable(NULL);
+
     nt_destroy();
     return 0;;
 }

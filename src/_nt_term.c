@@ -78,7 +78,7 @@ void nt_term_init(nt_status_t* out_status)
             _term = i;
     }
 
-    if((env_colorterm != NULL) && strstr(env_colorterm, "truecolor"))
+    if((env_colorterm != NULL) && (strstr(env_colorterm, "truecolor")))
         _color = NT_TERM_COLOR_TC;
     else
     {

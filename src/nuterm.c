@@ -4,6 +4,7 @@
 #include <math.h>
 #include <poll.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -67,11 +68,10 @@ static inline int _awrite(int fd, const void* src, size_t count)
     return status;
 }
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
 /* GENERAL */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
 
-static struct nt_xy _term_size = {0};
 static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
@@ -146,8 +146,6 @@ void nt_init(nt_status_t* out_status)
         _VRETURN(out_status, NT_ERR_UNEXPECTED);
     }
 
-    _term_size = term_size;
-
     nt_charbuff_init(&_buff, &_status);
     if(_status != NT_SUCCESS)
     {
@@ -167,7 +165,303 @@ void nt_destroy()
 }
 
 /* -------------------------------------------------------------------------- */
-/* NT EVENT */
+/* COLOR & STYLE */
+/* -------------------------------------------------------------------------- */
+
+static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, int8_t b)
+{
+    // TODO
+    //
+    return 1;
+}
+
+static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, int8_t b)
+{
+    // TODO
+    if((r == g) && (g == b)) // gray
+    {
+        uint8_t val_adj = floor(r / 10.667);
+
+    }
+
+    uint8_t r_adj = floor(r / 42.6667);
+    uint8_t g_adj = floor(g / 42.6667);
+    uint8_t b_adj = floor(b / 42.6667);
+
+    return 16 + (36 * r_adj) + 6 * (6 * g_adj) + b_adj;
+}
+
+nt_color_t nt_color_create(uint8_t r, uint8_t g, int8_t b)
+{
+    return (nt_color_t) {
+        ._color_rgb = (struct nt_rgb) { .r = r, .g = g, .b = b },
+        ._color_c256 = _rgb_to_c256(r, g, b),
+        ._color_c8 = _rgb_to_c8(r, g, b)
+    };
+}
+
+bool nt_color_are_equal(nt_color_t c1, nt_color_t c2)
+{
+    return (memcmp(&c1, &c2, sizeof(nt_color_t)) == 0);
+}
+
+bool nt_style_are_equal(nt_style_t s1, nt_style_t s2)
+{
+    return (s1 == s2);
+}
+
+/* -------------------------------------------------------------------------- */
+/* TERMINAL FUNCTIONS */
+/* -------------------------------------------------------------------------- */
+
+static void _execute_used_term_func(nt_esc_func_t func, nt_status_t* out_status, ...)
+{
+    int status;
+    nt_status_t _status;
+
+    const struct nt_term_info* used_term = nt_term_get_used();
+    if(used_term == NULL)
+    {
+        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
+    }
+
+    const char* esc_func = used_term->esc_func_seqs[func];
+    if(esc_func == NULL)
+    {
+        _VRETURN(out_status, NT_ERR_FUNC_NOT_SUPPORTED);
+    }
+
+    char buff[50];
+
+    va_list list;
+    va_start(list, out_status);
+
+    status = vsprintf(buff, esc_func, list);
+    if(status < 0)
+    {
+        _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
+
+    va_end(list);
+
+    if(_buff_enabled == true)
+    {
+        nt_charbuff_append(&_buff, buff, &_status);
+        if(_status == NT_ERR_ALLOC_FAIL)
+        {
+            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
+        }
+    }
+    else
+    {
+        int write_status = _awrite(STDIN_FILENO, buff, strlen(buff));
+        if(write_status == -1)
+        {
+            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+        }
+    }
+
+    _VRETURN(out_status, NT_SUCCESS);
+}
+
+static void _cursor_move(size_t x, size_t y, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, &_status, x, y);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_bold(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_faint(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_FAINT, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_italic(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_ITALIC, &_status);
+    _VRETURN(out_status, _status);
+}
+static void _style_set_underline(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_UNDERLINE, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_blink(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BLINK, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_hidden(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_HIDDEN, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _style_set_strikethrough(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_STRIKETHROUGH, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _gfx_reset(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static void _fg_set_c8(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static void _fg_set_c256(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static void _fg_set_rgb(uint8_t r, uint8_t g, uint8_t b, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, &_status, r, g, b);
+    _VRETURN(out_status, _status);
+}
+
+
+static void _bg_set_c8(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static void _bg_set_c256(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static void _bg_set_rgb(uint8_t r, uint8_t g, uint8_t b, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, &_status, r, g, b);
+    _VRETURN(out_status, _status);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void nt_buffer_enable()
+{
+    _buff_enabled = true;
+}
+
+void nt_buffer_flush()
+{
+    // Assume write() doesn't fail.
+    _awrite(STDOUT_FILENO, _buff.data, _buff.len);
+
+    nt_charbuff_rewind(&_buff, NULL);
+}
+
+void nt_buffer_disable(nt_buffact_t action)
+{
+    if(action == NT_BUFF_FLUSH)
+        nt_buffer_flush();
+    else
+        nt_charbuff_rewind(&_buff, NULL);
+
+    _buff_enabled = false;
+}
+
+void nt_cursor_hide(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_cursor_show(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_erase_screen(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_erase_line(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_erase_scrollback(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_alt_screen_enable(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, &_status);
+    _VRETURN(out_status, _status);
+}
+
+void nt_alt_screen_disable(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, &_status);
+    _VRETURN(out_status, _status);
+}
+
+/* ------------------------------------------------------------------------- */
+/* WRITE TO TERMINAL */
+/* ------------------------------------------------------------------------- */
+
+static void _set_color(nt_color_t color);
+static void _set_style(nt_style_t stlye);
+
+// UTF-32
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y)
+{
+}
+
+// UTF-8
+void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y)
+{
+}
+
+/* -------------------------------------------------------------------------- */
+/* EVENT */
 /* -------------------------------------------------------------------------- */
 
 /* Called by nt_wait_for_event() internally. */
@@ -219,9 +513,9 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     _RETURN(event, out_status, NT_SUCCESS);
 }
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------ */
 /* KEY EVENT */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------ */
 
 #define ESC_TIMEOUT 10
 
@@ -239,7 +533,7 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
 static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
         nt_status_t* out_status);
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------ */
 
 static struct nt_key_event _process_key_event(nt_status_t* out_status)
 {
@@ -437,9 +731,9 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
     _RETURN(ret, out_status, NT_SUCCESS);
 }
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------ */
 /* RESIZE EVENT */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------ */
 
 static const struct nt_resize_event _NT_RESIZE_EVENT_EMPTY = {0};
 
@@ -461,230 +755,8 @@ static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
     }
 
     struct nt_resize_event resize_event = {
-        .old_size = _term_size,
         .new_size = term_size
     };
 
-    _term_size = term_size;
-
     _RETURN(resize_event, out_status, NT_SUCCESS);
-}
-
-/* -------------------------------------------------------------------------- */
-/* COLOR & STYLE */
-/* -------------------------------------------------------------------------- */
-
-static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, int8_t b)
-{
-    // TODO
-    //
-    return 1;
-}
-
-static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, int8_t b)
-{
-    // TODO
-    if((r == g) && (g == b)) // gray
-    {
-        uint8_t val_adj = floor(r / 10.667);
-
-    }
-
-    uint8_t r_adj = floor(r / 42.6667);
-    uint8_t g_adj = floor(g / 42.6667);
-    uint8_t b_adj = floor(b / 42.6667);
-
-    return 16 + (36 * r_adj) + 6 * (6 * g_adj) + b_adj;
-}
-
-nt_color_t nt_color_create(uint8_t r, uint8_t g, int8_t b)
-{
-    return (nt_color_t) {
-        ._color_rgb = (struct nt_rgb) { .r = r, .g = g, .b = b },
-        ._color_c256 = _rgb_to_c256(r, g, b),
-        ._color_c8 = _rgb_to_c8(r, g, b)
-    };
-}
-
-bool nt_color_are_equal(nt_color_t c1, nt_color_t c2)
-{
-    return (memcmp(&c1, &c2, sizeof(nt_color_t)) == 0);
-}
-
-bool nt_style_are_equal(nt_style_t s1, nt_style_t s2)
-{
-    return (s1 == s2);
-}
-
-/* -------------------------------------------------------------------------- */
-/* TERM FUNCS */
-/* -------------------------------------------------------------------------- */
-
-void nt_buffer_enable()
-{
-    _buff_enabled = true;
-}
-
-void nt_buffer_flush()
-{
-    // Assume write() doesn't fail.
-    _awrite(STDOUT_FILENO, _buff.data, _buff.len);
-
-    nt_charbuff_rewind(&_buff, NULL);
-}
-
-void nt_buffer_disable(nt_buffact_t action)
-{
-    if(action == NT_BUFF_FLUSH)
-        nt_buffer_flush();
-    else
-        nt_charbuff_rewind(&_buff, NULL);
-
-    _buff_enabled = false;
-}
-
-static void _execute_term_func(const char* func, nt_status_t* out_status)
-{
-    if(func == NULL)
-    {
-        _VRETURN(out_status, NT_ERR_INVALID_ARG);
-    }
-
-    nt_status_t _status;
-    
-    if(_buff_enabled == true)
-    {
-        nt_charbuff_append(&_buff, func, &_status);
-        if(_status == NT_ERR_ALLOC_FAIL)
-        {
-            _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-        }
-    }
-    else
-    {
-        int write_status = _awrite(STDIN_FILENO, func, strlen(func));
-        if(write_status == -1)
-        {
-            _VRETURN(out_status, NT_ERR_UNEXPECTED);
-        }
-    }
-
-    _VRETURN(out_status, NT_SUCCESS);
-
-}
-
-void nt_cursor_hide(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_CURSOR_HIDE],
-                &_status);
-
-        _VRETURN(out_status, _status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_cursor_show(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_CURSOR_SHOW],
-                &_status);
-
-        _VRETURN(out_status, _status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_erase_screen(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_SCREEN],
-                &_status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_erase_line(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_LINE],
-                &_status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_erase_scrollback(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_ERASE_SCROLLBACK],
-                &_status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_alt_screen_enable(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_ALT_BUFF_ENTER],
-                &_status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
-}
-
-void nt_alt_screen_disable(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term != NULL)
-    {
-        _execute_term_func(
-                used_term->esc_func_seqs[NT_ESC_FUNC_ALT_BUFF_EXIT],
-                &_status);
-    }
-    else
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
 }

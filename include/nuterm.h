@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 /* ------------------------------------------------------------------------- */
-/* START */
+/* GENERAL */
 /* ------------------------------------------------------------------------- */
 
 void nt_init(nt_status_t* out_status);
@@ -29,7 +29,7 @@ struct nt_xy { size_t x, y; };
 struct nt_dxy { ssize_t x, y; };
 
 /* ------------------------------------------------------------------------- */
-/* GFX */
+/* COLOR & STYLE */
 /* ------------------------------------------------------------------------- */
 
 struct nt_rgb { uint8_t r, g, b; };
@@ -47,7 +47,7 @@ extern const nt_color_t NT_COLOR_DEFAULT;
 nt_color_t nt_color_create(uint8_t r, uint8_t g, int8_t b);
 bool nt_color_are_equal(nt_color_t c1, nt_color_t c2);
 
-/* ------------------------------------------------------------------------- */
+/* ----------------------------------------------------- */
 
 typedef uint8_t nt_style_t;
 
@@ -66,7 +66,7 @@ extern const nt_style_t NT_STYLE_DEFAULT;
 bool nt_style_are_equal(nt_style_t s1, nt_style_t s2);
 
 /* ------------------------------------------------------------------------- */
-/* ENV */
+/* TERMINAL FUNCTIONS */
 /* ------------------------------------------------------------------------- */
 
 void nt_buffer_enable();
@@ -76,7 +76,7 @@ typedef enum nt_buffact { NT_BUFF_FLUSH, NT_BUFF_DISCARD } nt_buffact_t;
 
 void nt_buffer_disable(nt_buffact_t action);
 
-/* ------------------------------------------------------ */
+/* ----------------------------------------------------- */
 
 void nt_cursor_hide(nt_status_t* out_status);
 void nt_cursor_show(nt_status_t* out_status);
@@ -88,28 +88,21 @@ void nt_erase_scrollback(nt_status_t* out_status);
 void nt_alt_screen_enable(nt_status_t* out_status);
 void nt_alt_screen_disable(nt_status_t* out_status);
 
-/* ------------------------------------------------------ */
+/* ------------------------------------------------------------------------- */
+/* WRITE TO TERMINAL */
+/* ------------------------------------------------------------------------- */
 
-#define NT_CELL_EMPTY ' '
-
-struct nt_cell
+struct nt_gfx
 {
-    uint32_t codepoint; // utf32
     nt_color_t foreground, background;
     nt_style_t style;
 };
 
-struct nt_text
-{
-    const char* text; // utf8
-    nt_color_t foreground, background;
-    nt_style_t style;
-};
+// UTF-32
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y);
 
-void nt_draw(struct nt_cell, size_t x, size_t y);
-void nt_write(struct nt_text, size_t x, size_t y);
-
-struct nt_xy nt_display_get_size();
+// UTF-8
+void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y);
 
 /* ------------------------------------------------------------------------- */
 /* EVENT */
@@ -141,7 +134,6 @@ struct nt_key_event
 
 struct nt_resize_event
 {
-    struct nt_xy old_size;
     struct nt_xy new_size;
 };
 
