@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static nt_term_color_t _color = NT_TERM_COLOR_OTHER;
+static nt_term_color_count_t _color = NT_TERM_COLOR_OTHER;
 static nt_term_t _term = NT_TERM_OTHER;
 
 static char* _xterm_esc_key_seqs[] = {
@@ -97,7 +97,7 @@ const struct nt_term_info* nt_term_get_used()
     return (_term == NT_TERM_OTHER) ? NULL : &_terms[_term];
 }
 
-nt_term_color_t nt_term_get_color_count()
+nt_term_color_count_t nt_term_get_color_count()
 {
     return _color;
 }

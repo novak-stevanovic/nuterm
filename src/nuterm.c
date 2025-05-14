@@ -264,34 +264,133 @@ static void _execute_used_term_func(nt_esc_func_t func, nt_status_t* out_status,
     _VRETURN(out_status, NT_SUCCESS);
 }
 
-static void _cursor_move(size_t x, size_t y, nt_status_t* out_status)
+static inline void _cursor_show(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _cursor_hide(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _cursor_move(size_t x, size_t y, nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, &_status, x, y);
     _VRETURN(out_status, _status);
 }
 
-static void _style_set_bold(nt_status_t* out_status)
+static inline void _fg_set_c8(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _fg_set_c256(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _fg_set_rgb(struct nt_rgb rgb, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, &_status, rgb.r, rgb.g, rgb.b);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _bg_set_c8(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _bg_set_c256(uint8_t code, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, &_status, code);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _bg_set_rgb(struct nt_rgb rgb, nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, &_status, rgb.r, rgb.g, rgb.b);
+    _VRETURN(out_status, _status);
+}
+
+static void _gfx_reset(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _erase_screen(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _erase_line(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _erase_scrollback(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _alt_screen_enable(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _alt_screen_disable(nt_status_t* out_status)
+{
+    nt_status_t _status;
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, &_status);
+    _VRETURN(out_status, _status);
+}
+
+static inline void _style_set_bold(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD, &_status);
     _VRETURN(out_status, _status);
 }
 
-static void _style_set_faint(nt_status_t* out_status)
+static inline void _style_set_faint(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_FAINT, &_status);
     _VRETURN(out_status, _status);
 }
 
-static void _style_set_italic(nt_status_t* out_status)
+static inline void _style_set_italic(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_ITALIC, &_status);
     _VRETURN(out_status, _status);
 }
-static void _style_set_underline(nt_status_t* out_status)
+
+static inline void _style_set_underline(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_UNDERLINE, &_status);
@@ -305,67 +404,17 @@ static void _style_set_blink(nt_status_t* out_status)
     _VRETURN(out_status, _status);
 }
 
-static void _style_set_hidden(nt_status_t* out_status)
+static inline void _style_set_hidden(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_HIDDEN, &_status);
     _VRETURN(out_status, _status);
 }
 
-static void _style_set_strikethrough(nt_status_t* out_status)
+static inline void _style_set_strikethrough(nt_status_t* out_status)
 {
     nt_status_t _status;
     _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_STRIKETHROUGH, &_status);
-    _VRETURN(out_status, _status);
-}
-
-static void _gfx_reset(nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, &_status);
-    _VRETURN(out_status, _status);
-}
-
-static void _fg_set_c8(uint8_t code, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, &_status, code);
-    _VRETURN(out_status, _status);
-}
-
-static void _fg_set_c256(uint8_t code, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, &_status, code);
-    _VRETURN(out_status, _status);
-}
-
-static void _fg_set_rgb(uint8_t r, uint8_t g, uint8_t b, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, &_status, r, g, b);
-    _VRETURN(out_status, _status);
-}
-
-
-static void _bg_set_c8(uint8_t code, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, &_status, code);
-    _VRETURN(out_status, _status);
-}
-
-static void _bg_set_c256(uint8_t code, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, &_status, code);
-    _VRETURN(out_status, _status);
-}
-
-static void _bg_set_rgb(uint8_t r, uint8_t g, uint8_t b, nt_status_t* out_status)
-{
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, &_status, r, g, b);
     _VRETURN(out_status, _status);
 }
 
@@ -396,59 +445,102 @@ void nt_buffer_disable(nt_buffact_t action)
 
 void nt_cursor_hide(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, &_status);
-    _VRETURN(out_status, _status);
+    _cursor_hide(out_status);
 }
 
 void nt_cursor_show(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, &_status);
-    _VRETURN(out_status, _status);
+    _cursor_show(out_status);
 }
 
 void nt_erase_screen(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, &_status);
-    _VRETURN(out_status, _status);
+    _erase_screen(out_status);
 }
 
 void nt_erase_line(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, &_status);
-    _VRETURN(out_status, _status);
+    _erase_line(out_status);
 }
 
 void nt_erase_scrollback(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, &_status);
-    _VRETURN(out_status, _status);
+    _erase_scrollback(out_status);
 }
 
 void nt_alt_screen_enable(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, &_status);
-    _VRETURN(out_status, _status);
+    _alt_screen_enable(out_status);
 }
 
 void nt_alt_screen_disable(nt_status_t* out_status)
 {
-    nt_status_t _status;
-    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, &_status);
-    _VRETURN(out_status, _status);
+    _alt_screen_disable(out_status);
 }
 
 /* ------------------------------------------------------------------------- */
 /* WRITE TO TERMINAL */
 /* ------------------------------------------------------------------------- */
 
-static void _set_color(nt_color_t color);
-static void _set_style(nt_style_t stlye);
+typedef enum set_color_opt {
+    SET_COLOR_FG,
+    SET_COLOR_BG
+} set_color_opt_t;
+
+static void _set_color_fg(nt_color_t color, set_color_opt_t opt,
+        nt_status_t* out_status)
+{
+    nt_status_t _status;
+    nt_term_color_count_t colors = nt_term_get_color_count();
+
+    size_t func_offset = (opt == SET_COLOR_BG) ?
+        (NT_ESC_FUNC_BG_SET_C8 - NT_ESC_FUNC_FG_SET_C8) : 0;
+
+    nt_esc_func_t func;
+    switch(colors)
+    {
+        case NT_TERM_COLOR_TC:
+            func = NT_ESC_FUNC_FG_SET_RGB + func_offset;
+
+            _execute_used_term_func(func, &_status, color._color_rgb);
+
+            /* If func is not supported by the terminal, proceed to the
+             * next case. */
+            if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
+            {
+                _VRETURN(out_status, _status);
+            }
+
+        case NT_TERM_COLOR_C256:
+            func = NT_ESC_FUNC_FG_SET_C256 + func_offset;
+
+            _execute_used_term_func(func, &_status, color._color_c256);
+
+            /* If func is not supported by the terminal, proceed to the
+             * next case. */
+            if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
+            {
+                _VRETURN(out_status, _status);
+            }
+
+            _VRETURN(out_status, _status);
+
+        case NT_TERM_COLOR_C8:
+            func = NT_ESC_FUNC_FG_SET_C8 + func_offset;
+
+            _execute_used_term_func(func, &_status, color._color_c8);
+
+            /* No more color palletes to fall back to. */
+            _VRETURN(out_status, _status);
+
+        default:
+            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+    }
+}
+
+static void _set_style(nt_style_t style, nt_status_t* out_status)
+{
+}
 
 // UTF-32
 void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y)

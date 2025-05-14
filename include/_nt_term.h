@@ -24,18 +24,18 @@ typedef enum nt_term
     NT_TERM_OTHER // Must be last because internally used as count
 } nt_term_t;
 
-typedef enum nt_term_color
+typedef enum nt_term_color_count
 {
     NT_TERM_COLOR_C8,
     NT_TERM_COLOR_C256,
     NT_TERM_COLOR_TC,
     NT_TERM_COLOR_OTHER // Must be last because internally used as count
-} nt_term_color_t;
+} nt_term_color_count_t;
 
 void nt_term_init(nt_status_t* out_status);
 
 const struct nt_term_info* nt_term_get_used();
-nt_term_color_t nt_term_get_color_count();
+nt_term_color_count_t nt_term_get_color_count();
 
 void nt_term_destroy();
 
