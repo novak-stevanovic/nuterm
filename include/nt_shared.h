@@ -2,6 +2,7 @@
 #define _NT_SHARED_H_
 
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 struct nt_xy { size_t x, y; };

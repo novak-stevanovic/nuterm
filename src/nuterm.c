@@ -1,6 +1,5 @@
 #include "nuterm.h"
 
-#include <math.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -112,22 +111,22 @@ void nt_destroy()
 /* COLOR & STYLE */
 /* -------------------------------------------------------------------------- */
 
-static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, int8_t b)
-{
-    // TODO
-    return 0;
-}
+const nt_color_t NT_COLOR_DEFAULT = {
+    ._code8 = 0,
+    ._code256 = 0,
+    ._rgb = { 0, 0, 0 },
+    .__default = true
+};
 
-static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, int8_t b)
+static inline bool _color_is_default(nt_color_t color)
 {
-    // TODO
-    return 0;
+    return color.__default;
 }
 
 nt_color_t nt_color_new(uint8_t r, uint8_t g, uint8_t b)
 {
     return (nt_color_t) {
-        ._rgb =  (struct nt_rgb) { .r = r, .g = g, .b = b },
+        ._rgb =  { .r = r, .g = g, .b = b },
         ._code256 = _rgb_to_c256(r, g, b),
         ._code8 = _rgb_to_c8(r, g, b)
     };
@@ -136,11 +135,6 @@ nt_color_t nt_color_new(uint8_t r, uint8_t g, uint8_t b)
 bool nt_color_cmp(nt_color_t c1, nt_color_t c2)
 {
     return (memcmp(&c1, &c2, sizeof(nt_color_t)) == 0);
-}
-
-bool nt_style_cmp(nt_style_t s1, nt_style_t s2)
-{
-    return (s1 == s2);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -270,15 +264,20 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
     nt_status_t _status;
     nt_term_color_count_t colors = nt_term_get_color_count();
 
+    size_t func_offset = (opt == SET_COLOR_FG) ? 0 : 4;
+
+    if(_color_is_default(color)) // DEFAULT COLOR
+    {
+        _execute_used_term_func(NT_ESC_FUNC_FG_SET_DEFAULT + func_offset,
+                &_status);
+        _VRETURN(out_status, _status);
+    }
+
     switch(colors)
     {
         case NT_TERM_COLOR_TC:
-            if(opt == SET_COLOR_FG)
-                _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB,
-                        &_status, color._rgb.r, color._rgb.g, color._rgb.b);
-            else
-                _execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB,
-                        &_status, color._rgb.r, color._rgb.g, color._rgb.b);
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB + func_offset,
+                    &_status, color._rgb.r, color._rgb.g, color._rgb.b);
 
             /* If func is not supported by the terminal, proceed to the
              * next case. */
@@ -288,12 +287,8 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             }
 
         case NT_TERM_COLOR_C256:
-            if(opt == SET_COLOR_FG)
-                _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256,
-                        &_status, color._code256);
-            else
-                _execute_used_term_func(NT_ESC_FUNC_BG_SET_C256,
-                        &_status, color._code256);
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256 + func_offset,
+                    &_status, color._code256);
 
             /* If func is not supported by the terminal, proceed to the
              * next case. */
@@ -305,12 +300,8 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             _VRETURN(out_status, _status);
 
         case NT_TERM_COLOR_C8:
-            if(opt == SET_COLOR_FG)
-                _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8,
-                        &_status, color._code8);
-            else
-                _execute_used_term_func(NT_ESC_FUNC_BG_SET_C8,
-                        &_status, color._code8);
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8 + func_offset,
+                    &_status, color._code8);
 
             /* No more color palletes to fall back to. */
             _VRETURN(out_status, _status);

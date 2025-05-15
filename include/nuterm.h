@@ -1,9 +1,7 @@
 /* TODO:
- * 1. Implement conversion functions between colors
- * 2. Handle default color
- * 3. Add other terminal support(esc keys, funcs, detection...)
- * 4. Improve documentation
- * 5. keysets? */
+ * 1. Add other terminal support(esc keys, funcs, detection...)
+ * 2. Improve documentation
+ * 3. keysets? */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -42,13 +40,17 @@ void nt_destroy();
 /* COLOR & STYLE */
 /* ------------------------------------------------------------------------- */
 
-struct nt_rgb { uint8_t r, g, b; };
-
+/* Colors are meant to be created by invoking nt_color_new(). Provided RGB
+ * values are translated into color codes(0-7 & 0-255). When writing text to
+ * terminal, terminal color will be set based on supported color palette. */
 typedef struct nt_color
 {
     uint8_t _code8;
     uint8_t _code256;
-    struct nt_rgb _rgb;
+    struct 
+    {
+        uint8_t r, g, b;
+    } _rgb;
     bool __default;
 } nt_color_t;
 
@@ -72,8 +74,6 @@ extern const nt_style_t NT_STYLE_DEFAULT;
 #define NT_STYLE_REVERSE         (1 << 5)  // 00100000
 #define NT_STYLE_HIDDEN          (1 << 6)  // 01000000
 #define NT_STYLE_STRIKETHROUGH   (1 << 7)  // 10000000
-
-bool nt_style_cmp(nt_style_t s1, nt_style_t s2);
 
 /* ------------------------------------------------------------------------- */
 /* TERMINAL FUNCTIONS */

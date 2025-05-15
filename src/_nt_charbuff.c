@@ -49,15 +49,22 @@ void nt_charbuff_append(nt_charbuff_t* buff, const char* text,
 
     size_t len = strlen(text);
 
-    if((buff->len + len) > buff->capacity)
+    size_t total_len = len + buff->len;
+
+    if((total_len) > buff->capacity)
     {
-        void* new_data = realloc(buff->data, buff->capacity * 2 + 1);
+        size_t new_cap_default = buff->capacity * 2;
+
+        size_t new_cap = (total_len > new_cap_default) ?
+            total_len * 2 : new_cap_default;
+
+        void* new_data = realloc(buff->data, new_cap + 1);
         if(new_data == NULL)
         {
             _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
         }
 
-        buff->capacity *= 2;
+        buff->capacity = new_cap;
         buff->data = new_data;
     }
 

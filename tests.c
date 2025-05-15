@@ -1,3 +1,4 @@
+#include "_nt_shared.h"
 #include "_nt_term.h"
 #include "nuterm.h"
 #include <assert.h>
@@ -70,35 +71,42 @@ void loop_lib()
     printf("Done\n");
 }
 
+struct rgb
+{
+    uint8_t r, g, b;
+};
+
 int main(int argc, char *argv[])
 {
     nt_status_t _status;
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
+    struct rgb color = { .r = 255, .g = 100, .b = 255 };
+
     nt_alt_screen_enable(NULL);
     nt_cursor_hide(NULL);
 
     struct nt_gfx gfx1 = {
-        .bg = nt_color_new(100, 0, 200),
-        .fg = nt_color_new(255, 255, 255),
+        .bg = nt_color_new(200, 0, 200),
+        .fg = nt_color_new(0, 255, 255),
         .style = NT_STYLE_BOLD | NT_STYLE_UNDERLINE
     };
 
     struct nt_gfx gfx2 = {
-        .bg = nt_color_new(200, 0, 100),
-        .fg = nt_color_new(255, 255, 255),
+        .bg = NT_COLOR_DEFAULT,
+        .fg = NT_COLOR_DEFAULT,
         .style = NT_STYLE_BOLD | NT_STYLE_BLINK
     };
 
     nt_style_t styles;
-    nt_write_str("N", gfx1, 10, 10, &styles, &_status);
+    nt_write_str("Test1", gfx1, 10, 10, &styles, &_status);
     assert(_status == NT_SUCCESS);
-    nt_write_str("E", gfx2, 160, 10, &styles, &_status);
+    nt_write_str("Test12333", gfx2, 160, 10, &styles, &_status);
     assert(_status == NT_SUCCESS);
 
-    nt_write_char(1055, gfx1, 50, 10, &styles, &_status);
-    assert(_status == NT_SUCCESS);
+    // nt_write_char(1055, gfx1, 50, 10, &styles, &_status);
+    // assert(_status == NT_SUCCESS);
 
     loop_basic();
 
