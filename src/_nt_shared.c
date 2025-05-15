@@ -72,21 +72,19 @@ static inline size_t _distance_point3d(struct point3d p1, struct point3d p2)
             _square_ssize(p2.z - p1.z));
 }
 
-/* Order is defined by ANSI esc sequence standards
- * (black, red, green, yellow, blue, magenta, cyan, white) */
-const struct point3d colors[] = { 
-    { .x = 0, .y = 0, .z = 0 },
-    { .x = 255, .y = 0, .z = 0 },
-    { .x = 0, .y = 255, .z = 0 },
-    { .x = 255, .y = 255, .z = 0 },
-    { .x = 0, .y = 0, .z = 255 },
-    { .x = 255, .y = 0, .z = 255 },
-    { .x = 0, .y = 255, .z = 255 },
-    { .x = 255, .y = 255, .z = 255 },
+/* Order is defined by ANSI esc sequence standards. */
+const struct point3d colors[] = {
+    { .x = 0, .y = 0, .z = 0 }, // Black
+    { .x = 255, .y = 0, .z = 0 }, // Red
+    { .x = 0, .y = 255, .z = 0 }, // Green
+    { .x = 255, .y = 255, .z = 0 }, // Yellow
+    { .x = 0, .y = 0, .z = 255 }, // Blue
+    { .x = 255, .y = 0, .z = 255 }, // Magenta
+    { .x = 0, .y = 255, .z = 255 }, // Cyan
+    { .x = 255, .y = 255, .z = 255 }, // White
 };
 
-// TODO: add static
-uint8_t _rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
+uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
 {
     const struct point3d color = { .x = r, .y = g, .z = b };
 
@@ -109,8 +107,7 @@ uint8_t _rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
     return min_idx;
 }
 
-// TODO: add static
-uint8_t _rgb_to_c256(uint8_t r, uint8_t g, uint8_t b)
+uint8_t nt_rgb_to_c256(uint8_t r, uint8_t g, uint8_t b)
 {
     if((r == g) && (g == b)) // gray
     {

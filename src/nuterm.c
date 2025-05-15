@@ -127,8 +127,8 @@ nt_color_t nt_color_new(uint8_t r, uint8_t g, uint8_t b)
 {
     return (nt_color_t) {
         ._rgb =  { .r = r, .g = g, .b = b },
-        ._code256 = _rgb_to_c256(r, g, b),
-        ._code8 = _rgb_to_c8(r, g, b)
+        ._code256 = nt_rgb_to_c256(r, g, b),
+        ._code8 = nt_rgb_to_c8(r, g, b)
     };
 }
 
