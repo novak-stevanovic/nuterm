@@ -32,9 +32,18 @@ typedef enum nt_term_color_count
     NT_TERM_COLOR_OTHER // Must be last because internally used as count
 } nt_term_color_count_t;
 
+/* Detects terminal(based on $TERM) and color palette(based on $TERM, $COLORTERM).
+ * Sets internal values that can be retrieved by getter funcs below.
+ *
+ * STATUS CODES:
+ * 1) NT_SUCCESS,
+ * 2) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
 void nt_term_init(nt_status_t* out_status);
 
+/* Returns NT_TERM_OTHER if not set. */
 const struct nt_term_info* nt_term_get_used();
+
+/* Returns NT_TERM_COLOR_OTHER if not set. */
 nt_term_color_count_t nt_term_get_color_count();
 
 void nt_term_destroy();

@@ -49,7 +49,7 @@ void nt_charbuff_append(nt_charbuff_t* buff, const char* text,
 
     size_t len = strlen(text);
 
-    if((buff->len + len) >= buff->capacity)
+    if((buff->len + len) > buff->capacity)
     {
         void* new_data = realloc(buff->data, buff->capacity * 2 + 1);
         if(new_data == NULL)

@@ -1,5 +1,6 @@
 #include "_nt_term.h"
 #include "_nt_shared.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,11 +32,11 @@ static char* _xterm_esc_func_seqs[] = {
     // Show/hide/move cursor
     "\x1b[?25h", "\x1b[?25l", "\x1b[%d;%dH",
 
-    // FG(c8, c256, tc)
-    "\x1b[3%dm", "\x1b[38;5;%dm", "\x1b[38;2;%d;%d;%dm",
+    // FG(c8, c256, tc, reset)
+    "\x1b[3%dm", "\x1b[38;5;%dm", "\x1b[38;2;%d;%d;%dm", "\x1b[39m",
 
-    // BG(c8, c256, tc)
-    "\x1b[4%dm", "\x1b[48;5;%dm", "\x1b[48;2;%d;%d;%dm",
+    // BG(c8, c256, tc, reset)
+    "\x1b[4%dm", "\x1b[48;5;%dm", "\x1b[48;2;%d;%d;%dm", "\x1b[49m",
 
     // Style funcs
     "\x1b[1m", "\x1b[2m", "\x1b[3m", "\x1b[4m",
@@ -68,14 +69,23 @@ void nt_term_init(nt_status_t* out_status)
 
     if(env_term == NULL)
     {
-        _VRETURN(out_status, NT_ERR_TERM_INIT_ENV_FAIL);
+        _VRETURN(out_status, NT_ERR_INIT_TERM_ENV);
     }
 
     size_t i;
+    bool found = false;
     for(i = 0; i < NT_TERM_OTHER; i++)
     {
         if(strstr(env_term, _terms[i].name) != NULL)
+        {
             _term = i;
+            found = true;
+            break;
+        }
+    }
+    if(!found)
+    {
+        _VRETURN(out_status, NT_ERR_TERM_NOT_SUPPORTED);
     }
 
     if((env_colorterm != NULL) && (strstr(env_colorterm, "truecolor")))
