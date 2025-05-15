@@ -25,13 +25,13 @@ ifneq ($(LIB_TYPE),shared)
 endif
 
 LIB_NAME = nuterm
-_LIB_NAME = _$(LIB_NAME) # internal
 
 CC = gcc
-# CC = /opt/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64_be-none-linux-gnu/bin/aarch64_be-none-linux-gnu-gcc
 
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
+
+INSTALL_INCLUDE = include/nuterm.h include/nt_shared.h include/nt_esc.h
 
 # -----------------------------------------------------------------------------
 # Build Flags
@@ -114,7 +114,7 @@ install:
 	cp $(LIB_FILE) $(PREFIX)/lib
 
 	@mkdir -p $(PREFIX)/include/$(LIB_NAME)
-	cp -r include/* $(PREFIX)/include/$(LIB_NAME)
+	cp -r $(INSTALL_INCLUDE) $(PREFIX)/include/$(LIB_NAME)
 
 # uninstall ------------------------------------------------
 
