@@ -102,6 +102,13 @@ void nt_init(nt_status_t* out_status)
 
 void nt_destroy()
 {
+    struct nt_gfx reset = {
+        .fg = NT_COLOR_DEFAULT,
+        .bg = NT_COLOR_DEFAULT,
+        .style = NT_STYLE_DEFAULT
+    };
+
+    nt_write_str("", reset, NT_WRITE_INPLACE, NT_WRITE_INPLACE, NULL, NULL);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
     nt_term_destroy();
     nt_charbuff_destroy(&_buff);
@@ -358,7 +365,7 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
 }
 
 // UTF-32
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
         nt_style_t* out_styles, nt_status_t* out_status)
 {
     char utf8[5];
@@ -389,7 +396,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
 }
 
 // UTF-8
-void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
+void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
         nt_style_t* out_styles, nt_status_t* out_status)
 {
     nt_status_t _status;
@@ -400,10 +407,13 @@ void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
         _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
     }
 
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, &_status, y, x);
-    if(_status != NT_SUCCESS)
+    if((x != NT_WRITE_INPLACE) || (y != NT_WRITE_INPLACE))
     {
-        _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
+        _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, &_status, y, x);
+        if(_status != NT_SUCCESS)
+        {
+            _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
+        }
     }
 
     _set_color(gfx.fg, SET_COLOR_FG, &_status);

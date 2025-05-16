@@ -43,7 +43,7 @@ static char* _xterm_esc_func_seqs[] = {
     "\x1b[5m", "\x1b[7m", "\x1b[8m", "\x1b[9m",
 
     // Reset GFX
-    "\x1b[0m",
+    "\x1b(B\x1b[m",
 
     // Erase
     "\x1b[2J", "\x1b[3J", "\x1b[2K",

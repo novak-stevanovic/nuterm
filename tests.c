@@ -71,6 +71,34 @@ void loop_lib()
     printf("Done\n");
 }
 
+void write_test()
+{
+    nt_status_t _status;
+    struct nt_gfx gfx1 = {
+        .bg = nt_color_new(200, 0, 200),
+        .fg = nt_color_new(0, 255, 255),
+        .style = NT_STYLE_DEFAULT |
+            NT_STYLE_BOLD |
+            NT_STYLE_FAINT |
+            NT_STYLE_ITALIC |
+            NT_STYLE_UNDERLINE |
+            NT_STYLE_BLINK | 
+            NT_STYLE_REVERSE | 
+            // NT_STYLE_HIDDEN | 
+            NT_STYLE_STRIKETHROUGH
+    };
+
+    nt_style_t styles;
+    nt_write_str("Test1", gfx1, 10, 10, &styles, &_status);
+
+    assert(styles == gfx1.style);
+    assert(_status == NT_SUCCESS);
+
+    // nt_write_char(1055, gfx1, 50, 10, &styles, &_status);
+    // assert(_status == NT_SUCCESS);
+
+}
+
 struct rgb
 {
     uint8_t r, g, b;
@@ -82,32 +110,10 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    struct rgb color = { .r = 255, .g = 100, .b = 255 };
-
     nt_alt_screen_enable(NULL);
     nt_cursor_hide(NULL);
 
-    struct nt_gfx gfx1 = {
-        .bg = nt_color_new(200, 0, 200),
-        .fg = nt_color_new(0, 255, 255),
-        .style = NT_STYLE_BOLD | NT_STYLE_UNDERLINE
-    };
-
-    struct nt_gfx gfx2 = {
-        .bg = NT_COLOR_DEFAULT,
-        .fg = NT_COLOR_DEFAULT,
-        .style = NT_STYLE_BOLD | NT_STYLE_BLINK
-    };
-
-    nt_style_t styles;
-    nt_write_str("Test1", gfx1, 10, 10, &styles, &_status);
-    assert(_status == NT_SUCCESS);
-    nt_write_str("Test12333", gfx2, 160, 10, &styles, &_status);
-    assert(_status == NT_SUCCESS);
-
-    // nt_write_char(1055, gfx1, 50, 10, &styles, &_status);
-    // assert(_status == NT_SUCCESS);
-
+    write_test();
     loop_basic();
 
     nt_alt_screen_disable(NULL);

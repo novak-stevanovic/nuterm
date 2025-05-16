@@ -125,18 +125,23 @@ struct nt_gfx
     nt_style_t style;
 };
 
+#define NT_WRITE_INPLACE -1
+
 /* Converts UTF-32 `codepoint` to UTF-8 and then invokes nt_write_str().
  *
  * The status codes returned match those specified for nt_write_str().
  * Additionally, the following status codes can be returned:
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
         nt_style_t* out_styles, nt_status_t* out_status);
 
 /* Prints null-terminated `str` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
  * at the provided coordinates.
+ *
+ * If x == NT_WRITE_INPLACE && y == NT_WRITE_INPLACE, the cursor will not move
+ * before printing to screen.
  * 
  * If buffering is enabled, the printing will occur only when nt_flush()
  * is called. 
@@ -152,7 +157,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
  * 4) NT_ERR_UNEXPECTED. */
-void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
+void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
         nt_style_t* out_styles, nt_status_t* out_status);
 
 /* ------------------------------------------------------------------------- */
