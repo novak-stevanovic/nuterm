@@ -325,7 +325,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
         (*out_style_param) = out_style;                                        \
     return                                                                     \
 
-/* Assumes styles are not set before invoking */
+/* Assumes styles are not set before calling. */
 static void _set_style(nt_style_t style, nt_style_t* out_style,
         nt_status_t* out_status)
 {
@@ -337,17 +337,12 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
         _SRETURN(out_style, NT_STYLE_DEFAULT, out_status, NT_ERR_TERM_UNKNOWN);
     }
 
-    /* Styles must be in the same order as defined in nt_esc.h */
-    nt_style_t styles[] = { NT_STYLE_BOLD, NT_STYLE_FAINT, NT_STYLE_ITALIC,
-        NT_STYLE_UNDERLINE, NT_STYLE_BLINK, NT_STYLE_REVERSE, NT_STYLE_HIDDEN,
-        NT_STYLE_STRIKETHROUGH };
-
     size_t i;
-    size_t count = sizeof(styles) / sizeof(nt_style_t);
+    size_t count = 8;
     nt_style_t used = NT_STYLE_DEFAULT;
     for(i = 0; i < count; i++)
     {
-        if(style & styles[i])
+        if(style & (NT_STYLE_BOLD << i))
         {
             _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, &_status);
             if(_status != NT_SUCCESS)
@@ -357,7 +352,7 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
                     _SRETURN(out_style, used, out_status, _status);
                 }
             }
-            else used |= styles[i];
+            else used |= (NT_STYLE_BOLD << i);
         }
     }
 

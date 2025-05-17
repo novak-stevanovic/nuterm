@@ -21,6 +21,7 @@ struct nt_term_info
 typedef enum nt_term
 {
     NT_TERM_XTERM,
+    NT_TERM_RXVT,
     NT_TERM_OTHER // Must be last because internally used as count
 } nt_term_t;
 

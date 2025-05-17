@@ -71,25 +71,53 @@ void loop_lib()
     printf("Done\n");
 }
 
+void test_styles()
+{
+    size_t i;
+
+    while(1)
+    {
+        struct nt_gfx gfx1 = {
+            .fg = nt_color_new(0, 0, 255),
+            .bg = nt_color_new(255, 0, 0),
+            .style = NT_STYLE_BOLD
+        };
+        char c = getchar();
+        if(c == 'q') break;
+
+        for(i = 0; i < 8; i++)
+        {
+            nt_status_t status;
+            nt_style_t style;
+            nt_write_str("Test1", gfx1, 0, 0, &style, &status);
+            // assert(style == gfx1.style);
+            assert(status == NT_SUCCESS);
+            sleep(2);
+            gfx1.style <<= 1;
+        }
+    }
+}
+
 void write_test()
 {
     nt_status_t _status;
     struct nt_gfx gfx1 = {
-        .bg = nt_color_new(200, 0, 200),
-        .fg = nt_color_new(0, 255, 255),
-        .style = NT_STYLE_DEFAULT |
-            NT_STYLE_BOLD |
-            NT_STYLE_FAINT |
-            NT_STYLE_ITALIC |
-            NT_STYLE_UNDERLINE |
-            NT_STYLE_BLINK | 
-            NT_STYLE_REVERSE | 
+        .bg = nt_color_new(255, 0, 0),
+        .fg = nt_color_new(0, 0, 255),
+        .style = NT_STYLE_DEFAULT
+            // NT_STYLE_FAINT
+            // NT_STYLE_ITALIC
+            // NT_STYLE_UNDERLINE
+            // NT_STYLE_REVERSE | 
             // NT_STYLE_HIDDEN | 
-            NT_STYLE_STRIKETHROUGH
+            // NT_STYLE_STRIKETHROUGH
     };
 
     nt_style_t styles;
-    nt_write_str("Test1", gfx1, 10, 10, &styles, &_status);
+    nt_write_str("SAUSAHS", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &styles, &_status);
+
+    gfx1.style |= NT_STYLE_FAINT;
+    nt_write_str("SAUSAHS", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &styles, &_status);
 
     assert(styles == gfx1.style);
     assert(_status == NT_SUCCESS);
@@ -110,15 +138,20 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
+    // nt_erase_screen(NULL);
     nt_alt_screen_enable(NULL);
     nt_cursor_hide(NULL);
 
-    write_test();
-    loop_basic();
-
+    // write_test();
+    // nt_erase_scrollback(NULL);
+    // loop_basic();
+    // test_styles();
+    // write_test();
+    // loop_lib();
+    //
     nt_alt_screen_disable(NULL);
     nt_cursor_show(NULL);
 
     nt_destroy();
-    return 0;;
+    return 0;
 }
