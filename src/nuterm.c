@@ -302,8 +302,6 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
                 _VRETURN(out_status, _status);
             }
 
-            _VRETURN(out_status, _status);
-
         case NT_TERM_COLOR_C8:
             _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8 + func_offset,
                     &_status, color._code8);

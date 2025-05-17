@@ -76,10 +76,10 @@ static char* _rxvt_esc_func_seqs[] = {
     "\x1b[?25h", "\x1b[?25l", "\x1b[%d;%dH",
 
     // FG(c8, c256, tc, reset)
-    "\x1b[3%dm", NULL, NULL, "\x1b[39m",
+    "\x1b[3%dm", "\x1b[38;5;%dm", NULL, "\x1b[39m",
 
     // BG(c8, c256, tc, reset)
-    "\x1b[4%dm", NULL, NULL, "\x1b[49m",
+    "\x1b[4%dm", "\x1b[48;5;%dm", NULL, "\x1b[49m",
 
     // Style funcs - TODO: check FAINT support
     "\x1b[1m", "\x1b[2m", "\x1b[3m", "\x1b[4m",
