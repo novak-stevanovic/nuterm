@@ -102,13 +102,11 @@ void nt_init(nt_status_t* out_status)
 
 void nt_destroy()
 {
-    struct nt_gfx reset = {
-        .fg = NT_COLOR_DEFAULT,
-        .bg = NT_COLOR_DEFAULT,
-        .style = NT_STYLE_DEFAULT
-    };
 
-    nt_write_str("", reset, NT_WRITE_INPLACE, NT_WRITE_INPLACE, NULL, NULL);
+    nt_write_str("", NT_GFX_DEFAULT,
+            NT_WRITE_INPLACE, NT_WRITE_INPLACE,
+            NULL, NULL);
+
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
     nt_term_destroy();
     nt_charbuff_destroy(&_buff);
@@ -358,6 +356,12 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
 
     _SRETURN(out_style, used, out_status, NT_SUCCESS);
 }
+
+const struct nt_gfx NT_GFX_DEFAULT = {
+    .bg = NT_COLOR_DEFAULT,
+    .fg = NT_COLOR_DEFAULT,
+    .style = NT_STYLE_DEFAULT
+};
 
 // UTF-32
 void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,

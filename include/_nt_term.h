@@ -18,13 +18,6 @@ struct nt_term_info
     char* name;
 };
 
-typedef enum nt_term
-{
-    NT_TERM_XTERM,
-    NT_TERM_RXVT,
-    NT_TERM_OTHER // Must be last because internally used as count
-} nt_term_t;
-
 typedef enum nt_term_color_count
 {
     NT_TERM_COLOR_C8,

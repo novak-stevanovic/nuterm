@@ -125,6 +125,8 @@ struct nt_gfx
     nt_style_t style;
 };
 
+extern const struct nt_gfx NT_GFX_DEFAULT;
+
 #define NT_WRITE_INPLACE -1
 
 /* Converts UTF-32 `codepoint` to UTF-8 and then invokes nt_write_str().

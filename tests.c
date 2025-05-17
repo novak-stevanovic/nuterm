@@ -138,14 +138,15 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    // nt_erase_screen(NULL);
+    // nt_erase_scrollback(NULL);
     nt_alt_screen_enable(NULL);
     nt_cursor_hide(NULL);
+    // nt_write_str("", NT_GFX_DEFAULT, 0, 0, NULL, NULL);
 
     // write_test();
     // nt_erase_scrollback(NULL);
     // loop_basic();
-    // test_styles();
+    test_styles();
     // write_test();
     // loop_lib();
     //
