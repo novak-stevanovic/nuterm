@@ -1,6 +1,6 @@
 # Nu-term
 
-Nuterm is a lightweight C library for terminal control: for each terminal function(changing color, style, clearing display, etc.) it emits the correct escape codes(based on auto-detected terminal emulator and how many colors it supports). It offers optional output buffering for smooth redraws, and unifies input events (key presses and window resizes) without pulling in large dependencies.
+__Nu-term__ is a lightweight C library for terminal control: for each terminal function(changing color, style, clearing display, etc.) it emits the correct escape codes(based on auto-detected terminal emulator and how many colors it supports). It offers optional output buffering for smooth redraws, and unifies input events (key presses and window resizes) without pulling in large dependencies.
 
 ## Makefile instructions:
 
