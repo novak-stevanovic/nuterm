@@ -19,7 +19,8 @@ extern "C" {
 /* GENERAL */
 /* ------------------------------------------------------------------------- */
 
-/* Initializes the nuterm library.
+/* Initializes the nuterm library. Calling any of the functions from the library
+ * without initializing first is undefined behavior.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
@@ -112,11 +113,9 @@ void nt_buffer_flush();
  * 1) NT_SUCCESS,
  * 2) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
- * 3) NT_ERR_TERM_UNKNOWN - variable indicating which terminal emulator is
- * being used is not set(nt_init() failed),
- * 4) NT_ERR_FUNC_NOT_SUPPORTED - terminal emulator doesn't support this
+ * 3) NT_ERR_FUNC_NOT_SUPPORTED - terminal emulator doesn't support this
  * function,
- * 5) NT_ERR_UNEXPECTED. */
+ * 4) NT_ERR_UNEXPECTED. */
 
 void nt_cursor_hide(nt_status_t* out_status);
 void nt_cursor_show(nt_status_t* out_status);

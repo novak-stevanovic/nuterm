@@ -159,10 +159,6 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
     int status;
 
     const struct nt_term_info* used_term = nt_term_get_used();
-    if(used_term == NULL)
-    {
-        _VRETURN(out_status, NT_ERR_TERM_UNKNOWN);
-    }
 
     const char* esc_func = used_term->esc_func_seqs[func];
     if(esc_func == NULL)
@@ -319,13 +315,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
 static void _set_style(nt_style_t style, nt_style_t* out_style,
         nt_status_t* out_status)
 {
-    const struct nt_term_info* used_term = nt_term_get_used();
     nt_status_t _status;
-
-    if(used_term == NULL)
-    {
-        _SRETURN(out_style, NT_STYLE_DEFAULT, out_status, NT_ERR_TERM_UNKNOWN);
-    }
 
     size_t i;
     size_t count = 8;
