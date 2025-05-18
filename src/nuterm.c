@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#include "_nt_charbuff.h"
+#include "_nt_outbuff.h"
 #include "_nt_term.h"
 #include "_uconv.h"
 #include "nt_esc.h"
@@ -24,8 +24,7 @@ static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
 
-bool _buff_enabled;
-static nt_charbuff_t _buff;
+static nt_outbuff_t _buff;
 
 static void _sa_handler(int signum)
 {
@@ -96,35 +95,28 @@ void nt_init(nt_status_t* out_status)
     {
         case NT_SUCCESS:
             break;
+        case NT_ERR_TERM_NOT_SUPPORTED:
+            break;
         case NT_ERR_INIT_TERM_ENV:
             _VRETURN(out_status, NT_ERR_INIT_TERM_ENV);
-        case NT_ERR_TERM_NOT_SUPPORTED:
-            _VRETURN(out_status, NT_ERR_TERM_NOT_SUPPORTED);
         default:
             _VRETURN(out_status, NT_ERR_UNEXPECTED);
     }
 
-    nt_charbuff_init(&_buff, &_status);
-    if(_status != NT_SUCCESS)
-    {
-        _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-    }
-
-    _buff_enabled = false;
+    nt_outbuff_init(&_buff, 0);
 
     _VRETURN(out_status, NT_SUCCESS);
 }
 
 void nt_destroy()
 {
-
     nt_write_str("", NT_GFX_DEFAULT,
             NT_WRITE_INPLACE, NT_WRITE_INPLACE,
             NULL, NULL);
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
     nt_term_destroy();
-    nt_charbuff_destroy(&_buff);
+    nt_outbuff_destroy(&_buff);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -161,11 +153,10 @@ bool nt_color_cmp(nt_color_t c1, nt_color_t c2)
 /* TERMINAL FUNCTIONS */
 /* -------------------------------------------------------------------------- */
 
-static void _execute_used_term_func(nt_esc_func_t func,
+static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
         nt_status_t* out_status, ...)
 {
     int status;
-    nt_status_t _status;
 
     const struct nt_term_info* used_term = nt_term_get_used();
     if(used_term == NULL)
@@ -179,94 +170,82 @@ static void _execute_used_term_func(nt_esc_func_t func,
         _VRETURN(out_status, NT_ERR_FUNC_NOT_SUPPORTED);
     }
 
-    char buff[50];
-
-    va_list list;
-    va_start(list, out_status);
-
-    status = vsprintf(buff, esc_func, list);
-    if(status < 0)
+    const char* _func;
+    if(use_va)
     {
-        _VRETURN(out_status, NT_ERR_UNEXPECTED);
-    }
+        char buff[50];
 
-    va_end(list);
+        va_list list;
+        va_start(list, out_status);
 
-    nt_charbuff_append(&_buff, buff, &_status);
-    if(_status == NT_ERR_ALLOC_FAIL)
-    {
-        _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-    }
+        status = vsprintf(buff, esc_func, list);
+        if(status < 0)
+        {
+            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+        }
 
-    if(!_buff_enabled)
-    {
-        nt_buffer_flush();
+        va_end(list);
+
+        _func = buff;
     }
+    else _func = esc_func;
+
+    nt_outbuff_append(&_buff, _func);
 
     _VRETURN(out_status, NT_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------- */
 
-void nt_buffer_enable()
+void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status)
 {
-    _buff_enabled = true;
+    int status = nt_outbuff_set_cap(&_buff, buff_cap);
+
+    nt_status_t ret = (status == 0) ? NT_SUCCESS : NT_ERR_ALLOC_FAIL;
+    _VRETURN(out_status, ret);
 }
 
 void nt_buffer_flush()
 {
-    // Assume write() doesn't fail.
-    nt_awrite(STDOUT_FILENO, _buff.data, _buff.len);
-
-    nt_charbuff_rewind(&_buff, NULL);
-}
-
-void nt_buffer_disable(nt_buffact_t action)
-{
-    if(action == NT_BUFF_FLUSH)
-        nt_buffer_flush();
-    else
-        nt_charbuff_rewind(&_buff, NULL);
-
-    _buff_enabled = false;
+    nt_outbuff_flush(&_buff);
 }
 
 void nt_cursor_hide(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, false, out_status);
 }
 
 void nt_cursor_show(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, false, out_status);
 }
 
 void nt_erase_screen(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, NULL);
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, false, out_status);
 }
 
 void nt_erase_line(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, NULL);
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, false, out_status);
 }
 
 void nt_erase_scrollback(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, NULL);
-    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, false, out_status);
 }
 
 void nt_alt_screen_enable(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, false, out_status);
 }
 
 void nt_alt_screen_disable(nt_status_t* out_status)
 {
-    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, out_status);
+    _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, false, out_status);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -289,14 +268,14 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
     if(_color_is_default(color)) // DEFAULT COLOR
     {
         _execute_used_term_func(NT_ESC_FUNC_FG_SET_DEFAULT + func_offset,
-                &_status);
+                false, &_status);
         _VRETURN(out_status, _status);
     }
 
     switch(colors)
     {
         case NT_TERM_COLOR_TC:
-            _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB + func_offset,
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB + func_offset, true,
                     &_status, color._rgb.r, color._rgb.g, color._rgb.b);
 
             /* If func is not supported by the terminal, proceed to the
@@ -307,7 +286,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             }
 
         case NT_TERM_COLOR_C256:
-            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256 + func_offset,
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256 + func_offset, true,
                     &_status, color._code256);
 
             /* If func is not supported by the terminal, proceed to the
@@ -318,7 +297,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             }
 
         case NT_TERM_COLOR_C8:
-            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8 + func_offset,
+            _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8 + func_offset, true,
                     &_status, color._code8);
 
             /* No more color palletes to fall back to. */
@@ -355,7 +334,7 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
     {
         if(style & (NT_STYLE_BOLD << i))
         {
-            _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, &_status);
+            _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
             if(_status != NT_SUCCESS)
             {
                 if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
@@ -413,7 +392,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
 {
     nt_status_t _status;
 
-    _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, &_status);
+    _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
     {
         _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
@@ -421,7 +400,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
 
     if((x != NT_WRITE_INPLACE) || (y != NT_WRITE_INPLACE))
     {
-        _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, &_status, y, x);
+        _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
         if(_status != NT_SUCCESS)
         {
             _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
@@ -447,19 +426,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
         _SRETURN(out_styles, used_styles, out_status, _status);
     }
 
-    nt_charbuff_append(&_buff, str, &_status);
-    switch(_status)
-    {
-        case NT_SUCCESS:
-            break;
-        case NT_ERR_ALLOC_FAIL:
-            _SRETURN(out_styles, used_styles, out_status, NT_ERR_ALLOC_FAIL);
-        default:
-            _SRETURN(out_styles, used_styles, out_status, NT_ERR_UNEXPECTED);
-    }
-
-    if(!_buff_enabled)
-        nt_buffer_flush();
+    nt_outbuff_append(&_buff, str);
 
     _SRETURN(out_styles, used_styles, out_status, NT_SUCCESS);
 }

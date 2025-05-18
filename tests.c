@@ -1,5 +1,3 @@
-#include "_nt_shared.h"
-#include "_nt_term.h"
 #include "nuterm.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -19,7 +17,6 @@ void loop_basic()
         printf("%x ", c);
         fflush(stdout);
     }
-    printf("\n");
 }
 
 void loop_lib()
@@ -146,15 +143,25 @@ int main(int argc, char *argv[])
         .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
     };
 
-    nt_style_t style;
-    nt_write_str("Emilijaчћшљ", gfx1, 100, 0, &style, NULL);
-    gfx1.style ^= NT_STYLE_BOLD;
-    nt_write_str("Emilijaчћшљ", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &style, NULL);
+    nt_buffer_enable();
 
+    nt_style_t style;
+    nt_write_str("test123", gfx1, 100, 0, &style, NULL);
+
+    nt_buffer_flush();
+    loop_basic();
+
+    gfx1.style ^= NT_STYLE_BOLD;
+    nt_write_str("test456", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &style, NULL);
+
+    nt_buffer_flush();
     loop_basic();
 
     // loop_lib();
     nt_alt_screen_disable(NULL);
+
+    nt_buffer_flush();
+    loop_basic();
 
     nt_destroy();
 

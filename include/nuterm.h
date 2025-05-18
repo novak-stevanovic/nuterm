@@ -1,7 +1,6 @@
 /* TODO:
- * 1. improve buffering system
- * 2. add support for other terminals
- * 3. keysets? */
+ * 1. add support for other terminals
+ * 2. keysets? */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -29,7 +28,8 @@ extern "C" {
  * 3) NT_ERR_INIT_PIPE - pipe() failed and errno was set to ENFILE or EMFILE,
  * 4) NT_ERR_INIT_TERM_ENV - failure to detect terminal due to $TERM not being
  * set,
- * 5) NT_ERR_TERM_NOT_SUPPORTED - terminal emulator not supported,
+ * 5) NT_ERR_TERM_NOT_SUPPORTED - terminal emulator not supported - library
+ * will assume that the emulator is compatible with xterm,
  * 6) NT_ERR_UNEXPECTED. */
 void nt_init(nt_status_t* out_status);
 
@@ -80,18 +80,30 @@ extern const nt_style_t NT_STYLE_DEFAULT;
 /* TERMINAL FUNCTIONS */
 /* ------------------------------------------------------------------------- */
 
-/* Enables buffering. All terminal functions and text(appended to the buffer
- * by calls to nt_write_char()/nt_write_str()) will be buffered until a call to
- * nt_flush(). */
-void nt_buffer_enable();
+/* It is possible to enable buffering to avoid excessive writing to terminal
+ * (this includes terminal function codes and text). */
 
+/* ------------------------------------------------------ */
+
+/* Sets capacity of internal output buffer. If `buff_cap` == 0, buffering is
+ * disabled. If the buffer contains content, and the content's length is 
+ * greater than `buff_cap`, a flush will occur.
+
+ * STATUS CODES:
+ * 1) NT_SUCCESS,
+ * 2) NT_ERR_ALLOC_FAIL - if `buff_cap` is greater than the current buffer
+ * capacity, a realloc() call may fail. */
+void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status);
+
+/* Capacity of internal output buffer */
+#define NT_BUFFER_CAP_DEFAULT 10000
+
+/* Convenience macros. */
+#define nt_buffer_enable() nt_buffer_set_cap(NT_BUFFER_CAP_DEFAULT, NULL)
+#define nt_buffer_disable() nt_buffer_set_cap(0, NULL)
+
+/* Flushes the content of the internal output buffer onto the screen. */
 void nt_buffer_flush();
-
-typedef enum nt_buffact { NT_BUFF_FLUSH, NT_BUFF_DISCARD } nt_buffact_t;
-
-/* Disables buffering. Parameter `action` dictates if the currently buffered
- * content will be printed to the screen or discarded. */
-void nt_buffer_disable(nt_buffact_t action);
 
 /* ----------------------------------------------------- */
 

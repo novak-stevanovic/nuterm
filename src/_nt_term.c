@@ -181,7 +181,7 @@ void nt_term_init(nt_status_t* out_status)
 
     if(!found)
     {
-        _VRETURN(out_status, NT_ERR_TERM_NOT_SUPPORTED);
+        _term = &_terms[0]; // Assume emulator is compatible with xterm
     }
 
     if((env_colorterm != NULL) && (strstr(env_colorterm, "truecolor")))
@@ -194,8 +194,8 @@ void nt_term_init(nt_status_t* out_status)
             _color = NT_TERM_COLOR_C8;
     }
 
-    // printf("T: %d C: %d\n", _term, _color);
-    _VRETURN(out_status, NT_SUCCESS);
+    nt_status_t ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPPORTED;
+    _VRETURN(out_status, ret);
 }
 
 const struct nt_term_info* nt_term_get_used()
