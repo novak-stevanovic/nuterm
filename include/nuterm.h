@@ -1,14 +1,15 @@
 /* TODO:
- * 1. Add other terminal support(esc keys, funcs, detection...)
- * 2. Improve documentation
+ * 1. improve buffering system
+ * 2. add support for other terminals
  * 3. keysets? */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
-#include "nt_esc.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
+
+#include "nt_esc.h"
 #include "nt_shared.h"
 
 #ifdef __cplusplus
@@ -150,12 +151,14 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
  *
  * If a style is specified in `gfx` but the terminal doesn't support the style,
  * the status variable will not indicate this. Instead, `out_styles` will be set
- * to indicate successfully set styles.
+ * to indicate successfully set styles. Keep in mind that some terminal emulators
+ * view some styles as mutually exclusive(for example, bold and italic may not
+ * be set at the same time). `out_styles` will not be able to indicate this.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS, 
  * 2) NT_ERR_FUNC_NOT_SUPPORTED - one of the functions invoked is not supported
- * by the terminal - moving the cursor, resetting gfx, setting color.
+ * by the terminal - moving the cursor, resetting gfx, setting color,
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
  * 4) NT_ERR_UNEXPECTED. */

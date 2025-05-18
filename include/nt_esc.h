@@ -29,6 +29,7 @@ typedef enum nt_esc_key
     NT_ESC_KEY_OTHER // Must be last because internally used as count
 } nt_esc_key_t;
 
+/* Internally used. */
 typedef enum nt_esc_func
 {
     NT_ESC_FUNC_CURSOR_SHOW,

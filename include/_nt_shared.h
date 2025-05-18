@@ -1,9 +1,10 @@
 #ifndef __NT_SHARED_H__
 #define __NT_SHARED_H__
 
-#include "nt_shared.h"
 #include <stdint.h>
 #include <sys/poll.h>
+
+#include "nt_shared.h"
 
 struct nt_xy nt_get_term_size(nt_status_t* out_status);
 

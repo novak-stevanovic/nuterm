@@ -1,10 +1,11 @@
-#include "_nt_term.h"
-#include "_nt_shared.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "_nt_term.h"
+#include "_nt_shared.h"
 
 static nt_term_color_count_t _color = NT_TERM_COLOR_OTHER;
 static struct nt_term_info* _term = NULL;

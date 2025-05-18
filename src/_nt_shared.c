@@ -1,8 +1,9 @@
-#include "_nt_shared.h"
-#include "nt_shared.h"
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+
+#include "_nt_shared.h"
+#include "nt_shared.h"
 
 struct nt_xy nt_get_term_size(nt_status_t* out_status)
 {

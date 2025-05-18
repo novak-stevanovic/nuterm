@@ -1,7 +1,8 @@
-#include "_nt_charbuff.h"
-#include "_nt_shared.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "_nt_charbuff.h"
+#include "_nt_shared.h"
 
 #define CHARBUFF_INIT_CAP 100
 

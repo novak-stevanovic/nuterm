@@ -1,8 +1,9 @@
 #ifndef _NT_CHARBUFF_H_
 #define _NT_CHARBUFF_H_
 
-#include "nt_shared.h"
 #include <stddef.h>
+
+#include "nt_shared.h"
 
 typedef struct nt_charbuff
 {

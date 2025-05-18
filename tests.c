@@ -138,21 +138,25 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    // nt_erase_scrollback(NULL);
     nt_alt_screen_enable(NULL);
-    nt_cursor_hide(NULL);
-    // nt_write_str("", NT_GFX_DEFAULT, 0, 0, NULL, NULL);
 
-    // write_test();
-    // nt_erase_scrollback(NULL);
-    // loop_basic();
-    test_styles();
-    // write_test();
+    struct nt_gfx gfx1 = {
+        .bg = nt_color_new(255, 0, 128),
+        .fg = nt_color_new(255, 255, 255),
+        .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
+    };
+
+    nt_style_t style;
+    nt_write_str("Emilijaчћшљ", gfx1, 100, 0, &style, NULL);
+    gfx1.style ^= NT_STYLE_BOLD;
+    nt_write_str("Emilijaчћшљ", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &style, NULL);
+
+    loop_basic();
+
     // loop_lib();
-    //
     nt_alt_screen_disable(NULL);
-    nt_cursor_show(NULL);
 
     nt_destroy();
+
     return 0;
 }

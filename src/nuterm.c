@@ -33,19 +33,34 @@ static void _sa_handler(int signum)
     nt_awrite(_resize_fds[1], &c, 1);
 }
 
+static inline void _term_opts_raw(struct termios* term_opts)
+{
+    term_opts->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+            | INLCR | IGNCR | ICRNL | IXON);
+    term_opts->c_oflag &= ~OPOST;
+    term_opts->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    term_opts->c_cflag &= ~(CSIZE | PARENB);
+    term_opts->c_cflag |= CS8;
+
+    term_opts->c_cc[VMIN]  = 1;
+    term_opts->c_cc[VTIME] = 0;
+}
+
 void nt_init(nt_status_t* out_status)
 {
     nt_status_t _status;
     int status;
-    struct termios raw_term_opts;
-    cfmakeraw(&raw_term_opts); // TODO - set flags manually for compatibility
 
     status = tcgetattr(STDIN_FILENO, &_init_term_opts);
     if(status == -1)
     {
         _VRETURN(out_status, NT_ERR_UNEXPECTED);
     }
-    status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_term_opts);
+
+    struct termios _raw_term_opts = _init_term_opts;
+    _term_opts_raw(&_raw_term_opts);
+
+    status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &_raw_term_opts);
     if(status == -1)
     {
         _VRETURN(out_status, NT_ERR_UNEXPECTED);
@@ -314,7 +329,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
     }
 }
 
-#define _SRETURN(out_style_param, out_style, out_status_param, out_status)    \
+#define _SRETURN(out_style_param, out_style, out_status_param, out_status)     \
     if((out_status_param) != NULL)                                             \
         (*out_status_param) = out_status;                                      \
     if((out_style_param) != NULL)                                              \
