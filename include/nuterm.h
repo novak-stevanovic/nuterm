@@ -1,4 +1,9 @@
-/* TODO: add support for other terminals */
+/*
+ * Copyright (c) 2025 Novak Stevanović
+ * Licensed under the MIT License. See LICENSE file in project root.
+ */
+
+// TODO: add support for other terminals */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 Novak Stevanović
+ * Licensed under the MIT License. See LICENSE file in project root.
+ */
 #ifndef __NT_SHARED_H__
 #define __NT_SHARED_H__
 

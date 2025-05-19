@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 Novak Stevanović
+ * Licensed under the MIT License. See LICENSE file in project root.
+ */
 #ifndef _NT_CHARBUFF_H_
 #define _NT_CHARBUFF_H_
 

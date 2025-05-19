@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 Novak Stevanović
+ * Licensed under the MIT License. See LICENSE file in project root.
+ */
 #ifndef _UCONV_H_
 #define _UCONV_H_
 
