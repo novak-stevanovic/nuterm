@@ -42,7 +42,7 @@ INSTALL_INCLUDE = include/nuterm.h include/nt_shared.h include/nt_esc.h
 # ---------------------------------------------------------
 
 BASE_CFLAGS_DEBUG = -g
-BASE_CFLAGS_OPTIMIZATION = -O0
+BASE_CFLAGS_OPTIMIZATION = -O2
 BASE_CFLAGS_WARN = -Wall
 BASE_CFLAGS_MAKE = -MMD -MP
 BASE_CFLAGS_INCLUDE = -Iinclude

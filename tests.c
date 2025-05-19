@@ -124,10 +124,37 @@ void write_test()
 
 }
 
-struct rgb
+void handler1(struct nt_key_event key_event)
 {
-    uint8_t r, g, b;
-};
+    printf("EVENT1\n");
+}
+
+void handler2(struct nt_key_event key_event)
+{
+    printf("EVENT2\n");
+}
+
+void test_hm()
+{
+    nt_status_t _status;
+    nt_keymap keymap = nt_keymap_new(&_status);
+
+    struct nt_key_event kv1 = {
+        .type = NT_KEY_EVENT_UTF32,
+        .utf32_data = {
+            .codepoint = 'k',
+            .alt = false
+        }
+    };
+
+    nt_keymap_bind(keymap, kv1, handler1, &_status);
+
+    nt_key_handler_t handler1 = nt_keymap_get(keymap, kv1, &_status);
+    if(handler1 != NULL)
+        handler1(kv1);
+
+    nt_keymap_destroy(keymap);
+}
 
 int main(int argc, char *argv[])
 {
@@ -135,7 +162,7 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_alt_screen_enable(NULL);
+    // nt_alt_screen_enable(NULL);
 
     struct nt_gfx gfx1 = {
         .bg = nt_color_new(255, 0, 128),
@@ -143,26 +170,9 @@ int main(int argc, char *argv[])
         .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
     };
 
-    nt_buffer_enable();
+    test_hm();
 
-    nt_style_t style;
-    nt_write_str("test123", gfx1, 100, 0, &style, NULL);
-
-    nt_buffer_flush();
-    loop_basic();
-
-    gfx1.style ^= NT_STYLE_BOLD;
-    nt_write_str("test456", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &style, NULL);
-
-    nt_buffer_flush();
-    loop_basic();
-
-    // loop_lib();
-    nt_alt_screen_disable(NULL);
-
-    nt_buffer_flush();
-    loop_basic();
-
+    // nt_alt_screen_disable(NULL);
     nt_destroy();
 
     return 0;

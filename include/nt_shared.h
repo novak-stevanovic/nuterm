@@ -19,5 +19,6 @@ typedef int nt_status_t;
 #define NT_ERR_INIT_TERM_ENV 6
 #define NT_ERR_TERM_NOT_SUPPORTED 7
 #define NT_ERR_INVALID_UTF32 8
+#define NT_ERR_BIND_ALREADY_EXISTS 9
 
 #endif // _NT_SHARED_H_

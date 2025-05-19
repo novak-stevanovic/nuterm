@@ -1,6 +1,4 @@
-/* TODO:
- * 1. add support for other terminals
- * 2. keysets? */
+/* TODO: add support for other terminals */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -248,7 +246,7 @@ struct nt_event
     };
 };
 
-#define NT_EVENT_WAIT_FOREVER -1
+#define NT_WAIT_FOREVER -1
 
 /* Waits for an event(key event, resize event or "timeout event"). 
  * The thread is blocked until the event occurs.
@@ -261,6 +259,57 @@ struct nt_event
  * 2) NT_ERR_UNEXPECTED - this can occur, for example, if read(), write()
  * or poll() fails and the failure is not internally handled. */
 struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status);
+
+/* ------------------------------------------------------------------------- */
+
+/* Nu-term allows you to bind key event handlers to key evnets. This may be
+ * useful when creating a TGUI application, for example. A single key event
+ * can have only one entry in the keymap. */
+
+typedef struct nt_keymap* nt_keymap;
+
+/* Creates the nt_keymap, initializes internal hashmap.
+ *
+ * STATUS CODES:
+ * 1. NT_SUCCESS,
+ * 2. NT_ERR_ALLOC_FAIL - dynamic allocation for the internal struct nt_keymap
+ * failed. */
+nt_keymap nt_keymap_new(nt_status_t* out_status);
+
+/* Destroys the nt_keymap. Frees the dynamially allocated memory. */
+void nt_keymap_destroy(nt_keymap map);
+
+typedef void (*nt_key_handler_t)(struct nt_key_event key_event);
+
+/* Binds a specific `event_handler` to given `key_event`. This will create an
+ * entry inside the internal hashmap. Function assumes `key_event` is valid.
+ *
+ * STATUS CODES:
+ * 1. NT_SUCCESS, 
+ * 2. NT_ERR_INVALID_ARG - `map` or `event_handler` is NULL,
+ * 3. NT_ERR_BIND_ALREADY_EXISTS - `key_event` is already a key inside the
+ * hashmap,
+ * 4. NT_ERR_ALLOC_FAIL - dynamic allocation failed. */
+void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
+        nt_key_handler_t event_handler, nt_status_t* out_status);
+
+/* Unbinds a specific `event_handler` from the given `key_event`. This will
+ * remove the entry inside the internal hashmap. If `key_event` is not a key
+ * inside the hashmap, NT_SUCCESS is returned.
+ *
+ * STATUS CODES:
+ * 1. NT_SUCCESS, 
+ * 2. NT_ERR_INVALID_ARG - `map` is NULL. */
+void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
+        nt_status_t* out_status);
+
+/* Retrieves nt_key_handler_t tied to given `key_event`. If `key_event` is not
+ * an entry inside the `map`, NULL is returned.
+ *
+ * 1. NT_SUCCESS, 
+ * 2. NT_ERR_INVALID_ARG - `map` is NULL. */
+nt_key_handler_t nt_keymap_get(nt_keymap map, struct nt_key_event key_event,
+        nt_status_t* out_status);
 
 /* ------------------------------------------------------------------------- */
 /* END */
