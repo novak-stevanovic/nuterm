@@ -27,6 +27,8 @@ endif
 LIB_NAME = nuterm
 
 CC = gcc
+AR = ar
+MAKE = make
 
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
@@ -38,31 +40,46 @@ INSTALL_INCLUDE = include/nuterm.h include/nt_shared.h include/nt_esc.h
 # -----------------------------------------------------------------------------
 
 # ---------------------------------------------------------
+# Thirdparty
+# ---------------------------------------------------------
+
+_UCONV_DIR = thirdparty/uconv
+_UTHASH_DIR = thirdparty/uthash
+
+_UCONV_LIB = $(_UCONV_DIR)/libuconv.a
+
+_UCONV_CFLAGS = -I$(_UCONV_DIR)/include
+_UTHASH_CFLAGS = -I$(_UTHASH_DIR)/include
+
+_UCONV_LFLAGS = -L$(_UCONV_DIR) -luconv
+
+# ---------------------------------------------------------
 # Base Flags
 # ---------------------------------------------------------
 
-BASE_CFLAGS_DEBUG = -g
-BASE_CFLAGS_OPTIMIZATION = -O2
-BASE_CFLAGS_WARN = -Wall
-BASE_CFLAGS_MAKE = -MMD -MP
-BASE_CFLAGS_INCLUDE = -Iinclude
+SRC_CFLAGS_DEBUG = -g
+SRC_CFLAGS_OPTIMIZATION = -O2
+SRC_CFLAGS_WARN = -Wall
+SRC_CFLAGS_MAKE = -MMD -MP
+SRC_CFLAGS_INCLUDE = -Iinclude $(_UCONV_CFLAGS) $(_UTHASH_CFLAGS)
 
-BASE_CFLAGS = -c -fPIC $(BASE_CFLAGS_INCLUDE) $(BASE_CFLAGS_MAKE) \
-$(BASE_CFLAGS_WARN) $(BASE_CFLAGS_DEBUG) $(BASE_CFLAGS_OPTIMIZATION)
-
-# ---------------------------------------------------------
-# C Source Flags
-# ---------------------------------------------------------
-
-SRC_CFLAGS = $(BASE_CFLAGS)
+SRC_CFLAGS = -c -fPIC $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
+$(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
 
 # ---------------------------------------------------------
 # Test Flags
 # ---------------------------------------------------------
 
-TEST_CFLAGS = $(BASE_CFLAGS)
+TEST_CFLAGS_DEBUG = -g
+TEST_CFLAGS_OPTIMIZATION = -O0
+TEST_CFLAGS_WARN = -Wall
+TEST_CFLAGS_MAKE = -MMD -MP
+TEST_CFLAGS_INCLUDE = -Iinclude
 
-TEST_LFLAGS = -L. -l$(LIB_NAME) -lm
+TEST_CFLAGS = -c -fPIC $(TEST_CFLAGS_INCLUDE) $(TEST_CFLAGS_MAKE) \
+$(TEST_CFLAGS_WARN) $(TEST_CFLAGS_DEBUG) $(TEST_CFLAGS_OPTIMIZATION)
+
+TEST_LFLAGS = -L. -l$(LIB_NAME)
 
 ifeq ($(LIB_TYPE),shared)
 TEST_LFLAGS += -Wl,-rpath,.
@@ -77,26 +94,32 @@ LIB_SO_FILE = lib$(LIB_NAME).so
 
 ifeq ($(LIB_TYPE), archive)
 LIB_FILE = $(LIB_AR_FILE)
-LIB_MAKE = ar rcs $(LIB_FILE) $(C_OBJ)
 else 
 LIB_FILE = $(LIB_SO_FILE)
-LIB_MAKE = $(CC) -shared $(C_OBJ) -o $(LIB_FILE)
 endif
 
 # -----------------------------------------------------------------------------
 # Targets
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean install uninstall 
+.PHONY: all clean install uninstall
 
 all: $(LIB_FILE)
 
-$(LIB_FILE): $(C_OBJ)
-	$(LIB_MAKE)
+$(LIB_AR_FILE): $(_UCONV_LIB) $(C_OBJ)
+	@mkdir -p build/uconv
+	@cd build/uconv && ar -x ../../$(_UCONV_LIB)
+	$(AR) rcs $@ $(C_OBJ) build/uconv/*.o
+
+$(LIB_SO_FILE): $(_UCONV_LIB) $(C_OBJ)
+	$(CC) -shared $(C_OBJ) $(_UCONV_LIB) -o $@
 
 $(C_OBJ): build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SRC_CFLAGS) $< -o $@
+
+$(_UCONV_LIB): $(_UCONV_DIR)
+	make -C $(_UCONV_DIR) LIB_TYPE=archive
 
 # test -----------------------------------------------------
 
@@ -125,6 +148,7 @@ uninstall:
 # clean ----------------------------------------------------
 
 clean:
+	@$(MAKE) -C thirdparty/uconv clean
 	rm -rf build
 	rm -f $(LIB_AR_FILE)
 	rm -f $(LIB_SO_FILE)
