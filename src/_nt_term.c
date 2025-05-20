@@ -168,7 +168,7 @@ void nt_term_init(nt_status_t* out_status)
 
     if(env_term == NULL)
     {
-        _VRETURN(out_status, NT_ERR_INIT_TERM_ENV);
+        _vreturn(out_status, NT_ERR_INIT_TERM_ENV);
     }
 
     size_t i;
@@ -199,7 +199,7 @@ void nt_term_init(nt_status_t* out_status)
     }
 
     nt_status_t ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPPORTED;
-    _VRETURN(out_status, ret);
+    _vreturn(out_status, ret);
 }
 
 const struct nt_term_info* nt_term_get_used()

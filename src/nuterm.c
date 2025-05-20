@@ -57,32 +57,24 @@ void nt_init(nt_status_t* out_status)
 
     status = tcgetattr(STDIN_FILENO, &_init_term_opts);
     if(status == -1)
-    {
-        _VRETURN(out_status, NT_ERR_UNEXPECTED);
-    }
+        _vreturn(out_status, NT_ERR_UNEXPECTED);
 
     struct termios _raw_term_opts = _init_term_opts;
     _term_opts_raw(&_raw_term_opts);
 
     status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &_raw_term_opts);
     if(status == -1)
-    {
-        _VRETURN(out_status, NT_ERR_UNEXPECTED);
-    }
+        _vreturn(out_status, NT_ERR_UNEXPECTED);
 
     struct sigaction sw_sa = {0};
     sw_sa.sa_handler = _sa_handler;
     status = sigaction(SIGWINCH, &sw_sa, NULL);
     if(status == -1)
-    {
-        _VRETURN(out_status, NT_ERR_UNEXPECTED);
-    }
+        _vreturn(out_status, NT_ERR_UNEXPECTED);
 
     int pipe_status = pipe(_resize_fds);
     if(pipe_status != 0)
-    {
-        _VRETURN(out_status, NT_ERR_INIT_PIPE);
-    }
+        _vreturn(out_status, NT_ERR_INIT_PIPE);
 
     _poll_fds[0] = (struct pollfd) {
         .fd = STDIN_FILENO,
@@ -103,14 +95,14 @@ void nt_init(nt_status_t* out_status)
         case NT_ERR_TERM_NOT_SUPPORTED:
             break;
         case NT_ERR_INIT_TERM_ENV:
-            _VRETURN(out_status, NT_ERR_INIT_TERM_ENV);
+            _vreturn(out_status, NT_ERR_INIT_TERM_ENV);
         default:
-            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+            _vreturn(out_status, NT_ERR_UNEXPECTED);
     }
 
     nt_outbuff_init(&_buff, 0);
 
-    _VRETURN(out_status, NT_SUCCESS);
+    _vreturn(out_status, NT_SUCCESS);
 }
 
 void nt_destroy()
@@ -167,9 +159,7 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
 
     const char* esc_func = used_term->esc_func_seqs[func];
     if(esc_func == NULL)
-    {
-        _VRETURN(out_status, NT_ERR_FUNC_NOT_SUPPORTED);
-    }
+        _vreturn(out_status, NT_ERR_FUNC_NOT_SUPPORTED);
 
     const char* _func;
     if(use_va)
@@ -181,9 +171,7 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
 
         status = vsprintf(buff, esc_func, list);
         if(status < 0)
-        {
-            _VRETURN(out_status, NT_ERR_UNEXPECTED);
-        }
+            _vreturn(out_status, NT_ERR_UNEXPECTED);
 
         va_end(list);
 
@@ -193,7 +181,7 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
 
     nt_outbuff_append(&_buff, _func);
 
-    _VRETURN(out_status, NT_SUCCESS);
+    _vreturn(out_status, NT_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -203,7 +191,7 @@ void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status)
     int status = nt_outbuff_set_cap(&_buff, buff_cap);
 
     nt_status_t ret = (status == 0) ? NT_SUCCESS : NT_ERR_ALLOC_FAIL;
-    _VRETURN(out_status, ret);
+    _vreturn(out_status, ret);
 }
 
 void nt_buffer_flush()
@@ -270,7 +258,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
     {
         _execute_used_term_func(NT_ESC_FUNC_FG_SET_DEFAULT + func_offset,
                 false, &_status);
-        _VRETURN(out_status, _status);
+        _vreturn(out_status, _status);
     }
 
     switch(colors)
@@ -282,9 +270,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             /* If func is not supported by the terminal, proceed to the
              * next case. */
             if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-            {
-                _VRETURN(out_status, _status);
-            }
+                _vreturn(out_status, _status);
 
         case NT_TERM_COLOR_C256:
             _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256 + func_offset, true,
@@ -293,28 +279,29 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
             /* If func is not supported by the terminal, proceed to the
              * next case. */
             if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-            {
-                _VRETURN(out_status, _status);
-            }
+                _vreturn(out_status, _status);
 
         case NT_TERM_COLOR_C8:
             _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8 + func_offset, true,
                     &_status, color._code8);
 
             /* No more color palletes to fall back to. */
-            _VRETURN(out_status, _status);
+            _vreturn(out_status, _status);
 
         default:
-            _VRETURN(out_status, NT_ERR_UNEXPECTED);
+            _vreturn(out_status, NT_ERR_UNEXPECTED);
     }
 }
 
-#define _SRETURN(out_style_param, out_style, out_status_param, out_status)     \
-    if((out_status_param) != NULL)                                             \
-        (*out_status_param) = out_status;                                      \
-    if((out_style_param) != NULL)                                              \
-        (*out_style_param) = out_style;                                        \
-    return                                                                     \
+#define _sreturn(out_style_param, out_style, out_status_param, out_status)     \
+    do                                                                         \
+    {                                                                          \
+        if((out_status_param) != NULL)                                         \
+            (*out_status_param) = out_status;                                  \
+        if((out_style_param) != NULL)                                          \
+            (*out_style_param) = out_style;                                    \
+        return;                                                                \
+    } while(0)                                                                 \
 
 /* Assumes styles are not set before calling. */
 static void _set_style(nt_style_t style, nt_style_t* out_style,
@@ -333,15 +320,13 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
             if(_status != NT_SUCCESS)
             {
                 if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-                {
-                    _SRETURN(out_style, used, out_status, _status);
-                }
+                    _sreturn(out_style, used, out_status, _status);
             }
             else used |= (NT_STYLE_BOLD << i);
         }
     }
 
-    _SRETURN(out_style, used, out_status, NT_SUCCESS);
+    _sreturn(out_style, used, out_status, NT_SUCCESS);
 }
 
 const struct nt_gfx NT_GFX_DEFAULT = {
@@ -366,13 +351,13 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
         case UC_SUCCESS:
             break;
         case UC_ERR_SURROGATE:
-            _SRETURN(out_styles, NT_STYLE_DEFAULT,
+            _sreturn(out_styles, NT_STYLE_DEFAULT,
                     out_status, NT_ERR_INVALID_UTF32);
         case UC_ERR_INVALID_CODEPOINT:
-            _SRETURN(out_styles, NT_STYLE_DEFAULT,
+            _sreturn(out_styles, NT_STYLE_DEFAULT,
                     out_status, NT_ERR_INVALID_UTF32);
         default:
-            _SRETURN(out_styles, NT_STYLE_DEFAULT,
+            _sreturn(out_styles, NT_STYLE_DEFAULT,
                     out_status, NT_ERR_UNEXPECTED);
     }
 
@@ -389,41 +374,31 @@ void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
 
     _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
-    {
-        _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-    }
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
     if((x != NT_WRITE_INPLACE) || (y != NT_WRITE_INPLACE))
     {
         _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
         if(_status != NT_SUCCESS)
-        {
-            _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-        }
+            _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
     }
 
     _set_color(gfx.fg, SET_COLOR_FG, &_status);
     if(_status != NT_SUCCESS)
-    {
-        _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-    }
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
     _set_color(gfx.bg, SET_COLOR_BG, &_status);
     if(_status != NT_SUCCESS)
-    {
-        _SRETURN(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-    }
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
     nt_style_t used_styles;
     _set_style(gfx.style, &used_styles, &_status);
     if(_status != NT_SUCCESS)
-    {
-        _SRETURN(out_styles, used_styles, out_status, _status);
-    }
+        _sreturn(out_styles, used_styles, out_status, _status);
 
     nt_outbuff_append(&_buff, str);
 
-    _SRETURN(out_styles, used_styles, out_status, NT_SUCCESS);
+    _sreturn(out_styles, used_styles, out_status, NT_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -445,7 +420,7 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     int poll_status = nt_apoll(_poll_fds, 2, timeout);
     if(poll_status == -1)
     {
-        _RETURN(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
     if(poll_status == 0)
     {
@@ -458,7 +433,7 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
             .timeout_data = timeout_event
         };
 
-        _RETURN(ret, out_status, NT_SUCCESS);
+        _return(ret, out_status, NT_SUCCESS);
     }
 
     struct nt_event event;
@@ -476,7 +451,7 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
         event.resize_data = resize_event;
     }
 
-    _RETURN(event, out_status, NT_SUCCESS);
+    _return(event, out_status, NT_SUCCESS);
 }
 
 /* ------------------------------------------------------ */
@@ -510,7 +485,7 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
     read_status = nt_aread(STDIN_FILENO, buff, 1);
     if(read_status < 0)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     if(buff[0] == 0x1b) // ESC or ESC SEQ or ALT + PRINTABLE
@@ -518,7 +493,7 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
         poll_status = nt_apoll(_poll_fds, 1, ESC_TIMEOUT);
         if(poll_status == -1)
         {
-            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
 
         if(poll_status == 0) // timeout - just ESC
@@ -531,13 +506,13 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
                 }
             };
 
-            _RETURN(key_event, out_status, NT_SUCCESS);
+            _return(key_event, out_status, NT_SUCCESS);
         }
 
         read_status = nt_aread(STDIN_FILENO, buff + 1, 1);
         if(read_status == -1)
         {
-            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
 
         /* Probably ESC KEY, will be sure after poll() */
@@ -546,7 +521,7 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
             poll_status = nt_apoll(_poll_fds, 1, ESC_TIMEOUT);
             if(poll_status == -1)
             {
-                _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
             }
 
             if(poll_status == 0) // Not in fact an ESC key...
@@ -558,7 +533,7 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
                         .alt = true,
                     }
                 };
-                _RETURN(key_event, out_status, NT_SUCCESS);
+                _return(key_event, out_status, NT_SUCCESS);
             }
 
             // ESC KEY
@@ -569,9 +544,9 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
             switch(_status)
             {
                 case NT_SUCCESS:
-                    _RETURN(key_event, out_status, NT_SUCCESS);
+                    _return(key_event, out_status, NT_SUCCESS);
                 default:
-                    _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                    _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
             }
 
         }
@@ -583,9 +558,9 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
             switch(_status)
             {
                 case NT_SUCCESS:
-                    _RETURN(key_event, out_status, NT_SUCCESS);
+                    _return(key_event, out_status, NT_SUCCESS);
                 default:
-                    _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                    _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
             }
         }
     }
@@ -597,9 +572,9 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
         switch(_status)
         {
             case NT_SUCCESS:
-                _RETURN(key_event, out_status, NT_SUCCESS);
+                _return(key_event, out_status, NT_SUCCESS);
             default:
-                _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
     }
 }
@@ -611,19 +586,19 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
     utf32_len = uc_utf8_char_len(utf8_sbyte[0]);
     if(utf32_len == SIZE_MAX)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     // read()
     int read_status = nt_aread(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1);
     if(read_status < 0)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
     
     if(read_status != (utf32_len - 1))
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED); // ?
+        _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED); // ?
     }
 
     uint32_t utf32;
@@ -632,7 +607,7 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
     uc_utf8_to_utf32(utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width, &_status);
     if(_status != UC_SUCCESS)
     {
-        _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     struct nt_key_event key_event = {
@@ -643,7 +618,7 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
         }
     };
 
-    _RETURN(key_event, out_status, NT_SUCCESS);
+    _return(key_event, out_status, NT_SUCCESS);
 }
 
 static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
@@ -656,7 +631,7 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
         read_status = nt_aread(STDIN_FILENO, buff + read_count, 1);
         if(read_status < 0)
         {
-            _RETURN(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            _return(_NT_KEY_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
         }
 
         if((buff[read_count] >= 0x40) && (buff[read_count] <= 0x7E))
@@ -683,7 +658,7 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
                 }
             };
 
-            _RETURN(ret, out_status, NT_SUCCESS);
+            _return(ret, out_status, NT_SUCCESS);
         }
     }
 
@@ -694,7 +669,7 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
         }
     };
 
-    _RETURN(ret, out_status, NT_SUCCESS);
+    _return(ret, out_status, NT_SUCCESS);
 }
 
 /* ------------------------------------------------------ */
@@ -710,21 +685,21 @@ static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
     int read_status = nt_aread(_resize_fds[0], buff, 1);
     if(read_status == -1)
     {
-        _RETURN(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     nt_status_t _status;
     struct nt_xy term_size = nt_get_term_size(&_status);
     if(_status == NT_ERR_FUNC_NOT_SUPPORTED)
     {
-        _RETURN(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        _return(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
     struct nt_resize_event resize_event = {
         .new_size = term_size
     };
 
-    _RETURN(resize_event, out_status, NT_SUCCESS);
+    _return(resize_event, out_status, NT_SUCCESS);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -746,12 +721,12 @@ nt_keymap nt_keymap_new(nt_status_t* out_status)
     nt_keymap new = (nt_keymap)malloc(sizeof(nt_keymap));
     if(new == NULL)
     {
-        _RETURN(NULL, out_status, NT_ERR_ALLOC_FAIL);
+        _return(NULL, out_status, NT_ERR_ALLOC_FAIL);
     }
 
     new->_map = NULL;
 
-    _RETURN(new, out_status, NT_SUCCESS);
+    _return(new, out_status, NT_SUCCESS);
 }
 
 void nt_keymap_destroy(nt_keymap map)
@@ -772,24 +747,19 @@ void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
         nt_key_handler_t event_handler, nt_status_t* out_status)
 {
     if((map == NULL) || (event_handler == NULL))
-    {
-        _VRETURN(out_status, NT_ERR_INVALID_ARG);
-    }
+        _vreturn(out_status, NT_ERR_INVALID_ARG);
 
     struct _nt_keymap_entry* _found;
     HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
 
     if(_found != NULL)
-    {
-        _VRETURN(out_status, NT_ERR_BIND_ALREADY_EXISTS);
-    }
+        _vreturn(out_status, NT_ERR_BIND_ALREADY_EXISTS);
 
     struct _nt_keymap_entry* new = (struct _nt_keymap_entry*)malloc
         (sizeof(struct _nt_keymap_entry));
     if(new == NULL)
-    {
-        _VRETURN(out_status, NT_ERR_ALLOC_FAIL);
-    }
+        _vreturn(out_status, NT_ERR_ALLOC_FAIL);
+
     memset(new, 0, sizeof(struct _nt_keymap_entry));
 
     new->key_event = key_event;
@@ -797,28 +767,24 @@ void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
 
     HASH_ADD(hh, map->_map, key_event, sizeof(map->_map->key_event), new);
 
-    _VRETURN(out_status, NT_SUCCESS);
+    _vreturn(out_status, NT_SUCCESS);
 }
 
 void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
         nt_status_t* out_status)
 {
     if(map == NULL)
-    {
-        _VRETURN(out_status, NT_ERR_INVALID_ARG);
-    }
+        _vreturn(out_status, NT_ERR_INVALID_ARG);
 
     struct _nt_keymap_entry* _found;
     HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
     if(_found == NULL)
-    {
-        _VRETURN(out_status, NT_SUCCESS);
-    }
+        _vreturn(out_status, NT_SUCCESS);
 
     HASH_DEL(map->_map, _found);
     free(_found);
 
-    _VRETURN(out_status, NT_SUCCESS);
+    _vreturn(out_status, NT_SUCCESS);
 }
 
 nt_key_handler_t nt_keymap_get(nt_keymap map, struct nt_key_event key_event,
@@ -826,19 +792,19 @@ nt_key_handler_t nt_keymap_get(nt_keymap map, struct nt_key_event key_event,
 {
     if(map == NULL)
     {
-        _RETURN(NULL, out_status, NT_ERR_INVALID_ARG);
+        _return(NULL, out_status, NT_ERR_INVALID_ARG);
     }
 
     struct _nt_keymap_entry* _found;
     HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
     if(_found == NULL)
     {
-        _RETURN(NULL, out_status, NT_SUCCESS);
+        _return(NULL, out_status, NT_SUCCESS);
     }
     else
     {
-        _RETURN(_found->handler, out_status, NT_SUCCESS);
+        _return(_found->handler, out_status, NT_SUCCESS);
     }
 
-    _RETURN(NULL, out_status, NT_SUCCESS);
+    _return(NULL, out_status, NT_SUCCESS);
 }

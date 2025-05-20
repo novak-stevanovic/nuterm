@@ -15,14 +15,14 @@ struct nt_xy nt_get_term_size(nt_status_t* out_status)
     int status = ioctl(STDIN_FILENO, TIOCGWINSZ, &size);
     if(status == -1)
     {
-        _RETURN((struct nt_xy) {0}, out_status, NT_ERR_FUNC_NOT_SUPPORTED);
+        _return((struct nt_xy) {0}, out_status, NT_ERR_FUNC_NOT_SUPPORTED);
     }
 
     struct nt_xy ret;
     ret.x = size.ws_col;
     ret.y = size.ws_row;
 
-    _RETURN(ret, out_status, NT_SUCCESS);
+    _return(ret, out_status, NT_SUCCESS);
 }
 
 int nt_aread(int fd, void* dest, size_t count)

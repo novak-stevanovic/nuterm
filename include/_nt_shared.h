@@ -19,14 +19,20 @@ int nt_awrite(int fd, const void* src, size_t count);
 uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b);
 uint8_t nt_rgb_to_c256(uint8_t r, uint8_t g, uint8_t b);
 
-#define _RETURN(ret_val, out_status_param, out_status)                         \
-    if((out_status_param) != NULL)                                             \
-        (*out_status_param) = (out_status);                                    \
-    return (ret_val)                                                           \
+#define _return(ret_val, out_status_param, out_status)                         \
+    do                                                                         \
+    {                                                                          \
+        if((out_status_param) != NULL)                                         \
+            (*out_status_param) = (out_status);                                \
+        return (ret_val);                                                      \
+    } while(0);                                                                \
 
-#define _VRETURN(out_status_param, out_status)                                 \
-    if((out_status_param) != NULL)                                             \
-        (*out_status_param) = out_status;                                      \
-    return                                                                     \
+#define _vreturn(out_status_param, out_status)                                 \
+    do                                                                         \
+    {                                                                          \
+        if((out_status_param) != NULL)                                         \
+            (*out_status_param) = (out_status);                                \
+        return;                                                                \
+    } while(0);                                                                \
 
 #endif // __NT_SHARED_H__
