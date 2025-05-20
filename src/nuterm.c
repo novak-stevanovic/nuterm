@@ -16,8 +16,8 @@
 
 #include "_nt_outbuff.h"
 #include "_nt_term.h"
-#include "_uconv.h"
-#include "_uthash.h"
+#include "uconv.h"
+#include "uthash.h"
 #include "nt_esc.h"
 #include "_nt_shared.h"
 
