@@ -57,7 +57,7 @@ MAKE = make
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 
-INSTALL_INCLUDE = include/uconv.h
+INSTALL_INCLUDE = include/nuterm.h include/nt_shared.h include/nt_esc.h
 
 # -----------------------------------------------------------------------------
 # Build Flags
@@ -141,7 +141,7 @@ $(UCONV_FLAT): $(UCONV_AR)
 	@mkdir -p $(UCONV_FLAT)
 	ar x $(UCONV_AR) --output=$(UCONV_FLAT)
 
-$(UCONV_AR): thirdparty/uconv
+$(UCONV_AR): $(UCONV_DIR)
 	make -C $< LIB_TYPE=ar OPT=2
 
 $(C_OBJ): build/%.o: src/%.c
@@ -160,9 +160,10 @@ build/tests.o: tests.c
 # install --------------------------------------------------
 
 install:
+	# lib file
 	@mkdir -p $(PREFIX)/lib
-	cp $(LIB_FILE) $(PREFIX)/lib
-
+	ln $(LIB_FILE) $(PREFIX)/lib
+	# headers
 	@mkdir -p $(PREFIX)/include/$(LIB_NAME)
 	cp -r $(INSTALL_INCLUDE) $(PREFIX)/include/$(LIB_NAME)
 
