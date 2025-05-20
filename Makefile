@@ -48,10 +48,7 @@ _UTHASH_DIR = thirdparty/uthash
 
 _UCONV_LIB = $(_UCONV_DIR)/libuconv.a
 
-_UCONV_CFLAGS = -I$(_UCONV_DIR)/include
-_UTHASH_CFLAGS = -I$(_UTHASH_DIR)/include
-
-_UCONV_LFLAGS = -L$(_UCONV_DIR) -luconv
+THIRDPARTY_CFLAGS = -Ithirdparty/uconv/include -Ithirdparty/uthash/include
 
 # ---------------------------------------------------------
 # Base Flags
@@ -61,7 +58,7 @@ SRC_CFLAGS_DEBUG = -g
 SRC_CFLAGS_OPTIMIZATION = -O2
 SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
-SRC_CFLAGS_INCLUDE = -Iinclude $(_UCONV_CFLAGS) $(_UTHASH_CFLAGS)
+SRC_CFLAGS_INCLUDE = -Iinclude $(THIRDPARTY_CFLAGS)
 
 SRC_CFLAGS = -c -fPIC $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
 $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
@@ -102,24 +99,26 @@ endif
 # Targets
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean install uninstall
+.PHONY: all thirdparty clean install uninstall
 
 all: $(LIB_FILE)
 
-$(LIB_AR_FILE): $(_UCONV_LIB) $(C_OBJ)
+$(LIB_AR_FILE): $(C_OBJ) | thirdparty
 	@mkdir -p build/uconv
 	@cd build/uconv && ar -x ../../$(_UCONV_LIB)
 	$(AR) rcs $@ $(C_OBJ) build/uconv/*.o
 
-$(LIB_SO_FILE): $(_UCONV_LIB) $(C_OBJ)
+$(LIB_SO_FILE): $(C_OBJ) | thirdparty
 	$(CC) -shared $(C_OBJ) $(_UCONV_LIB) -o $@
+
+thirdparty: $(_UCONV_LIB)
+
+$(_UCONV_LIB): $(_UCONV_DIR)
+	make -C $(_UCONV_DIR) LIB_TYPE=archive
 
 $(C_OBJ): build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SRC_CFLAGS) $< -o $@
-
-$(_UCONV_LIB): $(_UCONV_DIR)
-	make -C $(_UCONV_DIR) LIB_TYPE=archive
 
 # test -----------------------------------------------------
 
