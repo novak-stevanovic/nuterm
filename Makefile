@@ -48,7 +48,7 @@ OPT_FLAG = -O$(OPT)
 
 # ---------------------------------------------------------
 
-LIB_NAME = uconv
+LIB_NAME = nuterm
 
 CC = gcc
 AR = ar
