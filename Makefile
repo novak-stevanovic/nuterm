@@ -12,43 +12,19 @@ endif
 
 # ---------------------------------------------------------
 
-ifndef LIB_TYPE
-    LIB_TYPE = so
-endif
+LIB_TYPE ?= so
 
-ifneq ($(LIB_TYPE),so)
-    ifneq ($(LIB_TYPE),ar)
-        $(error Invalid settings. USAGE: make [TARGET] [LIB_TYPE=so/ar] [OPT={0..3}])
-    endif
-endif
+PREFIX ?= /usr/local
 
-# ---------------------------------------------------------
+PC_PREFIX ?= /usr/local/lib/pkgconfig
 
-ifndef PREFIX
-    PREFIX = /usr/local
-endif
-
-# ---------------------------------------------------------
-
-ifndef OPT
-    OPT = 2
-endif
-
-ifneq ($(OPT),0)
-    ifneq ($(OPT),1)
-        ifneq ($(OPT),2)
-            ifneq ($(OPT),3)
-                $(error Invalid settings. USAGE: make [TARGET] [LIB_TYPE=so/ar] [OPT={0..3}])
-            endif
-        endif
-    endif
-endif
-
+OPT ?= 2
 OPT_FLAG = -O$(OPT)
 
 # ---------------------------------------------------------
 
 LIB_NAME = nuterm
+LIB_PC = $(LIB_NAME).pc
 
 CC = gcc
 AR = ar
@@ -64,29 +40,39 @@ INSTALL_INCLUDE = include/nuterm.h include/nt_shared.h include/nt_esc.h
 # -----------------------------------------------------------------------------
 
 # ---------------------------------------------------------
-# Thirdparty
+# pkgconf
 # ---------------------------------------------------------
 
-UCONV = uconv
-UTHASH = uthash
+_PC_PREFIX = $(PREFIX)
+_PC_EXEC_PREFIX = $${prefix}
+_PC_LIBDIR = $${exec_prefix}/lib
+_PC_INCLUDEDIR = $${exec_prefix}/include
+_PC_NAME = $(LIB_NAME)
+_PC_DESCRIPTION = Terminal event detection, function abstraction.
+_PC_VERSION = 1.0.0
+_PC_LIBS = -L$${libdir} -l$(LIB_NAME)
+_PC_CFLAGS = -I$${includedir}/$(LIB_NAME)
+_PC_REQUIRES = uconv
+_PC_REQUIRES_PRIVATE =
 
-UCONV_DIR = thirdparty/$(UCONV)
-UTHASH_DIR = thirdparty/$(UTHASH)
+PC_DEPS = $(_PC_REQUIRES)
+ifneq ($(PC_DEPS),)
+    PC_CFLAGS = $(shell pkgconf --silence-errors --cflags $(PC_DEPS))
+    PC_LFLAGS = $(shell pkgconf --silence-errors --libs $(PC_DEPS))
+endif
 
-UCONV_AR = $(UCONV_DIR)/lib$(UCONV).a
-UCONV_FLAT = build/$(UCONV)
-
-THIRDPARTY_CFLAGS = -I$(UCONV_DIR)/include -I$(UTHASH_DIR)/include
+DEP_CFLAGS = $(PC_CFLAGS)
+DEP_LFLAGS = $(PC_LFLAGS)
 
 # ---------------------------------------------------------
-# Base Flags
+# Source Flags
 # ---------------------------------------------------------
 
 SRC_CFLAGS_DEBUG = -g
 SRC_CFLAGS_OPTIMIZATION = $(OPT_FLAG)
 SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
-SRC_CFLAGS_INCLUDE = -Iinclude $(THIRDPARTY_CFLAGS)
+SRC_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
 SRC_CFLAGS = -c -fPIC $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
 $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
@@ -99,12 +85,12 @@ TEST_CFLAGS_DEBUG = -g
 TEST_CFLAGS_OPTIMIZATION = -O0
 TEST_CFLAGS_WARN = -Wall
 TEST_CFLAGS_MAKE = -MMD -MP
-TEST_CFLAGS_INCLUDE = -Iinclude
+TEST_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
 TEST_CFLAGS = -c $(TEST_CFLAGS_INCLUDE) $(TEST_CFLAGS_MAKE) \
 $(TEST_CFLAGS_WARN) $(TEST_CFLAGS_DEBUG) $(TEST_CFLAGS_OPTIMIZATION)
 
-TEST_LFLAGS = -L. -l$(LIB_NAME)
+TEST_LFLAGS = -L. -l$(LIB_NAME) $(DEP_LFLAGS) 
 
 ifeq ($(LIB_TYPE),so)
     TEST_LFLAGS += -Wl,-rpath,.
@@ -131,18 +117,11 @@ endif
 
 all: $(LIB_FILE)
 
-$(LIB_AR_FILE): $(C_OBJ) $(UCONV_FLAT)
-	$(AR) rcs $@ $(C_OBJ) $(UCONV_FLAT)/*.o
+$(LIB_AR_FILE): $(C_OBJ)
+	$(AR) rcs $@ $(C_OBJ)
 
-$(LIB_SO_FILE): $(C_OBJ) $(UCONV_FLAT)
-	$(CC) -shared $(C_OBJ) $(UCONV_FLAT)/*.o -o $@
-
-$(UCONV_FLAT): $(UCONV_AR)
-	@mkdir -p $(UCONV_FLAT)
-	ar x $(UCONV_AR) --output=$(UCONV_FLAT)
-
-$(UCONV_AR): $(UCONV_DIR)
-	make -C $< LIB_TYPE=ar OPT=2
+$(LIB_SO_FILE): $(C_OBJ)
+	$(CC) -shared $(C_OBJ) -o $@
 
 $(C_OBJ): build/%.o: src/%.c
 	@mkdir -p $(dir $@)
@@ -159,19 +138,34 @@ build/tests.o: tests.c
 
 # install --------------------------------------------------
 
-install:
-	# lib file
-	@mkdir -p $(PREFIX)/lib
-	ln $(LIB_FILE) $(PREFIX)/lib
-	# headers
-	@mkdir -p $(PREFIX)/include/$(LIB_NAME)
+install: $(LIB_PC)
+	@mkdir -p $(PREFIX)/lib # lib
+	ln -f $(LIB_FILE) $(PREFIX)/lib
+	@mkdir -p $(PREFIX)/include/$(LIB_NAME) # headers
 	cp -r $(INSTALL_INCLUDE) $(PREFIX)/include/$(LIB_NAME)
+	mkdir -p $(PC_PREFIX) # pc file
+	mv $(LIB_PC) $(PC_PREFIX)
+
+$(LIB_PC):
+	@echo 'prefix=$(_PC_PREFIX)' > $@
+	@echo 'exec_prefix=$(_PC_EXEC_PREFIX)' >> $@
+	@echo 'libdir=$(-PC_LIBDIR)' >> $@
+	@echo 'includedir=$(_PC_INCLUDEDIR)' >> $@
+	@echo '' >> $@
+	@echo 'Name: $(_PC_NAME)' >> $@
+	@echo 'Description: $(_PC_DESCRIPTION)' >> $@
+	@echo 'Version: $(_PC_VERSION)' >> $@
+	@echo 'Libs: $(_PC_LIBS)' >> $@
+	@echo 'Cflags: $(_PC_CFLAGS)' >> $@
+	@echo 'Requires: $(_PC_REQUIRES)' >> $@
+	@echo 'Requires.private: $(_PC_REQUIRES_PRIVATE)' >> $@
 
 # uninstall ------------------------------------------------
 
 uninstall:
 	rm -f $(PREFIX)/lib/$(LIB_FILE)
 	rm -rf $(PREFIX)/include/$(LIB_NAME)
+	rm -f $(PC_PREFIX)/$(LIB_PC)
 
 # clean ----------------------------------------------------
 
@@ -180,5 +174,5 @@ clean:
 	rm -f $(LIB_AR_FILE)
 	rm -f $(LIB_SO_FILE)
 	rm -f test
+	rm -f $(LIB_PC)
 	rm -f compile_commands.json
-	make -C $(UCONV_DIR) clean
