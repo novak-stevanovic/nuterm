@@ -11,4 +11,6 @@ Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr
 
 ## Usage instructions:
 
-To use the library in your project, install the library on your system and make sure to compile with flags: `$(pkgconf --cflags nuterm)` and link with flags `$(pkgconf --libs nuterm)`.
+To use the library in your project, you have 2 options:
+1. Install the library on your system and use flags: `$(pkgconf --cflags nuterm)`(when compiling) and `$(pkgconf --libs nuterm)`(when linking).
+2. If you don't want to install the library, you will have to somehow embed the library into your project. Nuterm requires you to use the following compile flags: -I{path/to/nuterm/root/include}. You will also have to link: -L{path/to/built/lib/file} -lnuterm.
