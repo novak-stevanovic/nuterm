@@ -52,7 +52,7 @@ _PC_DESCRIPTION = Terminal event detection, function abstraction.
 _PC_VERSION = 1.0.0
 _PC_LIBS = -L$${libdir} -l$(LIB_NAME)
 _PC_CFLAGS = -I$${includedir}/$(LIB_NAME)
-_PC_REQUIRES = uconv
+_PC_REQUIRES =
 _PC_REQUIRES_PRIVATE =
 
 PC_DEPS = $(_PC_REQUIRES)
@@ -149,7 +149,7 @@ install: $(LIB_PC)
 $(LIB_PC):
 	@echo 'prefix=$(_PC_PREFIX)' > $@
 	@echo 'exec_prefix=$(_PC_EXEC_PREFIX)' >> $@
-	@echo 'libdir=$(-PC_LIBDIR)' >> $@
+	@echo 'libdir=$(_PC_LIBDIR)' >> $@
 	@echo 'includedir=$(_PC_INCLUDEDIR)' >> $@
 	@echo '' >> $@
 	@echo 'Name: $(_PC_NAME)' >> $@
