@@ -11,4 +11,4 @@ Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr
 
 ## Usage instructions:
 
-To use the library in your project, make sure to compile with flags: `$(pkgconf --cflags nuterm)` and link with flags `$(pkgconf --libs nuterm)`.
+To use the library in your project, install the library on your system and make sure to compile with flags: `$(pkgconf --cflags nuterm)` and link with flags `$(pkgconf --libs nuterm)`.
