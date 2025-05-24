@@ -21,6 +21,11 @@ PC_PREFIX ?= /usr/local/lib/pkgconfig
 OPT ?= 2
 OPT_FLAG = -O$(OPT)
 
+DEBUG ?= 0
+ifeq ($(DEBUG),1)
+    DEBUG_FLAG = -g
+endif
+
 # ---------------------------------------------------------
 
 LIB_NAME = nuterm
@@ -68,7 +73,7 @@ DEP_LFLAGS = $(PC_LFLAGS)
 # Source Flags
 # ---------------------------------------------------------
 
-SRC_CFLAGS_DEBUG = -g
+SRC_CFLAGS_DEBUG = $(DEBUG_FLAG)
 SRC_CFLAGS_OPTIMIZATION = $(OPT_FLAG)
 SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
@@ -81,7 +86,7 @@ $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
 # Test Flags
 # ---------------------------------------------------------
 
-TEST_CFLAGS_DEBUG = -g
+TEST_CFLAGS_DEBUG = $(DEBUG_FLAG)
 TEST_CFLAGS_OPTIMIZATION = -O0
 TEST_CFLAGS_WARN = -Wall
 TEST_CFLAGS_MAKE = -MMD -MP

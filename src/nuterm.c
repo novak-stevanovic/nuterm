@@ -336,7 +336,7 @@ const struct nt_gfx NT_GFX_DEFAULT = {
 };
 
 // UTF-32
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
         nt_style_t* out_styles, nt_status_t* out_status)
 {
     char utf8[5];
@@ -367,7 +367,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
 }
 
 // UTF-8
-void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
+void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
         nt_style_t* out_styles, nt_status_t* out_status)
 {
     nt_status_t _status;
@@ -716,9 +716,9 @@ struct nt_keymap
     struct _nt_keymap_entry* _map;
 };
 
-nt_keymap nt_keymap_new(nt_status_t* out_status)
+nt_keymap_t nt_keymap_new(nt_status_t* out_status)
 {
-    nt_keymap new = (nt_keymap)malloc(sizeof(nt_keymap));
+    nt_keymap_t new = (nt_keymap_t)malloc(sizeof(nt_keymap_t));
     if(new == NULL)
     {
         _return(NULL, out_status, NT_ERR_ALLOC_FAIL);
@@ -729,7 +729,7 @@ nt_keymap nt_keymap_new(nt_status_t* out_status)
     _return(new, out_status, NT_SUCCESS);
 }
 
-void nt_keymap_destroy(nt_keymap map)
+void nt_keymap_destroy(nt_keymap_t map)
 {
     if(map == NULL) return;
 
@@ -743,7 +743,7 @@ void nt_keymap_destroy(nt_keymap map)
     free(map);
 }
 
-void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
+void nt_keymap_bind(nt_keymap_t map, struct nt_key_event key_event,
         nt_key_handler_t event_handler, nt_status_t* out_status)
 {
     if((map == NULL) || (event_handler == NULL))
@@ -770,7 +770,7 @@ void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
     _vreturn(out_status, NT_SUCCESS);
 }
 
-void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
+void nt_keymap_unbind(nt_keymap_t map, struct nt_key_event key_event,
         nt_status_t* out_status)
 {
     if(map == NULL)
@@ -787,7 +787,7 @@ void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
     _vreturn(out_status, NT_SUCCESS);
 }
 
-nt_key_handler_t nt_keymap_get(nt_keymap map, struct nt_key_event key_event,
+nt_key_handler_t nt_keymap_get(nt_keymap_t map, struct nt_key_event key_event,
         nt_status_t* out_status)
 {
     if(map == NULL)

@@ -2,8 +2,6 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-
-// TODO: add support for other terminals */
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -66,6 +64,7 @@ bool nt_color_cmp(nt_color_t c1, nt_color_t c2);
 
 /* ----------------------------------------------------- */
 
+/* Bitmask type where each bit represents a style. */
 typedef uint8_t nt_style_t;
 
 extern const nt_style_t NT_STYLE_DEFAULT;
@@ -134,6 +133,7 @@ void nt_alt_screen_disable(nt_status_t* out_status);
 /* WRITE TO TERMINAL */
 /* ------------------------------------------------------------------------- */
 
+/* Structure which describe graphical properties of text inside Nuterm */
 struct nt_gfx
 {
     nt_color_t fg, bg;
@@ -142,7 +142,7 @@ struct nt_gfx
 
 extern const struct nt_gfx NT_GFX_DEFAULT;
 
-#define NT_WRITE_INPLACE -1
+#define NT_WRITE_INPLACE SIZE_MAX
 
 /* Converts UTF-32 `codepoint` to UTF-8 and then invokes nt_write_str().
  *
@@ -150,15 +150,16 @@ extern const struct nt_gfx NT_GFX_DEFAULT;
  * Additionally, the following status codes can be returned:
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
         nt_style_t* out_styles, nt_status_t* out_status);
 
 /* Prints null-terminated `str` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
  * at the provided coordinates.
  *
- * If x == NT_WRITE_INPLACE && y == NT_WRITE_INPLACE, the cursor will not move
- * before printing to screen.
+ * If (`x` == NT_WRITE_INPLACE) && (`y` == NT_WRITE_INPLACE), the cursor will
+ * not move before printing to screen. Setting only `x` or `y` to
+ * NT_WRITE_INPLACE is undefined behavior.
  * 
  * If buffering is enabled, the printing will occur only when nt_flush()
  * is called. 
@@ -176,7 +177,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, ssize_t x, ssize_t y,
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
  * 4) NT_ERR_UNEXPECTED. */
-void nt_write_str(const char* str, struct nt_gfx gfx, ssize_t x, ssize_t y,
+void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
         nt_style_t* out_styles, nt_status_t* out_status);
 
 /* ------------------------------------------------------------------------- */
@@ -267,11 +268,11 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status);
 
 /* ------------------------------------------------------------------------- */
 
-/* Nu-term allows you to bind key event handlers to key evnets. This may be
+/* Nu-term allows you to bind key event handlers to key events. This may be
  * useful when creating a TGUI application, for example. A single key event
  * can have only one entry in the keymap. */
 
-typedef struct nt_keymap* nt_keymap;
+typedef struct nt_keymap* nt_keymap_t;
 
 /* Creates the nt_keymap, initializes internal hashmap.
  *
@@ -279,10 +280,10 @@ typedef struct nt_keymap* nt_keymap;
  * 1. NT_SUCCESS,
  * 2. NT_ERR_ALLOC_FAIL - dynamic allocation for the internal struct nt_keymap
  * failed. */
-nt_keymap nt_keymap_new(nt_status_t* out_status);
+nt_keymap_t nt_keymap_new(nt_status_t* out_status);
 
 /* Destroys the nt_keymap. Frees the dynamially allocated memory. */
-void nt_keymap_destroy(nt_keymap map);
+void nt_keymap_destroy(nt_keymap_t map);
 
 typedef void (*nt_key_handler_t)(struct nt_key_event key_event);
 
@@ -295,7 +296,7 @@ typedef void (*nt_key_handler_t)(struct nt_key_event key_event);
  * 3. NT_ERR_BIND_ALREADY_EXISTS - `key_event` is already a key inside the
  * hashmap,
  * 4. NT_ERR_ALLOC_FAIL - dynamic allocation failed. */
-void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
+void nt_keymap_bind(nt_keymap_t map, struct nt_key_event key_event,
         nt_key_handler_t event_handler, nt_status_t* out_status);
 
 /* Unbinds a specific `event_handler` from the given `key_event`. This will
@@ -305,7 +306,7 @@ void nt_keymap_bind(nt_keymap map, struct nt_key_event key_event,
  * STATUS CODES:
  * 1. NT_SUCCESS, 
  * 2. NT_ERR_INVALID_ARG - `map` is NULL. */
-void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
+void nt_keymap_unbind(nt_keymap_t map, struct nt_key_event key_event,
         nt_status_t* out_status);
 
 /* Retrieves nt_key_handler_t tied to given `key_event`. If `key_event` is not
@@ -313,7 +314,7 @@ void nt_keymap_unbind(nt_keymap map, struct nt_key_event key_event,
  *
  * 1. NT_SUCCESS, 
  * 2. NT_ERR_INVALID_ARG - `map` is NULL. */
-nt_key_handler_t nt_keymap_get(nt_keymap map, struct nt_key_event key_event,
+nt_key_handler_t nt_keymap_get(nt_keymap_t map, struct nt_key_event key_event,
         nt_status_t* out_status);
 
 /* ------------------------------------------------------------------------- */

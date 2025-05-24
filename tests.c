@@ -137,7 +137,7 @@ void handler2(struct nt_key_event key_event)
 void test_hm()
 {
     nt_status_t _status;
-    nt_keymap keymap = nt_keymap_new(&_status);
+    nt_keymap_t keymap = nt_keymap_new(&_status);
 
     struct nt_key_event kv1 = {
         .type = NT_KEY_EVENT_UTF32,
