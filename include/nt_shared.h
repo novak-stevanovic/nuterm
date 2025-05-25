@@ -9,9 +9,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-struct nt_xy { size_t x, y; };
-struct nt_dxy { ssize_t x, y; };
-
 typedef int nt_status_t;
 
 #define NT_SUCCESS 0

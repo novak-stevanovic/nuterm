@@ -199,6 +199,30 @@ void nt_buffer_flush()
     nt_outbuff_flush(&_buff);
 }
 
+/* ----------------------------------------------------- */
+
+void nt_get_term_size(size_t* out_width, size_t* out_height)
+{
+    struct winsize size;
+    int status = ioctl(STDIN_FILENO, TIOCGWINSZ, &size);
+    size_t ret_width, ret_height;
+    if(status == -1)
+    {
+        ret_width = 0;
+        ret_height =  0;
+        return;
+    }
+    else
+    {
+        ret_width = size.ws_col;
+        ret_height = size.ws_row;
+
+    }
+
+    if(out_width != NULL) *out_width = ret_width;
+    if(out_height != NULL) *out_height = ret_height;
+}
+
 void nt_cursor_hide(nt_status_t* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, false, out_status);
@@ -680,7 +704,6 @@ static const struct nt_resize_event _NT_RESIZE_EVENT_EMPTY = {0};
 
 static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
 {
-
     char buff[1];
     int read_status = nt_aread(_resize_fds[0], buff, 1);
     if(read_status == -1)
@@ -688,15 +711,12 @@ static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
         _return(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
 
-    nt_status_t _status;
-    struct nt_xy term_size = nt_get_term_size(&_status);
-    if(_status == NT_ERR_FUNC_NOT_SUPPORTED)
-    {
-        _return(_NT_RESIZE_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
-    }
+    size_t _width, _height;
+    nt_get_term_size(&_width, &_height);
 
     struct nt_resize_event resize_event = {
-        .new_size = term_size
+        .width = _width,
+        .height = _height
     };
 
     _return(resize_event, out_status, NT_SUCCESS);

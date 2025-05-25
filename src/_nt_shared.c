@@ -7,23 +7,6 @@
 #include <unistd.h>
 
 #include "_nt_shared.h"
-#include "nt_shared.h"
-
-struct nt_xy nt_get_term_size(nt_status_t* out_status)
-{
-    struct winsize size;
-    int status = ioctl(STDIN_FILENO, TIOCGWINSZ, &size);
-    if(status == -1)
-    {
-        _return((struct nt_xy) {0}, out_status, NT_ERR_FUNC_NOT_SUPPORTED);
-    }
-
-    struct nt_xy ret;
-    ret.x = size.ws_col;
-    ret.y = size.ws_row;
-
-    _return(ret, out_status, NT_SUCCESS);
-}
 
 int nt_aread(int fd, void* dest, size_t count)
 {

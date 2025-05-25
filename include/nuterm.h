@@ -110,6 +110,8 @@ void nt_buffer_flush();
 
 /* ----------------------------------------------------- */
 
+void nt_get_term_size(size_t* out_width, size_t* out_height);
+
 /* The functions below share the same STATUS CODES:
  *
  * 1) NT_SUCCESS,
@@ -222,9 +224,10 @@ struct nt_key_event
     };
 };
 
+/* New terminal width and height */
 struct nt_resize_event
 {
-    struct nt_xy new_size;
+    size_t width, height;
 };
 
 struct nt_timeout_event

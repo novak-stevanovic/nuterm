@@ -10,8 +10,6 @@
 
 #include "nt_shared.h"
 
-struct nt_xy nt_get_term_size(nt_status_t* out_status);
-
 int nt_aread(int fd, void* dest, size_t count);
 int nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout);
 int nt_awrite(int fd, const void* src, size_t count);

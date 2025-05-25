@@ -52,7 +52,7 @@ void loop_lib()
         else if(event.type == NT_EVENT_TYPE_RESIZE)
         {
             printf("R(%ld,%ld)", 
-                    event.resize_data.new_size.x, event.resize_data.new_size.y);
+                    event.resize_data.width, event.resize_data.height);
 
             printf(" | ");
 
@@ -170,7 +170,9 @@ int main(int argc, char *argv[])
         .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
     };
 
-    test_hm();
+    loop_lib();
+
+    // test_hm();
 
     // nt_alt_screen_disable(NULL);
     nt_destroy();
