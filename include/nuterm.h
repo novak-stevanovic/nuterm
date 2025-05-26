@@ -159,9 +159,8 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * graphical attributes described by struct `gfx` and the text will be printed
  * at the provided coordinates.
  *
- * If (`x` == NT_WRITE_INPLACE) && (`y` == NT_WRITE_INPLACE), the cursor will
- * not move before printing to screen. Setting only `x` or `y` to
- * NT_WRITE_INPLACE is undefined behavior.
+ * If (`x` == NT_WRITE_INPLACE) or (`y` == NT_WRITE_INPLACE), the cursor will
+ * not move before printing to screen.
  * 
  * If buffering is enabled, the printing will occur only when nt_flush()
  * is called. 
@@ -178,7 +177,8 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * by the terminal - moving the cursor, resetting gfx, setting color,
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
- * 4) NT_ERR_UNEXPECTED. */
+ * 4) NT_ERR_OUT_OF_BOUNDS - `x` or `y` is out of bounds,
+ * 5) NT_ERR_UNEXPECTED. */
 void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
         nt_style_t* out_styles, nt_status_t* out_status);
 

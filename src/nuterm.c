@@ -216,7 +216,6 @@ void nt_get_term_size(size_t* out_width, size_t* out_height)
     {
         ret_width = size.ws_col;
         ret_height = size.ws_row;
-
     }
 
     if(out_width != NULL) *out_width = ret_width;
@@ -400,8 +399,17 @@ void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
-    if((x != NT_WRITE_INPLACE) || (y != NT_WRITE_INPLACE))
+    if((x != NT_WRITE_INPLACE) && (y != NT_WRITE_INPLACE))
     {
+        size_t _width, _height;
+        nt_get_term_size(&_width, &_height);
+
+        if((x >= _width) || (y >= _height))
+        {
+            _sreturn(out_styles, NT_STYLE_DEFAULT, out_status,
+                    NT_ERR_OUT_OF_BOUNDS);
+        }
+
         _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
         if(_status != NT_SUCCESS)
             _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
