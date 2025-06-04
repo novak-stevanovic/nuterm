@@ -1,4 +1,4 @@
-#include "nuterm.h"
+#include "nt.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -86,7 +86,7 @@ void test_styles()
         {
             nt_status_t status;
             nt_style_t style;
-            nt_write_str("Test1", gfx1, 0, 0, &style, &status);
+            nt_write_str_at("Test1", gfx1, 0, 10, &style, &status);
             // assert(style == gfx1.style);
             assert(status == NT_SUCCESS);
             sleep(2);
@@ -111,10 +111,10 @@ void write_test()
     };
 
     nt_style_t styles;
-    nt_write_str("SAUSAHS", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &styles, &_status);
+    nt_write_str("SAUSAHS", gfx1, &styles, &_status);
 
     gfx1.style |= NT_STYLE_FAINT;
-    nt_write_str("SAUSAHS", gfx1, NT_WRITE_INPLACE, NT_WRITE_INPLACE, &styles, &_status);
+    nt_write_str("SAUSAHS", gfx1, &styles, &_status);
 
     assert(styles == gfx1.style);
     assert(_status == NT_SUCCESS);
@@ -124,45 +124,23 @@ void write_test()
 
 }
 
-void handler1(struct nt_key_event key_event)
+void handler1(struct nt_key_event key_event, void* data)
 {
     printf("EVENT1\n");
 }
 
-void handler2(struct nt_key_event key_event)
+void handler2(struct nt_key_event key_event, void* data)
 {
     printf("EVENT2\n");
-}
-
-void test_hm()
-{
-    nt_status_t _status;
-    nt_keymap_t keymap = nt_keymap_new(&_status);
-
-    struct nt_key_event kv1 = {
-        .type = NT_KEY_EVENT_UTF32,
-        .utf32_data = {
-            .codepoint = 'k',
-            .alt = false
-        }
-    };
-
-    nt_keymap_bind(keymap, kv1, handler1, &_status);
-
-    nt_key_handler_t handler1 = nt_keymap_get(keymap, kv1, &_status);
-    if(handler1 != NULL)
-        handler1(kv1);
-
-    nt_keymap_destroy(keymap);
 }
 
 int main(int argc, char *argv[])
 {
     nt_status_t _status;
-    nt_init(&_status);
+    __nt_init__(&_status);
     assert(_status == NT_SUCCESS);
 
-    // nt_alt_screen_enable(NULL);
+    nt_alt_screen_enable(NULL);
 
     struct nt_gfx gfx1 = {
         .bg = nt_color_new(255, 0, 128),
@@ -170,12 +148,12 @@ int main(int argc, char *argv[])
         .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
     };
 
+    test_styles();
+
     loop_lib();
 
-    // test_hm();
-
-    // nt_alt_screen_disable(NULL);
-    nt_destroy();
+    nt_alt_screen_disable(NULL);
+    __nt_deinit__();
 
     return 0;
 }

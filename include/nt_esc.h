@@ -5,7 +5,11 @@
 #ifndef _NT_ESC_H_
 #define _NT_ESC_H_
 
-typedef enum nt_esc_key
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+enum nt_esc_key
 {
     NT_ESC_KEY_F1,
     NT_ESC_KEY_F2,
@@ -31,10 +35,10 @@ typedef enum nt_esc_key
     NT_ESC_KEY_PG_DOWN,
     NT_ESC_KEY_STAB,
     NT_ESC_KEY_OTHER // Must be last because internally used as count
-} nt_esc_key_t;
+};
 
 /* Internally used. */
-typedef enum nt_esc_func
+enum nt_esc_func
 {
     NT_ESC_FUNC_CURSOR_SHOW,
     NT_ESC_FUNC_CURSOR_HIDE,
@@ -62,6 +66,10 @@ typedef enum nt_esc_func
     NT_ESC_FUNC_ALT_BUFF_ENTER,
     NT_ESC_FUNC_ALT_BUFF_EXIT,
     NT_ESC_FUNC_OTHER // Must be last because internally used as count
-} nt_esc_func_t;
+};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _NT_ESC_H_

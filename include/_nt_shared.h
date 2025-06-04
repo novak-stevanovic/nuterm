@@ -5,10 +5,9 @@
 #ifndef __NT_SHARED_H__
 #define __NT_SHARED_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/poll.h>
-
-#include "nt_shared.h"
 
 int nt_aread(int fd, void* dest, size_t count);
 int nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout);

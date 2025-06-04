@@ -6,31 +6,41 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "_nt_outbuff.h"
+#include "nt_charbuff.h"
 #include "_nt_shared.h"
 
-int nt_outbuff_init(nt_outbuff_t* buff, size_t cap)
+struct nt_charbuff
 {
+    char* _data;
+    size_t _len;
+    size_t _cap;
+};
+
+nt_charbuff_t* nt_charbuff_new(size_t cap)
+{
+    nt_charbuff_t* buff = (nt_charbuff_t*)malloc(sizeof(struct nt_charbuff));
+
     buff->_len = 0;
 
     buff->_data = malloc((sizeof(char) * cap) + 1);
-    if(buff->_data == NULL) return 1;
+    if(buff->_data == NULL) return NULL;
 
     buff->_data[0] = '\0';
     buff->_cap = cap;
 
-    return 0;
+    return buff;
 }
 
-void nt_outbuff_destroy(nt_outbuff_t* buff)
+void nt_charbuff_destroy(nt_charbuff_t* buff)
 {
+    if(buff == NULL) return;
+
     if(buff->_data != NULL) free(buff->_data);
 
-    buff->_cap = 0;
-    buff->_len = 0;
+    free(buff);
 }
 
-void nt_outbuff_append(nt_outbuff_t* buff, const char* str)
+void nt_charbuff_append(nt_charbuff_t* buff, const char* str)
 {
     if(str == NULL) return;
 
@@ -42,7 +52,7 @@ void nt_outbuff_append(nt_outbuff_t* buff, const char* str)
     }
     else
     {
-        nt_outbuff_flush(buff);
+        nt_charbuff_flush(buff);
         if(buff->_cap >= len) // enough allocated space for this func
         {
             memcpy(buff->_data, str, len);
@@ -56,7 +66,7 @@ void nt_outbuff_append(nt_outbuff_t* buff, const char* str)
 
 }
 
-void nt_outbuff_flush(nt_outbuff_t* buff)
+void nt_charbuff_flush(nt_charbuff_t* buff)
 {
     if(buff->_len > 0)
         nt_awrite(STDOUT_FILENO, buff->_data, buff->_len);
@@ -64,12 +74,12 @@ void nt_outbuff_flush(nt_outbuff_t* buff)
     buff->_len = 0;
 }
 
-int nt_outbuff_set_cap(nt_outbuff_t* buff, size_t cap)
+int nt_charbuff_set_cap(nt_charbuff_t* buff, size_t cap)
 {
     if(buff->_cap == cap) return 0;
 
     if(buff->_len > cap)
-        nt_outbuff_flush(buff);
+        nt_charbuff_flush(buff);
 
     void* new_data = realloc(buff->_data, cap + 1);
     if(new_data == NULL) return 1;

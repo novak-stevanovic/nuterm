@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-#include "nuterm.h"
+#include "nt.h"
 
 #include <poll.h>
 #include <signal.h>
@@ -14,10 +14,9 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#include "_nt_outbuff.h"
+#include "nt_charbuff.h"
 #include "_nt_term.h"
 #include "_uconv.h"
-#include "_uthash.h"
 #include "nt_esc.h"
 #include "_nt_shared.h"
 
@@ -29,7 +28,7 @@ static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
 
-static nt_outbuff_t _buff;
+static nt_charbuff_t* _buff;
 
 static void _sa_handler(int signum)
 {
@@ -50,7 +49,7 @@ static inline void _term_opts_raw(struct termios* term_opts)
     term_opts->c_cc[VTIME] = 0;
 }
 
-void nt_init(nt_status_t* out_status)
+void __nt_init__(nt_status_t* out_status)
 {
     nt_status_t _status;
     int status;
@@ -100,57 +99,28 @@ void nt_init(nt_status_t* out_status)
             _vreturn(out_status, NT_ERR_UNEXPECTED);
     }
 
-    nt_outbuff_init(&_buff, 0);
+    _buff = nt_charbuff_new(0);
+    if(_buff == NULL)
+        _vreturn(out_status, NT_ERR_ALLOC_FAIL);
 
     _vreturn(out_status, NT_SUCCESS);
 }
 
-void nt_destroy()
+void __nt_deinit__()
 {
     nt_write_str("", NT_GFX_DEFAULT,
-            NT_WRITE_INPLACE, NT_WRITE_INPLACE,
             NULL, NULL);
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
     nt_term_destroy();
-    nt_outbuff_destroy(&_buff);
-}
-
-/* -------------------------------------------------------------------------- */
-/* COLOR & STYLE */
-/* -------------------------------------------------------------------------- */
-
-const nt_color_t NT_COLOR_DEFAULT = {
-    ._code8 = 0,
-    ._code256 = 0,
-    ._rgb = { 0, 0, 0 },
-    .__default = true
-};
-
-static inline bool _color_is_default(nt_color_t color)
-{
-    return color.__default;
-}
-
-nt_color_t nt_color_new(uint8_t r, uint8_t g, uint8_t b)
-{
-    return (nt_color_t) {
-        ._rgb =  { .r = r, .g = g, .b = b },
-        ._code256 = nt_rgb_to_c256(r, g, b),
-        ._code8 = nt_rgb_to_c8(r, g, b)
-    };
-}
-
-bool nt_color_cmp(nt_color_t c1, nt_color_t c2)
-{
-    return (memcmp(&c1, &c2, sizeof(nt_color_t)) == 0);
+    nt_charbuff_destroy(_buff);
 }
 
 /* -------------------------------------------------------------------------- */
 /* TERMINAL FUNCTIONS */
 /* -------------------------------------------------------------------------- */
 
-static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
+static void _execute_used_term_func(enum nt_esc_func func, bool use_va,
         nt_status_t* out_status, ...)
 {
     int status;
@@ -179,7 +149,7 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
     }
     else _func = esc_func;
 
-    nt_outbuff_append(&_buff, _func);
+    nt_charbuff_append(_buff, _func);
 
     _vreturn(out_status, NT_SUCCESS);
 }
@@ -188,7 +158,7 @@ static void _execute_used_term_func(nt_esc_func_t func, bool use_va,
 
 void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status)
 {
-    int status = nt_outbuff_set_cap(&_buff, buff_cap);
+    int status = nt_charbuff_set_cap(_buff, buff_cap);
 
     nt_status_t ret = (status == 0) ? NT_SUCCESS : NT_ERR_ALLOC_FAIL;
     _vreturn(out_status, ret);
@@ -196,7 +166,7 @@ void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status)
 
 void nt_buffer_flush()
 {
-    nt_outbuff_flush(&_buff);
+    nt_charbuff_flush(_buff);
 }
 
 /* ----------------------------------------------------- */
@@ -277,7 +247,7 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
 
     size_t func_offset = (opt == SET_COLOR_FG) ? 0 : 4;
 
-    if(_color_is_default(color)) // DEFAULT COLOR
+    if(nt_color_cmp(NT_COLOR_DEFAULT, color)) // DEFAULT COLOR
     {
         _execute_used_term_func(NT_ESC_FUNC_FG_SET_DEFAULT + func_offset,
                 false, &_status);
@@ -352,15 +322,9 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
     _sreturn(out_style, used, out_status, NT_SUCCESS);
 }
 
-const struct nt_gfx NT_GFX_DEFAULT = {
-    .bg = NT_COLOR_DEFAULT,
-    .fg = NT_COLOR_DEFAULT,
-    .style = NT_STYLE_DEFAULT
-};
-
 // UTF-32
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status)
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style_t* out_styles,
+        nt_status_t* out_status)
 {
     char utf8[5];
     size_t utf8_len;
@@ -386,34 +350,18 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
 
     utf8[utf8_len] = '\0';
 
-    nt_write_str(utf8, gfx, x, y, out_styles, out_status);
+    nt_write_str(utf8, gfx, out_styles, out_status);
 }
 
 // UTF-8
-void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status)
+void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
+        nt_status_t* out_status)
 {
     nt_status_t _status;
 
     _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-
-    if((x != NT_WRITE_INPLACE) && (y != NT_WRITE_INPLACE))
-    {
-        size_t _width, _height;
-        nt_get_term_size(&_width, &_height);
-
-        if((x >= _width) || (y >= _height))
-        {
-            _sreturn(out_styles, NT_STYLE_DEFAULT, out_status,
-                    NT_ERR_OUT_OF_BOUNDS);
-        }
-
-        _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
-        if(_status != NT_SUCCESS)
-            _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
-    }
 
     _set_color(gfx.fg, SET_COLOR_FG, &_status);
     if(_status != NT_SUCCESS)
@@ -428,9 +376,51 @@ void nt_write_str(const char* str, struct nt_gfx gfx, size_t x, size_t y,
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, used_styles, out_status, _status);
 
-    nt_outbuff_append(&_buff, str);
+    nt_charbuff_append(_buff, str);
 
     _sreturn(out_styles, used_styles, out_status, NT_SUCCESS);
+}
+
+void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+        nt_style_t* out_styles, nt_status_t* out_status)
+{
+    size_t _width, _height;
+    nt_get_term_size(&_width, &_height);
+
+    if((x >= _width) || (y >= _height))
+    {
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status,
+                NT_ERR_OUT_OF_BOUNDS);
+    }
+
+    nt_status_t _status;
+
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
+    if(_status != NT_SUCCESS)
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
+
+    nt_write_char(codepoint, gfx, out_styles, out_status);
+}
+
+void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
+        nt_style_t* out_styles, nt_status_t* out_status)
+{
+    size_t _width, _height;
+    nt_get_term_size(&_width, &_height);
+
+    if((x >= _width) || (y >= _height))
+    {
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status,
+                NT_ERR_OUT_OF_BOUNDS);
+    }
+
+    nt_status_t _status;
+
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
+    if(_status != NT_SUCCESS)
+        _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
+
+    nt_write_str(str, gfx, out_styles, out_status);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -728,111 +718,4 @@ static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
     };
 
     _return(resize_event, out_status, NT_SUCCESS);
-}
-
-/* ------------------------------------------------------------------------- */
-
-struct _nt_keymap_entry
-{
-    struct nt_key_event key_event; // key
-    nt_key_handler_t handler;
-    UT_hash_handle hh;
-};
-
-struct nt_keymap
-{
-    struct _nt_keymap_entry* _map;
-};
-
-nt_keymap_t nt_keymap_new(nt_status_t* out_status)
-{
-    nt_keymap_t new = (nt_keymap_t)malloc(sizeof(nt_keymap_t));
-    if(new == NULL)
-    {
-        _return(NULL, out_status, NT_ERR_ALLOC_FAIL);
-    }
-
-    new->_map = NULL;
-
-    _return(new, out_status, NT_SUCCESS);
-}
-
-void nt_keymap_destroy(nt_keymap_t map)
-{
-    if(map == NULL) return;
-
-    struct _nt_keymap_entry *curr, *tmp;
-
-    HASH_ITER(hh, map->_map, curr, tmp) {
-        HASH_DEL(map->_map, curr);
-        free(curr);
-    }
-
-    free(map);
-}
-
-void nt_keymap_bind(nt_keymap_t map, struct nt_key_event key_event,
-        nt_key_handler_t event_handler, nt_status_t* out_status)
-{
-    if((map == NULL) || (event_handler == NULL))
-        _vreturn(out_status, NT_ERR_INVALID_ARG);
-
-    struct _nt_keymap_entry* _found;
-    HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
-
-    if(_found != NULL)
-        _vreturn(out_status, NT_ERR_BIND_ALREADY_EXISTS);
-
-    struct _nt_keymap_entry* new = (struct _nt_keymap_entry*)malloc
-        (sizeof(struct _nt_keymap_entry));
-    if(new == NULL)
-        _vreturn(out_status, NT_ERR_ALLOC_FAIL);
-
-    memset(new, 0, sizeof(struct _nt_keymap_entry));
-
-    new->key_event = key_event;
-    new->handler = event_handler;
-
-    HASH_ADD(hh, map->_map, key_event, sizeof(map->_map->key_event), new);
-
-    _vreturn(out_status, NT_SUCCESS);
-}
-
-void nt_keymap_unbind(nt_keymap_t map, struct nt_key_event key_event,
-        nt_status_t* out_status)
-{
-    if(map == NULL)
-        _vreturn(out_status, NT_ERR_INVALID_ARG);
-
-    struct _nt_keymap_entry* _found;
-    HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
-    if(_found == NULL)
-        _vreturn(out_status, NT_SUCCESS);
-
-    HASH_DEL(map->_map, _found);
-    free(_found);
-
-    _vreturn(out_status, NT_SUCCESS);
-}
-
-nt_key_handler_t nt_keymap_get(nt_keymap_t map, struct nt_key_event key_event,
-        nt_status_t* out_status)
-{
-    if(map == NULL)
-    {
-        _return(NULL, out_status, NT_ERR_INVALID_ARG);
-    }
-
-    struct _nt_keymap_entry* _found;
-    HASH_FIND(hh, map->_map, &key_event, sizeof(map->_map->key_event), _found);
-    if(_found == NULL)
-    {
-        _return(NULL, out_status, NT_SUCCESS);
-    }
-    else
-    {
-        _return(_found->handler, out_status, NT_SUCCESS);
-    }
-
-    _return(NULL, out_status, NT_SUCCESS);
 }
