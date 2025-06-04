@@ -12,4 +12,5 @@ Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr
 ## Usage instructions:
 
 To use the library in your project, you must first install it. This can be done on your system - globally, or locally, inside a project that is using this library.
-1. Install with desired `PREFIX` and `PC_PREFIX`. When compiling a project that depends on this library, make sure to use cflags: `pkfconf --cflags nuterm` and link with flags: `pkfconf --libs nuterm`. For this to work, make sure that pkgconf seaches in the directory `PC_PREFIX`(specified when installing this library).
+1. Install with desired `PREFIX` and `PC_PREFIX`.
+2. Compile your project with cflags: `pkfconf --cflags nuterm` and link with flags: `pkfconf --libs nuterm`. For this to work, make sure that pkgconf seaches in the directory `PC_PREFIX` when using pkgconfig.
