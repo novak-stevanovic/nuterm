@@ -395,7 +395,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
 
     nt_status_t _status;
 
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
@@ -416,7 +416,7 @@ void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
 
     nt_status_t _status;
 
-    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y, x);
+    _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 

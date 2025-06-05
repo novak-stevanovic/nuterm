@@ -110,8 +110,8 @@ void write_test()
             // NT_STYLE_STRIKETHROUGH
     };
 
-    size_t _width, _height;
-    nt_get_term_size(&_width, &_height);
+    size_t _width = 5, _height = 5;
+    // nt_get_term_size(&_width, &_height);
     size_t i, j;
 
     for(i = 0; i < _height; i++)
