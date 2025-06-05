@@ -196,7 +196,7 @@ void uc_utf32_to_utf8(const uint32_t* utf32_seq, size_t width,
         if(i_cp <= _1BYTE_RANGE_END)
         {
             i_len = 1;
-            out_utf8_seq[bcount] = (uint8_t)i_cp;
+            i_char = (uint8_t)i_cp;
         }
         else if(i_cp <= _2BYTE_RANGE_END)
         {

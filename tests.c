@@ -110,18 +110,18 @@ void write_test()
             // NT_STYLE_STRIKETHROUGH
     };
 
-    nt_style_t styles;
-    nt_write_str("SAUSAHS", gfx1, &styles, &_status);
+    size_t _width, _height;
+    nt_get_term_size(&_width, &_height);
+    size_t i, j;
 
-    gfx1.style |= NT_STYLE_FAINT;
-    nt_write_str("SAUSAHS", gfx1, &styles, &_status);
-
-    assert(styles == gfx1.style);
-    assert(_status == NT_SUCCESS);
-
-    // nt_write_char(1055, gfx1, 50, 10, &styles, &_status);
-    // assert(_status == NT_SUCCESS);
-
+    for(i = 0; i < _height; i++)
+    {
+        for(j = 0; j < _width; j++)
+        {
+            nt_write_char_at(70, gfx1, j, i, NULL, &_status);
+            assert(_status == 0);
+        }
+    }
 }
 
 void handler1(struct nt_key_event key_event, void* data)
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
         .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
     };
 
-    test_styles();
+    write_test();
 
     loop_lib();
 
