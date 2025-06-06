@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 
@@ -439,20 +440,25 @@ static const struct nt_event _NT_EVENT_EMPTY = {0};
 
 struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
 {
+    struct timespec _time1, _time2;
+    clock_gettime(CLOCK_REALTIME, &_time1);
+
     int poll_status = nt_apoll(_poll_fds, 2, timeout);
+
+    clock_gettime(CLOCK_REALTIME, &_time2);
+
+    ulong elapsed = ((_time2.tv_sec - _time1.tv_sec) * 1e3) +
+        ((_time2.tv_nsec - _time1.tv_nsec) / 1e6);
+
     if(poll_status == -1)
     {
         _return(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
     }
     if(poll_status == 0)
     {
-        struct nt_timeout_event timeout_event = {
-            .elapsed = timeout
-        };
-
         struct nt_event ret = {
             .type = NT_EVENT_TYPE_TIMEOUT,
-            .timeout_data = timeout_event
+            .elapsed = timeout
         };
 
         _return(ret, out_status, NT_SUCCESS);
@@ -463,14 +469,20 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     if(_poll_fds[0].revents & POLLIN)
     {
         struct nt_key_event key_event = _process_key_event(&_status);
-        event.type = NT_EVENT_TYPE_KEY;
-        event.key_data = key_event;
+        event = (struct nt_event) {
+            .type = NT_EVENT_TYPE_KEY,
+            .key_data = key_event,
+            .elapsed = elapsed
+        };
     }
     else // (poll_fds[1].revents & POLLIN)
     {
         struct nt_resize_event resize_event = _process_resize_event(&_status);
-        event.type = NT_EVENT_TYPE_RESIZE;
-        event.resize_data = resize_event;
+        event = (struct nt_event) {
+            .type = NT_EVENT_TYPE_RESIZE,
+            .resize_data = resize_event,
+            .elapsed = elapsed
+        };
     }
 
     _return(event, out_status, NT_SUCCESS);

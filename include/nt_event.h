@@ -5,14 +5,16 @@
 #ifndef _NT_EVENT_H_
 #define _NT_EVENT_H_
 
+#include <sys/types.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "nt_esc.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "nt_esc.h"
 
 /* ------------------------------------------------------ */
 /* KEY EVENT */
@@ -52,15 +54,6 @@ struct nt_resize_event
     size_t width, height;
 };
 
-/* ------------------------------------------------------ */
-/* TIMEOUT EVENT */
-/* ------------------------------------------------------ */
-
-struct nt_timeout_event
-{
-    uint64_t elapsed;
-};
-
 /* -------------------------------------------------------------------------- */
 /* EVENT */
 /* -------------------------------------------------------------------------- */
@@ -77,11 +70,11 @@ typedef enum nt_event_type
 struct nt_event
 {
     nt_event_type_t type;
+    uint elapsed;
     union
     {
         struct nt_key_event key_data;
         struct nt_resize_event resize_data;
-        struct nt_timeout_event timeout_data;
     };
 };
 

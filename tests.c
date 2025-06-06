@@ -19,13 +19,17 @@ void loop_basic()
     }
 }
 
+#define LOOP_TIMEOUT 5 * 1000
+
 void loop_lib()
 {
     nt_status_t _status;
     bool loop = true;
     while(loop)
     {
-        struct nt_event event = nt_wait_for_event(-1, &_status);
+        struct nt_event event = nt_wait_for_event(LOOP_TIMEOUT, &_status);
+        printf("(e:%d)", event.elapsed);
+
         assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_TYPE_KEY)
         {
@@ -142,14 +146,14 @@ int main(int argc, char *argv[])
 
     nt_alt_screen_enable(NULL);
 
-    struct nt_gfx gfx1 = {
-        .bg = nt_color_new(255, 0, 128),
-        .fg = nt_color_new(255, 255, 255),
-        .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
-    };
+    // struct nt_gfx gfx1 = {
+    //     .bg = nt_color_new(255, 0, 128),
+    //     .fg = nt_color_new(255, 255, 255),
+    //     .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
+    // };
 
-    write_test();
-
+    // write_test();
+    //
     loop_lib();
 
     nt_alt_screen_disable(NULL);

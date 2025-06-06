@@ -5,6 +5,7 @@
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -13,7 +14,6 @@
 #include "nt_event.h"
 #include "nt_gfx.h"
 #include "nt_esc.h"
-#include "nt_charbuff.h"
 
 #ifdef __cplusplus
 extern "C" {
