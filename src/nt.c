@@ -450,6 +450,8 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     ulong elapsed = ((_time2.tv_sec - _time1.tv_sec) * 1e3) +
         ((_time2.tv_nsec - _time1.tv_nsec) / 1e6);
 
+    elapsed = (elapsed <= timeout) ? elapsed : timeout;
+
     if(poll_status == -1)
     {
         _return(_NT_EVENT_EMPTY, out_status, NT_ERR_UNEXPECTED);
