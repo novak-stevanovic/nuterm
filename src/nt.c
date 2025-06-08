@@ -29,7 +29,35 @@ static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
 
-static nt_charbuff_t* _buff;
+static nt_charbuff_t* _buff = NULL;
+
+static void inline _buff_flush()
+{
+    const char* content;
+    size_t content_len;
+
+    nt_charbuff_rewind(_buff, &content, &content_len);
+    nt_awrite(STDOUT_FILENO, content, content_len);
+}
+
+static void inline _buff_append(const char* str, size_t str_len)
+{
+    if(_buff == NULL)
+    {
+        nt_awrite(STDOUT_FILENO, str, str_len);
+        return;
+    }
+
+    nt_status_t _status;
+    nt_charbuff_append(_buff, str, str_len, &_status);
+    if(_status == NT_ERR_OUT_OF_BOUNDS)
+    {
+        _buff_flush();
+        nt_charbuff_append(_buff, str, str_len, &_status);
+        if(_status == NT_ERR_OUT_OF_BOUNDS)
+            nt_awrite(STDOUT_FILENO, str, str_len);
+    }
+}
 
 static void _sa_handler(int signum)
 {
@@ -100,21 +128,18 @@ void __nt_init__(nt_status_t* out_status)
             _vreturn(out_status, NT_ERR_UNEXPECTED);
     }
 
-    _buff = nt_charbuff_new(0);
-    if(_buff == NULL)
-        _vreturn(out_status, NT_ERR_ALLOC_FAIL);
-
     _vreturn(out_status, NT_SUCCESS);
 }
 
 void __nt_deinit__()
 {
+    _buff = NULL;
+
     nt_write_str("", NT_GFX_DEFAULT,
             NULL, NULL);
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &_init_term_opts);
     nt_term_destroy();
-    nt_charbuff_destroy(_buff);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,24 +175,51 @@ static void _execute_used_term_func(enum nt_esc_func func, bool use_va,
     }
     else _func = esc_func;
 
-    nt_charbuff_append(_buff, _func);
+    _buff_append(_func, strlen(_func));
 
     _vreturn(out_status, NT_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------- */
 
-void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status)
+void nt_buffer_enable(nt_charbuff_t* buff)
 {
-    int status = nt_charbuff_set_cap(_buff, buff_cap);
+    if(buff == NULL) return;
+    if(_buff != NULL) return;
 
-    nt_status_t ret = (status == 0) ? NT_SUCCESS : NT_ERR_ALLOC_FAIL;
-    _vreturn(out_status, ret);
+    _buff = buff;
+}
+
+void nt_buffer_disable(nt_buffact_t buffact)
+{
+    if(_buff == NULL) return;
+
+    switch(buffact)
+    {
+        case NT_BUFF_KEEP:
+            _buff = NULL;
+            break;
+        case NT_BUFF_DISCARD:
+            nt_charbuff_rewind(_buff, NULL, NULL);
+            _buff = NULL;
+            break;
+        case NT_BUFF_FLUSH:
+            _buff_flush();
+            _buff = NULL;
+            break;
+    }
+}
+
+nt_charbuff_t* nt_buffer_get()
+{
+    return _buff;
 }
 
 void nt_buffer_flush()
 {
-    nt_charbuff_flush(_buff);
+    if(_buff == NULL) return;
+
+    _buff_flush();
 }
 
 /* ----------------------------------------------------- */
@@ -377,7 +429,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, used_styles, out_status, _status);
 
-    nt_charbuff_append(_buff, str);
+    _buff_append(str, strlen(str));
 
     _sreturn(out_styles, used_styles, out_status, NT_SUCCESS);
 }
@@ -678,14 +730,14 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
 
     buff[read_count + 1] = 0;
 
-    char* _buff = (char*)buff;
+    char* cbuff = (char*)buff;
 
     int i;
     struct nt_key_event ret;
     const struct nt_term_info* term = nt_term_get_used();
     for(i = 0; i < NT_ESC_KEY_OTHER; i++)
     {
-        if(strcmp(_buff, term->esc_key_seqs[i]) == 0)
+        if(strcmp(cbuff, term->esc_key_seqs[i]) == 0)
         {
             ret = (struct nt_key_event) {
                 .type = NT_KEY_EVENT_ESC_KEY,

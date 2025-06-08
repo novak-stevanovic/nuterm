@@ -5,35 +5,31 @@
 #ifndef _NT_CHARBUFF_H_
 #define _NT_CHARBUFF_H_
 
+#include <stddef.h>
+#include "nt_shared.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stddef.h>
 
 #define NT_CHARBUFF_CAP_DEFAULT 10000
 
 typedef struct nt_charbuff nt_charbuff_t;
 
-/* Functions below perform no validation of provided arguments. */
-
-// Returns 0 on success, 1 on alloc fail.
+/* If allocation fails or `cap` == 0, returns NULL. */
 nt_charbuff_t* nt_charbuff_new(size_t cap);
 
 void nt_charbuff_destroy(nt_charbuff_t* buff);
 
-/* If current length + len(`str`) > capacity, a flush will occur and
- * `str` will be stored at the beginning. If there is no capacity
- * for the provided `str`, no buffering will occur - the `str` will
- * be written right away. */
-void nt_charbuff_append(nt_charbuff_t* buff, const char* str);
+/* STATUS CODES:
+ * 1. NT_SUCCESS,
+ * 2. NT_ERR_INVALID_ARG - `buff` is NULL,
+ * 3. NT_ERR_OUT_OF_BOUNDS - not enough capacity. */
+void nt_charbuff_append(nt_charbuff_t* buff, const char* str, size_t len,
+        nt_status_t* out_status);
 
-/* Flushes the current buffer. Length is set to 0. */
-void nt_charbuff_flush(nt_charbuff_t* buff);
-
-/* Returns 0 on success, 1 on alloc fail.
- * If current length is greater than provided `cap`, a flush will occur. */
-int nt_charbuff_set_cap(nt_charbuff_t* buff, size_t cap);
+void nt_charbuff_rewind(nt_charbuff_t* buff, const char** out_str,
+        size_t* out_len);
 
 #ifdef __cplusplus
 }

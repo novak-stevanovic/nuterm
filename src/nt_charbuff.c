@@ -18,74 +18,59 @@ struct nt_charbuff
 
 nt_charbuff_t* nt_charbuff_new(size_t cap)
 {
-    nt_charbuff_t* buff = (nt_charbuff_t*)malloc(sizeof(struct nt_charbuff));
+    nt_charbuff_t* new = (nt_charbuff_t*)malloc(sizeof(struct nt_charbuff));
+    if(new == NULL) return NULL;
 
-    buff->_len = 0;
+    new->_data = malloc(cap);
+    if(new->_data == NULL)
+    {
+        free(new);
+        return NULL;
+    }
 
-    buff->_data = malloc((sizeof(char) * cap) + 1);
-    if(buff->_data == NULL) return NULL;
+    new->_cap = cap;
+    new->_len = 0;
 
-    buff->_data[0] = '\0';
-    buff->_cap = cap;
-
-    return buff;
+    return new;
 }
 
 void nt_charbuff_destroy(nt_charbuff_t* buff)
 {
     if(buff == NULL) return;
 
-    if(buff->_data != NULL) free(buff->_data);
+    free(buff->_data);
 
     free(buff);
 }
 
-void nt_charbuff_append(nt_charbuff_t* buff, const char* str)
+void nt_charbuff_append(nt_charbuff_t* buff, const char* str, size_t len,
+        nt_status_t* out_status)
 {
-    if(str == NULL) return;
+    if(buff == NULL)
+        _vreturn(out_status, NT_ERR_INVALID_ARG);
 
-    size_t len = strlen(str);
-    if((buff->_len + len) <= buff->_cap) // enough allocated space
-    {
-        memcpy(buff->_data + buff->_len, str, len);
-        buff->_len += len;
-    }
-    else
-    {
-        nt_charbuff_flush(buff);
-        if(buff->_cap >= len) // enough allocated space for this func
-        {
-            memcpy(buff->_data, str, len);
-            buff->_len = len;
-        }
-        else
-        {
-            nt_awrite(STDOUT_FILENO, str, len);
-        }
-    }
+    if((buff->_len + len) > buff->_cap)
+        _vreturn(out_status, NT_ERR_OUT_OF_BOUNDS);
 
+    memcpy((buff->_data + buff->_len), str, len);
+    buff->_len += len;
+
+    _vreturn(out_status, NT_SUCCESS);
 }
 
-void nt_charbuff_flush(nt_charbuff_t* buff)
+void nt_charbuff_rewind(nt_charbuff_t* buff, const char** out_str,
+        size_t* out_len)
 {
-    if(buff->_len > 0)
-        nt_awrite(STDOUT_FILENO, buff->_data, buff->_len);
+    if(buff == NULL)
+    {
+        if(out_str != NULL) *out_str = NULL;
+        if(out_len != NULL) *out_len = 0;
+
+        return;
+    }
+
+    if(out_str != NULL) *out_str = buff->_data;
+    if(out_len != NULL) *out_len = buff->_len;
 
     buff->_len = 0;
-}
-
-int nt_charbuff_set_cap(nt_charbuff_t* buff, size_t cap)
-{
-    if(buff->_cap == cap) return 0;
-
-    if(buff->_len > cap)
-        nt_charbuff_flush(buff);
-
-    void* new_data = realloc(buff->_data, cap + 1);
-    if(new_data == NULL) return 1;
-
-    buff->_data = new_data;
-    buff->_cap = cap;
-
-    return 0;
 }

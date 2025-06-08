@@ -76,15 +76,15 @@ void test_styles()
 {
     size_t i;
 
-    while(1)
-    {
+    // while(1)
+    // {
         struct nt_gfx gfx1 = {
             .fg = nt_color_new(0, 0, 255),
             .bg = nt_color_new(255, 0, 0),
             .style = NT_STYLE_BOLD
         };
-        char c = getchar();
-        if(c == 'q') break;
+        // char c = getchar();
+        // if(c == 'q') break;
 
         for(i = 0; i < 8; i++)
         {
@@ -93,10 +93,10 @@ void test_styles()
             nt_write_str_at("Test1", gfx1, 0, 10, &style, &status);
             // assert(style == gfx1.style);
             assert(status == NT_SUCCESS);
-            sleep(2);
+            sleep(1);
             gfx1.style <<= 1;
         }
-    }
+    // }
 }
 
 void write_test()
@@ -106,26 +106,8 @@ void write_test()
         .bg = nt_color_new(255, 0, 0),
         .fg = nt_color_new(0, 0, 255),
         .style = NT_STYLE_DEFAULT
-            // NT_STYLE_FAINT
-            // NT_STYLE_ITALIC
-            // NT_STYLE_UNDERLINE
-            // NT_STYLE_REVERSE | 
-            // NT_STYLE_HIDDEN | 
-            // NT_STYLE_STRIKETHROUGH
     };
 
-    size_t _width = 5, _height = 5;
-    // nt_get_term_size(&_width, &_height);
-    size_t i, j;
-
-    for(i = 0; i < _height; i++)
-    {
-        for(j = 0; j < _width; j++)
-        {
-            nt_write_char_at(70, gfx1, j, i, NULL, &_status);
-            assert(_status == 0);
-        }
-    }
 }
 
 void handler1(struct nt_key_event key_event, void* data)
@@ -144,19 +126,48 @@ int main(int argc, char *argv[])
     __nt_init__(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_alt_screen_enable(NULL);
+    struct nt_gfx complete = {
+        .bg = nt_color_new(0, 255, 0),
+        .fg = nt_color_new(0, 255, 0),
+        .style = 0
+    };
 
-    // struct nt_gfx gfx1 = {
-    //     .bg = nt_color_new(255, 0, 128),
-    //     .fg = nt_color_new(255, 255, 255),
-    //     .style = NT_STYLE_BOLD | NT_STYLE_ITALIC
-    // };
+    struct nt_gfx uncomplete = {
+        .bg = nt_color_new(255, 0, 0),
+        .fg = nt_color_new(255, 0, 0),
+        .style = 0
+    };
 
-    // write_test();
-    //
-    loop_lib();
+    size_t _width, _height;
+    nt_get_term_size(&_width, &_height);
+    
+    nt_buffer_enable(nt_charbuff_new(100000));
 
-    nt_alt_screen_disable(NULL);
+    size_t i, j;
+    size_t total;
+    for(total = 0; total < 10; total++)
+    {
+        for(i = 0; i < _width; i++)
+        {
+            nt_write_str_at("", NT_GFX_DEFAULT, 0, _height - 1, NULL, NULL);
+            for(j = 0; j <= i; j++)
+            {
+                nt_write_str(" ", complete, NULL, NULL);
+            }
+
+            for(j = i + 1; j < _width; j++)
+            {
+                nt_write_str(" ", uncomplete, NULL, NULL);
+            }
+
+            nt_buffer_flush();
+        }
+    }
+
+    getchar();
+
+    nt_buffer_disable(NT_BUFF_FLUSH);
+
     __nt_deinit__();
 
     return 0;

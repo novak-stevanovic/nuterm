@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#include "nt_charbuff.h"
 #include "nt_shared.h"
 #include "nt_event.h"
 #include "nt_gfx.h"
@@ -51,24 +52,26 @@ void __nt_deinit__();
 
 /* ------------------------------------------------------ */
 
-/* Sets capacity of internal output buffer. If `buff_cap` == 0, buffering is
- * disabled. If the buffer contains content, and the content's length is 
- * greater than `buff_cap`, a flush will occur.
+/* Enables buffering. When `buff` reaches its capacity, its contents will be
+ * flushed to stdout. If buffering is already enabled, this function has no
+ * effect. */
+void nt_buffer_enable(nt_charbuff_t* buff);
 
- * STATUS CODES:
- * 1) NT_SUCCESS,
- * 2) NT_ERR_ALLOC_FAIL - if `buff_cap` is greater than the current buffer
- * capacity, a realloc() call may fail. */
-void nt_buffer_set_cap(size_t buff_cap, nt_status_t* out_status);
+typedef enum nt_buffact 
+{ 
+    NT_BUFF_KEEP, // keep the contents inside the nt_charbuff
+    NT_BUFF_DISCARD, // rewind the str pointer of the nt_charbuff
+    NT_BUFF_FLUSH // flush the contents of the nt_charbuff to stdout
+} nt_buffact_t;
 
-/* Capacity of internal output buffer */
-#define NT_BUFFER_CAP_DEFAULT 10000
+/* Disables buffering. `buffact` dictates what happens to the contents of the
+ * buffer. If buffering is already disabled, this function has no effect. */
+void nt_buffer_disable(nt_buffact_t buffact);
 
-/* Convenience macros. */
-#define nt_buffer_enable() nt_buffer_set_cap(NT_BUFFER_CAP_DEFAULT, NULL)
-#define nt_buffer_disable() nt_buffer_set_cap(0, NULL)
+/* Returns the current buffer. Can be used to manually free the nt_charbuff. */
+nt_charbuff_t* nt_buffer_get();
 
-/* Flushes the content of the internal output buffer onto the screen. */
+/* Flushes the buffer to stdout if buffering is currently enabled. */
 void nt_buffer_flush();
 
 /* ----------------------------------------------------- */
