@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef int nt_status_t;
+typedef int nt_status;
 
 #define _NT_STATUS_BASE 0
 #define NT_SUCCESS (_NT_STATUS_BASE + 0)

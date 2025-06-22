@@ -23,7 +23,7 @@ void loop_basic()
 
 void loop_lib()
 {
-    nt_status_t _status;
+    nt_status _status;
     bool loop = true;
     while(loop)
     {
@@ -88,8 +88,8 @@ void test_styles()
 
         for(i = 0; i < 8; i++)
         {
-            nt_status_t status;
-            nt_style_t style;
+            nt_status status;
+            nt_style style;
             nt_write_str_at("Test1", gfx1, 0, 10, &style, &status);
             // assert(style == gfx1.style);
             assert(status == NT_SUCCESS);
@@ -101,7 +101,7 @@ void test_styles()
 
 void write_test()
 {
-    nt_status_t _status;
+    nt_status _status;
     struct nt_gfx gfx1 = {
         .bg = nt_color_new(255, 0, 0),
         .fg = nt_color_new(0, 0, 255),
@@ -122,7 +122,7 @@ void handler2(struct nt_key_event key_event, void* data)
 
 int main(int argc, char *argv[])
 {
-    nt_status_t _status;
+    nt_status _status;
     __nt_init__(&_status);
     assert(_status == NT_SUCCESS);
 

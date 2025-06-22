@@ -65,11 +65,11 @@ typedef enum nt_event_type
     NT_EVENT_TYPE_KEY,
     NT_EVENT_TYPE_RESIZE,
     NT_EVENT_TYPE_TIMEOUT
-} nt_event_type_t;
+} nt_event_type;
 
 struct nt_event
 {
-    nt_event_type_t type;
+    nt_event_type type;
     uint elapsed;
     union
     {

@@ -16,9 +16,9 @@ struct nt_charbuff
     size_t _cap;
 };
 
-nt_charbuff_t* nt_charbuff_new(size_t cap)
+nt_charbuff* nt_charbuff_new(size_t cap)
 {
-    nt_charbuff_t* new = (nt_charbuff_t*)malloc(sizeof(struct nt_charbuff));
+    nt_charbuff* new = (nt_charbuff*)malloc(sizeof(struct nt_charbuff));
     if(new == NULL) return NULL;
 
     new->_data = malloc(cap);
@@ -34,7 +34,7 @@ nt_charbuff_t* nt_charbuff_new(size_t cap)
     return new;
 }
 
-void nt_charbuff_destroy(nt_charbuff_t* buff)
+void nt_charbuff_destroy(nt_charbuff* buff)
 {
     if(buff == NULL) return;
 
@@ -43,8 +43,8 @@ void nt_charbuff_destroy(nt_charbuff_t* buff)
     free(buff);
 }
 
-void nt_charbuff_append(nt_charbuff_t* buff, const char* str, size_t len,
-        nt_status_t* out_status)
+void nt_charbuff_append(nt_charbuff* buff, const char* str, size_t len,
+        nt_status* out_status)
 {
     if(buff == NULL)
         _vreturn(out_status, NT_ERR_INVALID_ARG);
@@ -58,7 +58,7 @@ void nt_charbuff_append(nt_charbuff_t* buff, const char* str, size_t len,
     _vreturn(out_status, NT_SUCCESS);
 }
 
-void nt_charbuff_rewind(nt_charbuff_t* buff, const char** out_str,
+void nt_charbuff_rewind(nt_charbuff* buff, const char** out_str,
         size_t* out_len)
 {
     if(buff == NULL)

@@ -37,7 +37,7 @@ extern "C" {
  * 5) NT_ERR_TERM_NOT_SUPPORTED - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
  * 6) NT_ERR_UNEXPECTED. */
-void __nt_init__(nt_status_t* out_status);
+void __nt_init__(nt_status* out_status);
 
 /* Destroys the library and reverts terminal settings to old values.
  * Frees dynamically allocated memory. */
@@ -55,21 +55,21 @@ void __nt_deinit__();
 /* Enables buffering. When `buff` reaches its capacity, its contents will be
  * flushed to stdout. If buffering is already enabled, this function has no
  * effect. */
-void nt_buffer_enable(nt_charbuff_t* buff);
+void nt_buffer_enable(nt_charbuff* buff);
 
-typedef enum nt_buffact 
+typedef enum nt_buffact
 { 
     NT_BUFF_KEEP, // keep the contents inside the nt_charbuff
     NT_BUFF_DISCARD, // rewind the str pointer of the nt_charbuff
     NT_BUFF_FLUSH // flush the contents of the nt_charbuff to stdout
-} nt_buffact_t;
+} nt_buffact;
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect. */
-void nt_buffer_disable(nt_buffact_t buffact);
+void nt_buffer_disable(nt_buffact buffact);
 
 /* Returns the current buffer. Can be used to manually free the nt_charbuff. */
-nt_charbuff_t* nt_buffer_get();
+nt_charbuff* nt_buffer_get();
 
 /* Flushes the buffer to stdout if buffering is currently enabled. */
 void nt_buffer_flush();
@@ -87,15 +87,15 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
  * function,
  * 4) NT_ERR_UNEXPECTED. */
 
-void nt_cursor_hide(nt_status_t* out_status);
-void nt_cursor_show(nt_status_t* out_status);
+void nt_cursor_hide(nt_status* out_status);
+void nt_cursor_show(nt_status* out_status);
 
-void nt_erase_screen(nt_status_t* out_status);
-void nt_erase_line(nt_status_t* out_status);
-void nt_erase_scrollback(nt_status_t* out_status);
+void nt_erase_screen(nt_status* out_status);
+void nt_erase_line(nt_status* out_status);
+void nt_erase_scrollback(nt_status* out_status);
 
-void nt_alt_screen_enable(nt_status_t* out_status);
-void nt_alt_screen_disable(nt_status_t* out_status);
+void nt_alt_screen_enable(nt_status* out_status);
+void nt_alt_screen_disable(nt_status* out_status);
 
 /* ------------------------------------------------------------------------- */
 /* WRITE TO TERMINAL */
@@ -107,8 +107,8 @@ void nt_alt_screen_disable(nt_status_t* out_status);
  * Additionally, the following status codes can be returned:
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style_t* out_styles,
-        nt_status_t* out_status);
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style* out_styles,
+        nt_status* out_status);
 
 /* Prints null-terminated `str` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
@@ -130,8 +130,8 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style_t* out_styles
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
  * 4) NT_ERR_UNEXPECTED. */
-void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
-        nt_status_t* out_status);
+void nt_write_str(const char* str, struct nt_gfx gfx, nt_style* out_styles,
+        nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
  *
@@ -141,7 +141,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status);
+        nt_style* out_styles, nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_str(). 
  *
@@ -151,7 +151,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status);
+        nt_style* out_styles, nt_status* out_status);
 
 /* ------------------------------------------------------------------------- */
 /* EVENT */
@@ -185,7 +185,7 @@ void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED - this can occur, for example, if read(), write()
  * or poll() fails and the failure is not internally handled. */
-struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status);
+struct nt_event nt_wait_for_event(int timeout, nt_status* out_status);
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@
 #include "_nt_term.h"
 #include "_nt_shared.h"
 
-static nt_term_color_count_t _color = NT_TERM_COLOR_OTHER;
+static nt_term_color_count _color = NT_TERM_COLOR_OTHER;
 static struct nt_term_info* _term = NULL;
 
 static char* _xterm_esc_key_seqs[] = {
@@ -161,7 +161,7 @@ static struct nt_term_info _terms[] = {
     }
 };
 
-void nt_term_init(nt_status_t* out_status)
+void nt_term_init(nt_status* out_status)
 {
     char* env_term = getenv("TERM");
     char* env_colorterm = getenv("COLORTERM");
@@ -198,7 +198,7 @@ void nt_term_init(nt_status_t* out_status)
             _color = NT_TERM_COLOR_C8;
     }
 
-    nt_status_t ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPPORTED;
+    nt_status ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPPORTED;
     _vreturn(out_status, ret);
 }
 
@@ -207,7 +207,7 @@ const struct nt_term_info* nt_term_get_used()
     return _term;
 }
 
-nt_term_color_count_t nt_term_get_color_count()
+nt_term_color_count nt_term_get_color_count()
 {
     return _color;
 }

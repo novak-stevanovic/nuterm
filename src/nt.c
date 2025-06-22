@@ -29,7 +29,7 @@ static int _resize_fds[2];
 static struct pollfd _poll_fds[2];
 static struct termios _init_term_opts;
 
-static nt_charbuff_t* _buff = NULL;
+static nt_charbuff* _buff = NULL;
 
 static void inline _buff_flush()
 {
@@ -48,7 +48,7 @@ static void inline _buff_append(const char* str, size_t str_len)
         return;
     }
 
-    nt_status_t _status;
+    nt_status _status;
     nt_charbuff_append(_buff, str, str_len, &_status);
     if(_status == NT_ERR_OUT_OF_BOUNDS)
     {
@@ -78,9 +78,9 @@ static inline void _term_opts_raw(struct termios* term_opts)
     term_opts->c_cc[VTIME] = 0;
 }
 
-void __nt_init__(nt_status_t* out_status)
+void __nt_init__(nt_status* out_status)
 {
-    nt_status_t _status;
+    nt_status _status;
     int status;
 
     status = tcgetattr(STDIN_FILENO, &_init_term_opts);
@@ -147,7 +147,7 @@ void __nt_deinit__()
 /* -------------------------------------------------------------------------- */
 
 static void _execute_used_term_func(enum nt_esc_func func, bool use_va,
-        nt_status_t* out_status, ...)
+        nt_status* out_status, ...)
 {
     int status;
 
@@ -182,7 +182,7 @@ static void _execute_used_term_func(enum nt_esc_func func, bool use_va,
 
 /* -------------------------------------------------------------------------- */
 
-void nt_buffer_enable(nt_charbuff_t* buff)
+void nt_buffer_enable(nt_charbuff* buff)
 {
     if(buff == NULL) return;
     if(_buff != NULL) return;
@@ -190,7 +190,7 @@ void nt_buffer_enable(nt_charbuff_t* buff)
     _buff = buff;
 }
 
-void nt_buffer_disable(nt_buffact_t buffact)
+void nt_buffer_disable(nt_buffact buffact)
 {
     if(_buff == NULL) return;
 
@@ -210,7 +210,7 @@ void nt_buffer_disable(nt_buffact_t buffact)
     }
 }
 
-nt_charbuff_t* nt_buffer_get()
+nt_charbuff* nt_buffer_get()
 {
     return _buff;
 }
@@ -245,40 +245,40 @@ void nt_get_term_size(size_t* out_width, size_t* out_height)
     if(out_height != NULL) *out_height = ret_height;
 }
 
-void nt_cursor_hide(nt_status_t* out_status)
+void nt_cursor_hide(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, false, out_status);
 }
 
-void nt_cursor_show(nt_status_t* out_status)
+void nt_cursor_show(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, false, out_status);
 }
 
-void nt_erase_screen(nt_status_t* out_status)
+void nt_erase_screen(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     _execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, false, out_status);
 }
 
-void nt_erase_line(nt_status_t* out_status)
+void nt_erase_line(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     _execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, false, out_status);
 }
 
-void nt_erase_scrollback(nt_status_t* out_status)
+void nt_erase_scrollback(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     _execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, false, out_status);
 }
 
-void nt_alt_screen_enable(nt_status_t* out_status)
+void nt_alt_screen_enable(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, false, out_status);
 }
 
-void nt_alt_screen_disable(nt_status_t* out_status)
+void nt_alt_screen_disable(nt_status* out_status)
 {
     _execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, false, out_status);
 }
@@ -287,16 +287,16 @@ void nt_alt_screen_disable(nt_status_t* out_status)
 /* WRITE TO TERMINAL */
 /* ------------------------------------------------------------------------- */
 
-typedef enum set_color_opt {
+enum set_color_opt {
     SET_COLOR_FG,
     SET_COLOR_BG
-} set_color_opt_t;
+};
 
-static void _set_color(nt_color_t color, set_color_opt_t opt,
-        nt_status_t* out_status)
+static void _set_color(nt_color color, enum set_color_opt opt,
+        nt_status* out_status)
 {
-    nt_status_t _status;
-    nt_term_color_count_t colors = nt_term_get_color_count();
+    nt_status _status;
+    nt_term_color_count colors = nt_term_get_color_count();
 
     size_t func_offset = (opt == SET_COLOR_FG) ? 0 : 4;
 
@@ -350,14 +350,14 @@ static void _set_color(nt_color_t color, set_color_opt_t opt,
     } while(0)                                                                 \
 
 /* Assumes styles are not set before calling. */
-static void _set_style(nt_style_t style, nt_style_t* out_style,
-        nt_status_t* out_status)
+static void _set_style(nt_style style, nt_style* out_style,
+        nt_status* out_status)
 {
-    nt_status_t _status;
+    nt_status _status;
 
     size_t i;
     size_t count = 8;
-    nt_style_t used = NT_STYLE_DEFAULT;
+    nt_style used = NT_STYLE_DEFAULT;
     for(i = 0; i < count; i++)
     {
         if(style & (NT_STYLE_BOLD << i))
@@ -376,12 +376,12 @@ static void _set_style(nt_style_t style, nt_style_t* out_style,
 }
 
 // UTF-32
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style_t* out_styles,
-        nt_status_t* out_status)
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style* out_styles,
+        nt_status* out_status)
 {
     char utf8[5];
     size_t utf8_len;
-    nt_status_t _status;
+    nt_status _status;
 
     uc_utf32_to_utf8(&codepoint, 1, (uint8_t*)utf8,
             4, 0, NULL, &utf8_len, &_status);
@@ -407,10 +407,10 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style_t* out_styles
 }
 
 // UTF-8
-void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
-        nt_status_t* out_status)
+void nt_write_str(const char* str, struct nt_gfx gfx, nt_style* out_styles,
+        nt_status* out_status)
 {
-    nt_status_t _status;
+    nt_status _status;
 
     _execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
@@ -424,7 +424,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, NT_STYLE_DEFAULT, out_status, _status);
 
-    nt_style_t used_styles;
+    nt_style used_styles;
     _set_style(gfx.style, &used_styles, &_status);
     if(_status != NT_SUCCESS)
         _sreturn(out_styles, used_styles, out_status, _status);
@@ -435,7 +435,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, nt_style_t* out_styles,
 }
 
 void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status)
+        nt_style* out_styles, nt_status* out_status)
 {
     size_t _width, _height;
     nt_get_term_size(&_width, &_height);
@@ -446,7 +446,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
                 NT_ERR_OUT_OF_BOUNDS);
     }
 
-    nt_status_t _status;
+    nt_status _status;
 
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
@@ -456,7 +456,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
 }
 
 void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style_t* out_styles, nt_status_t* out_status)
+        nt_style* out_styles, nt_status* out_status)
 {
     size_t _width, _height;
     nt_get_term_size(&_width, &_height);
@@ -467,7 +467,7 @@ void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
                 NT_ERR_OUT_OF_BOUNDS);
     }
 
-    nt_status_t _status;
+    nt_status _status;
 
     _execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
@@ -481,16 +481,16 @@ void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
 /* -------------------------------------------------------------------------- */
 
 /* Called by nt_wait_for_event() internally. */
-static struct nt_key_event _process_key_event(nt_status_t* out_status);
+static struct nt_key_event _process_key_event(nt_status* out_status);
 
 /* Called by nt_wait_for_event() internally. */
-static struct nt_resize_event _process_resize_event(nt_status_t* out_status);
+static struct nt_resize_event _process_resize_event(nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */
 
 static const struct nt_event _NT_EVENT_EMPTY = {0};
 
-struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
+struct nt_event nt_wait_for_event(int timeout, nt_status* out_status)
 {
     struct timespec _time1, _time2;
     clock_gettime(CLOCK_REALTIME, &_time1);
@@ -519,7 +519,7 @@ struct nt_event nt_wait_for_event(int timeout, nt_status_t* out_status)
     }
 
     struct nt_event event;
-    nt_status_t _status;
+    nt_status _status;
     if(_poll_fds[0].revents & POLLIN)
     {
         struct nt_key_event key_event = _process_key_event(&_status);
@@ -554,21 +554,21 @@ static const struct nt_key_event _NT_KEY_EVENT_EMPTY = {0};
  * `utf8_sbyte` - ptr to first byte of utf8.
  * Other bytes will be read into `utf8_sbyte` in the function. */
 static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
-        bool alt, nt_status_t* out_status);
+        bool alt, nt_status* out_status);
 
 /* Called by _process_key_event() internally.
  * `buff` - ptr to the first byte of the ESC sequence(ESC char).
  * The whole escape sequences will be read into the buffer inside the function. */
 static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
-        nt_status_t* out_status);
+        nt_status* out_status);
 
 /* ------------------------------------------------------ */
 
-static struct nt_key_event _process_key_event(nt_status_t* out_status)
+static struct nt_key_event _process_key_event(nt_status* out_status)
 {
     unsigned char buff[64];
     int poll_status, read_status;
-    nt_status_t _status;
+    nt_status _status;
 
     read_status = nt_aread(STDIN_FILENO, buff, 1);
     if(read_status < 0)
@@ -668,7 +668,7 @@ static struct nt_key_event _process_key_event(nt_status_t* out_status)
 }
 
 static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
-        bool alt, nt_status_t* out_status)
+        bool alt, nt_status* out_status)
 {
     size_t utf32_len;
     utf32_len = uc_utf8_char_len(utf8_sbyte[0]);
@@ -710,7 +710,7 @@ static struct nt_key_event _process_key_event_utf32(uint8_t* utf8_sbyte,
 }
 
 static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
-        nt_status_t* out_status)
+        nt_status* out_status)
 {
     int read_status;
     int read_count = 2;
@@ -766,7 +766,7 @@ static struct nt_key_event _process_key_event_esc_key(uint8_t* buff,
 
 static const struct nt_resize_event _NT_RESIZE_EVENT_EMPTY = {0};
 
-static struct nt_resize_event _process_resize_event(nt_status_t* out_status)
+static struct nt_resize_event _process_resize_event(nt_status* out_status)
 {
     char buff[1];
     int read_status = nt_aread(_resize_fds[0], buff, 1);

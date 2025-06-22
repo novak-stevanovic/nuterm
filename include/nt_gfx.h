@@ -28,12 +28,12 @@ typedef struct nt_color
     {
         uint8_t r, g, b;
     } _rgb;
-} nt_color_t;
+} nt_color;
 
-extern const nt_color_t NT_COLOR_DEFAULT;
+extern const nt_color NT_COLOR_DEFAULT;
 
-nt_color_t nt_color_new(uint8_t r, uint8_t g, uint8_t b);
-bool nt_color_cmp(nt_color_t c1, nt_color_t c2);
+nt_color nt_color_new(uint8_t r, uint8_t g, uint8_t b);
+bool nt_color_cmp(nt_color c1, nt_color c2);
 
 /* -------------------------------------------------------------------------- */
 /* STYLE */
@@ -41,9 +41,9 @@ bool nt_color_cmp(nt_color_t c1, nt_color_t c2);
 
 /* Bitmask type where each bit represents a style. */
 
-typedef uint8_t nt_style_t;
+typedef uint8_t nt_style;
 
-extern const nt_style_t NT_STYLE_DEFAULT;
+extern const nt_style NT_STYLE_DEFAULT;
 
 #define NT_STYLE_NONE         0
 #define NT_STYLE_BOLD            (1 << 0)  // 00000001
@@ -61,8 +61,8 @@ extern const nt_style_t NT_STYLE_DEFAULT;
 
 struct nt_gfx
 {
-    nt_color_t fg, bg;
-    nt_style_t style;
+    nt_color fg, bg;
+    nt_style style;
 };
 
 extern const struct nt_gfx NT_GFX_DEFAULT;

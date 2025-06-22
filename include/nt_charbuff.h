@@ -14,21 +14,21 @@ extern "C" {
 
 #define NT_CHARBUFF_CAP_DEFAULT 10000
 
-typedef struct nt_charbuff nt_charbuff_t;
+typedef struct nt_charbuff nt_charbuff;
 
 /* If allocation fails or `cap` == 0, returns NULL. */
-nt_charbuff_t* nt_charbuff_new(size_t cap);
+nt_charbuff* nt_charbuff_new(size_t cap);
 
-void nt_charbuff_destroy(nt_charbuff_t* buff);
+void nt_charbuff_destroy(nt_charbuff* buff);
 
 /* STATUS CODES:
  * 1. NT_SUCCESS,
  * 2. NT_ERR_INVALID_ARG - `buff` is NULL,
  * 3. NT_ERR_OUT_OF_BOUNDS - not enough capacity. */
-void nt_charbuff_append(nt_charbuff_t* buff, const char* str, size_t len,
-        nt_status_t* out_status);
+void nt_charbuff_append(nt_charbuff* buff, const char* str, size_t len,
+        nt_status* out_status);
 
-void nt_charbuff_rewind(nt_charbuff_t* buff, const char** out_str,
+void nt_charbuff_rewind(nt_charbuff* buff, const char** out_str,
         size_t* out_len);
 
 #ifdef __cplusplus
