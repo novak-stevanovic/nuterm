@@ -171,6 +171,11 @@ nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb)
     };
 }
 
+nt_style nt_style_new_(uint8_t value)
+{
+    return nt_style_new(value, value, value);
+}
+
 bool nt_style_are_equal(nt_style style1, nt_style style2)
 {
     return (memcmp(&style1, &style2, sizeof(nt_style)) == 0);

@@ -313,116 +313,101 @@ static void _set_gfx(struct nt_gfx gfx, nt_status* out_status)
     }
     else
     {
-        switch(colors)
-        {
-            case NT_TERM_COLOR_TC:
-                _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_RGB,
-                        true, &_status,
-                        gfx.fg._rgb.r,
-                        gfx.fg._rgb.g,
-                        gfx.fg._rgb.b);
-                break;
-
-            case NT_TERM_COLOR_C256:
-                _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_C256,
-                        true, &_status,
-                        gfx.fg._code256);
-                break;
-
-            case NT_TERM_COLOR_C8:
-                _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_C8,
-                        true, &_status,
-                        gfx.fg._code8);
-                break;
-
-            default:
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-        }
-
-        if(_status != NT_SUCCESS)
-        {
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-        }
-
-        /* Set background --------------------------------------------------- */
-
-        if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.bg))
+        if(colors == NT_TERM_COLOR_TC)
         {
             _execute_used_term_func(
-                    NT_ESC_FUNC_BG_SET_DEFAULT,
-                    false, &_status);
+                    NT_ESC_FUNC_FG_SET_RGB,
+                    true, &_status,
+                    gfx.fg._rgb.r,
+                    gfx.fg._rgb.g,
+                    gfx.fg._rgb.b);
         }
-        else
+        else if(colors == NT_TERM_COLOR_C256)
         {
-            switch(colors)
-            {
-                case NT_TERM_COLOR_TC:
-                    _execute_used_term_func(
-                            NT_ESC_FUNC_BG_SET_RGB,
-                            true, &_status,
-                            gfx.bg._rgb.r,
-                            gfx.bg._rgb.g,
-                            gfx.bg._rgb.b);
-                    break;
+            _execute_used_term_func(
+                    NT_ESC_FUNC_FG_SET_C256,
+                    true, &_status,
+                    gfx.fg._code256);
+        }
+        else if(colors == NT_TERM_COLOR_C8)
+        {
+            _execute_used_term_func(
+                    NT_ESC_FUNC_FG_SET_C8,
+                    true, &_status,
+                    gfx.fg._code8);
+        }
+        else { _nt_vreturn(out_status, NT_ERR_UNEXPECTED); }
+    }
 
-                case NT_TERM_COLOR_C256:
-                    _execute_used_term_func(
-                            NT_ESC_FUNC_BG_SET_C256,
-                            true, &_status,
-                            gfx.bg._code256);
-                    break;
+    if(_status != NT_SUCCESS)
+    {
+        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    }
 
-                case NT_TERM_COLOR_C8:
-                    _execute_used_term_func(
-                            NT_ESC_FUNC_BG_SET_C8,
-                            true, &_status,
-                            gfx.bg._code8);
-                    break;
+    /* Set background --------------------------------------------------- */
 
-                default:
-                    _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
+    if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.bg))
+    {
+        _execute_used_term_func(
+                NT_ESC_FUNC_BG_SET_DEFAULT,
+                false, &_status);
+    }
+    else
+    {
+        if(colors == NT_TERM_COLOR_TC)
+        {
+            _execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_RGB,
+                    true, &_status,
+                    gfx.bg._rgb.r,
+                    gfx.bg._rgb.g,
+                    gfx.bg._rgb.b);
+        }
+        else if(colors == NT_TERM_COLOR_C256)
+        {
+            _execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_C256,
+                    true, &_status,
+                    gfx.bg._code256);
+        }
+        else if(colors == NT_TERM_COLOR_C8)
+        {
+            _execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_C8,
+                    true, &_status,
+                    gfx.bg._code8);
+        }
+        else { _nt_vreturn(out_status, NT_ERR_UNEXPECTED); }
+    }
 
+    if(_status != NT_SUCCESS)
+    {
+        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    }
+
+    /* Set style -------------------------------------------------------- */
+
+    uint8_t style;
+
+    if(colors == NT_TERM_COLOR_TC)
+        style = gfx.style._value_c8;
+    else if(colors == NT_TERM_COLOR_C256)
+        style = gfx.style._value_c256;
+    else if(colors == NT_TERM_COLOR_C8)
+        style = gfx.style._value_rgb;
+    else { _nt_vreturn(out_status, NT_ERR_UNEXPECTED); }
+
+    size_t i;
+    size_t count = 8;
+    for(i = 0; i < count; i++)
+    {
+        if(style & (NT_STYLE_VAL_BOLD << i))
+        {
+            _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
             if(_status != NT_SUCCESS)
             {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-        }
-
-        /* Set style -------------------------------------------------------- */
-
-        uint8_t style;
-
-        switch(colors)
-        {
-            case NT_TERM_COLOR_C8:
-                style = gfx.style._value_c8;
-                break;
-            case NT_TERM_COLOR_C256:
-                style = gfx.style._value_c256;
-                break;
-            case NT_TERM_COLOR_TC:
-                style = gfx.style._value_rgb;
-                break;
-            default:
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-        }
-
-        size_t i;
-        size_t count = 8;
-        for(i = 0; i < count; i++)
-        {
-            if(style & (NT_STYLE_VAL_BOLD << i))
-            {
-                _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
-                if(_status != NT_SUCCESS)
-                {
-                    if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-                        _nt_vreturn(out_status, _status);
-                }
+                if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
+                    _nt_vreturn(out_status, _status);
             }
         }
     }

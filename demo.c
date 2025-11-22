@@ -86,15 +86,9 @@ int main(int argc, char *argv[])
     __nt_init__(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_color fg = nt_color_new(
-            NT_COLOR_C8_BLACK,
-            nt_rgb_to_c256(nt_rgb_new(255, 0, 0)),
-            nt_rgb_new(100, 0, 200));
+    nt_color fg = nt_color_new_rgb(nt_rgb_new(255, 0, 0));
 
-    nt_color bg = nt_color_new(
-            NT_COLOR_C8_WHITE,
-            nt_rgb_to_c256(nt_rgb_new(0, 255, 0)),
-            nt_rgb_new(255, 255, 200));
+    nt_color bg = nt_color_new_rgb(nt_rgb_new(255, 0, 0));
 
     nt_style style = nt_style_new(
             NT_STYLE_VAL_BOLD,

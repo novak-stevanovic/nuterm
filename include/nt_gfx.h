@@ -70,6 +70,7 @@ typedef struct nt_style
 extern const nt_style NT_STYLE_DEFAULT;
 
 nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
+nt_style nt_style_new_(uint8_t value);
 
 bool nt_style_are_equal(nt_style style1, nt_style style2);
 
