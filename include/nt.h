@@ -107,8 +107,7 @@ void nt_alt_screen_disable(nt_status* out_status);
  * Additionally, the following status codes can be returned:
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style* out_styles,
-        nt_status* out_status);
+void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status);
 
 /* Prints null-terminated `str` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
@@ -118,10 +117,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style* out_styles,
  * is called. 
  *
  * If a style is specified in `gfx` but the terminal doesn't support the style,
- * the status variable will not indicate this. Instead, `out_styles` will be set
- * to indicate successfully set styles. Keep in mind that some terminal emulators
- * view some styles as mutually exclusive(for example, bold and italic may not
- * be set at the same time). `out_styles` will not be able to indicate this.
+ * the status variable will not indicate this.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS, 
@@ -130,8 +126,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_style* out_styles,
  * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
  * buffer failed,
  * 4) NT_ERR_UNEXPECTED. */
-void nt_write_str(const char* str, struct nt_gfx gfx, nt_style* out_styles,
-        nt_status* out_status);
+void nt_write_str(const char* str, struct nt_gfx gfx, nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
  *
@@ -141,7 +136,7 @@ void nt_write_str(const char* str, struct nt_gfx gfx, nt_style* out_styles,
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style* out_styles, nt_status* out_status);
+        nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_str(). 
  *
@@ -151,7 +146,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 void nt_write_str_at(const char* str, struct nt_gfx gfx, size_t x, size_t y,
-        nt_style* out_styles, nt_status* out_status);
+        nt_status* out_status);
 
 /* ------------------------------------------------------------------------- */
 /* EVENT */

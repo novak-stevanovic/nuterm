@@ -8,7 +8,7 @@
 
 #include "_nt_shared.h"
 
-int nt_aread(int fd, void* dest, size_t count)
+int _nt_aread(int fd, void* dest, size_t count)
 {
     int status;
     do
@@ -19,7 +19,7 @@ int nt_aread(int fd, void* dest, size_t count)
     return status;
 }
 
-int nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout)
+int _nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout)
 {
     int status;
     do
@@ -30,7 +30,7 @@ int nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout)
     return status;
 }
 
-int nt_awrite(int fd, const void* src, size_t count)
+int _nt_awrite(int fd, const void* src, size_t count)
 {
     int status;
     do

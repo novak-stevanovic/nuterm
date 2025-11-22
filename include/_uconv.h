@@ -20,6 +20,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  
  * THE SOFTWARE. 
  */
+
+/* -------------------------------------------------------------------------- */
+/* START */
+/* -------------------------------------------------------------------------- */
+
 #ifndef _UCONV_H_
 #define _UCONV_H_
 
@@ -32,17 +37,30 @@ extern "C" {
 #endif
 
 #define UC_UNICODE_MAX 0x10FFFF
+#define UC_UNICODE_SURROGATE_START 0xD800
+#define UC_UNICODE_SURROGATE_END 0xDFFF
+
+#define UC_UTF8_1BYTE_UNIT_UNICODE_RANGE_START 0x0000
+#define UC_UTF8_1BYTE_UNIT_UNICODE_RANGE_END 0x007F
+#define UC_UTF8_2BYTE_UNIT_UNICODE_RANGE_START 0x0080
+#define UC_UTF8_2BYTE_UNIT_UNICODE_RANGE_END 0x07FF
+#define UC_UTF8_3BYTE_UNIT_UNICODE_RANGE_START 0x0800
+#define UC_UTF8_3BYTE_UNIT_UNICODE_RANGE_END 0xFFFF
+#define UC_UTF8_4BYTE_UNIT_UNICODE_RANGE_START 0x010000
+#define UC_UTF8_4BYTE_UNIT_UNICODE_RANGE_END 0x10FFFF
 
 /* UTF8 SEQUENCES:
  * 1 BYTE SEQUENCE - START BYTE FORMAT: 0xxxxxxx
  * 2 BYTE SEQUENCE - START BYTE FORMAT: 110xxxxx
  * 3 BYTE SEQUENCE - START BYTE FORMAT: 1110xxxx
  * 4 BYTE SEQUENCE - START BYTE FORMAT: 11110xxx
- * CONTINUATION BYTE - FORMAT: 10xxxxxx */
+ * CONTINUATION BYTE FORMAT: 10xxxxxx */
 
 /* -------------------------------------------------------------------------- */
+/* ERROR HANDLING */
+/* -------------------------------------------------------------------------- */
 
-typedef int uc_status_t;
+typedef int uc_status;
 
 #define UC_SUCCESS 0
 #define UC_ERR_INVALID_ARG 1
@@ -52,15 +70,48 @@ typedef int uc_status_t;
 #define UC_ERR_OVERLONG 101
 #define UC_ERR_SURROGATE 102
 #define UC_ERR_INVALID_CODEPOINT 103
-#define UC_ERR_INVALID_SBYTE 104
-#define UC_ERR_INVALID_CBYTE 105
+#define UC_ERR_INVALID_SBYTE 104 /* invalid start byte in sequence */
+#define UC_ERR_INVALID_CBYTE 105 /* invalid continuation byte in sequence */
 
 /* -------------------------------------------------------------------------- */
+/* FLAGS */
+/* -------------------------------------------------------------------------- */
 
-typedef uint8_t uc_flags_t;
+typedef uint8_t uc_flags;
 
-#define UC_ALLOW_SURROGATE (1 << 0)
-#define UC_ALLOW_OVERLONG (1 << 1)
+#define UC_FLAG_ALLOW_SURROGATE (1 << 0)
+#define UC_FLAG_ALLOW_OVERLONG (1 << 1)
+
+/* -------------------------------------------------------------------------- */
+/* CONVENIENCE FUNCTIONS/MACROS */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @brief Checks if the codepoint is in Unicode range.
+ *
+ * POSSIBLE FLAGS:
+ * 1) UC_FLAG_ALLOW_SURROGATE - If the codepoint is in the surrogate range,
+ * the function will return true.
+ *
+ * RETURN VALUE: true or false.
+*/
+bool uc_utf32_is_in_range(uint32_t utf32_codepoint, uc_flags flags);
+
+/* ------------------------------------------------------ */
+
+/**
+ * @brief Determines the length of a UTF8 unit depending on the provided
+ * start byte.
+ *
+ * RETURN VALUE: 
+ * ON SUCCESS: Integer value [1-4].
+ * ON FALURE: SIZE_MAX if the start byte is of invalid format.
+*/
+size_t uc_utf8_unit_len(uint8_t utf8_sbyte);
+
+/* -------------------------------------------------------------------------- */
+/* UTF8 -> UTF32 */
+/* -------------------------------------------------------------------------- */
 
 /**
  * @brief Converts a UTF-8 encoded byte sequence to UTF-32.
@@ -87,9 +138,9 @@ typedef uint8_t uc_flags_t;
  * @param out_status     Indicates success or a specific error condition. 
  *
  * POSSIBLE FLAGS:
- * 1) UC_ALLOW_SURROGATE - If the function runs into a surrogate value, it will
+ * 1) UC_FLAG_ALLOW_SURROGATE - If the function runs into a surrogate value, it will
  * not return with an error, but proceed decoding.
- * 2) UC_ALLOW_OVERLONG - If the function runs into an "overlong-ly encoded"
+ * 2) UC_FLAG_ALLOW_OVERLONG - If the function runs into an "overlong-ly encoded"
  * codepoint, it will not return with an error, but proceed decoding.
  *
  * STATUS CODES:
@@ -99,9 +150,9 @@ typedef uint8_t uc_flags_t;
  * decoding would exceed the provided `capacity`.
  * * 4) UC_ERR_INVALID_SIZE - The last processed UTF-8 "character" is cut-off due to
  * `len`.
- * 5) UC_ERR_OVERLONG - Flag UC_ALLOW_OVERLONG was not set and the UTF-8 sequence
+ * 5) UC_ERR_OVERLONG - Flag UC_FLAG_ALLOW_OVERLONG was not set and the UTF-8 sequence
  * ran into overlong encoding.
- * 6) UC_ERR_SURROGATE - Flag UCUC_ERR_SURROGATE was not set and the UTF-8 sequence
+ * 6) UC_ERR_SURROGATE - Flag UC_ERR_SURROGATE was not set and the UTF-8 sequence
  * ran into a surrogate unicode value.
  * 7) UC_ERR_INVALID_SBYTE - The function ran into a UTF-8 character with a
  * start byte that has an invalid format.
@@ -109,22 +160,11 @@ typedef uint8_t uc_flags_t;
  * continuation byte of invalid format.
  */
 void uc_utf8_to_utf32(const uint8_t* utf8_seq, size_t len,
-        uint32_t* out_utf32_seq, size_t capacity, uc_flags_t flags,
-        size_t* out_width, uc_status_t* out_status);
+        uint32_t* out_utf32_seq, size_t capacity, uc_flags flags,
+        size_t* out_width, uc_status* out_status);
 
-/* ------------------------------------------------------ */
-
-/**
- * @brief Determines the length of the UTF-8 unit based on the starting byte.
- *
- * RETURN VALUE:
- * 1) ON SUCCESS: An integer value in the range [1, 4] representing the length
- * of the UTF-8 "character".
- * 2) ON FAILURE: SIZE_MAX. This can occur if the given `utf8_start_byte` is of
- * invalid format.
- */
-size_t uc_utf8_char_len(const uint8_t utf8_start_byte);
-
+/* -------------------------------------------------------------------------- */
+/* UTF32 -> UTF8 */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -154,7 +194,7 @@ size_t uc_utf8_char_len(const uint8_t utf8_start_byte);
  * @param out_status     Indicates success or a specific error condition.
  *
  * POSSIBLE FLAGS:
- * 1) UC_ALLOW_SURROGATE - If the function encounters a surrogate code point,
+ * 1) UC_FLAG_ALLOW_SURROGATE - If the function encounters a surrogate code point,
  * it will not return an error but proceed encoding.
  *
  * STATUS CODES:
@@ -162,14 +202,14 @@ size_t uc_utf8_char_len(const uint8_t utf8_start_byte);
  * 2) UC_ERR_INVALID_ARG - `utf32_seq` is NULL.
  * 3) UC_ERR_NOT_ENOUGH_CAPACITY - `out_utf8_seq` is not NULL and the encoding
  * would exceed the `capacity` of the output buffer.
- * 4) UC_ERR_SURROGATE - Flag UC_ALLOW_SURROGATE was not set and a surrogate
+ * 4) UC_ERR_SURROGATE - Flag UC_FLAG_ALLOW_SURROGATE was not set and a surrogate
  * code point was encountered.
  * 5) UC_ERR_INVALID_CODEPOINT - A code point is outside the valid Unicode
  * range (greater than U+10FFFF).
  */
 void uc_utf32_to_utf8(const uint32_t* utf32_seq, size_t width,
-        uint8_t* out_utf8_seq, size_t capacity, uc_flags_t flags,
-        size_t* out_width, size_t* out_len, uc_status_t* out_status);
+        uint8_t* out_utf8_seq, size_t capacity, uc_flags flags,
+        size_t* out_width, size_t* out_len, uc_status* out_status);
 
 /* -------------------------------------------------------------------------- */
 
@@ -178,3 +218,240 @@ void uc_utf32_to_utf8(const uint32_t* utf32_seq, size_t width,
 #endif
 
 #endif // _UCONV_H_
+
+#ifdef _UCONV_IMPLEMENTATION_
+
+static inline bool _uc_utf8_overlong(uint32_t utf32_cp, size_t utf8_unit_size)
+{
+    switch(utf8_unit_size)
+    {
+        case 1:
+            return false;
+        case 2:
+            return (utf32_cp < UC_UTF8_2BYTE_UNIT_UNICODE_RANGE_START);
+        case 3:
+            return (utf32_cp < UC_UTF8_3BYTE_UNIT_UNICODE_RANGE_START);
+        case 4:
+            return (utf32_cp < UC_UTF8_4BYTE_UNIT_UNICODE_RANGE_START);
+        default: // undefined
+            return true;
+    }
+}
+
+static inline bool _uc_utf32_cp_surrogate(uint32_t utf32_cp)
+{
+    return ((utf32_cp >= UC_UNICODE_SURROGATE_START) &&
+            (utf32_cp <= UC_UNICODE_SURROGATE_END));
+}
+
+static inline bool _uc_utf32_cp_overflow(uint32_t utf32_cp)
+{
+    return (utf32_cp > UC_UNICODE_MAX);
+}
+
+bool uc_utf32_is_in_range(uint32_t utf32_codepoint, uc_flags flags)
+{
+    if(flags & UC_FLAG_ALLOW_SURROGATE)
+    {
+        return (!_uc_utf32_cp_overflow(utf32_codepoint));
+    }
+    else
+    {
+        return (!_uc_utf32_cp_overflow(utf32_codepoint) &&
+                !(_uc_utf32_cp_surrogate(utf32_codepoint)));
+    }
+}
+
+size_t uc_utf8_unit_len(uint8_t utf8_sbyte)
+{
+    if((utf8_sbyte & 0x80) == 0) return 1;
+    else if((utf8_sbyte & 0xE0) == 0xC0) return 2;
+    else if((utf8_sbyte & 0xF0) == 0xE0) return 3;
+    else if((utf8_sbyte & 0xF8) == 0xF0) return 4;
+    else return SIZE_MAX;
+}
+
+#define _uc_return(width, status)                                              \
+    if(out_width != NULL)                                                      \
+        *out_width = (width);                                                  \
+    if(out_status != NULL)                                                     \
+        *out_status = (status);                                                \
+    return                                                                     \
+
+void uc_utf8_to_utf32(const uint8_t* utf8_seq, size_t len,
+        uint32_t* out_utf32_seq, size_t capacity, uc_flags flags,
+        size_t* out_width, uc_status* out_status)
+{
+    if(utf8_seq == NULL)
+    {
+        _uc_return(0, UC_ERR_INVALID_ARG);
+    }
+
+    size_t i = 0;
+    size_t counter = 0;
+    size_t i_len;
+    uint32_t i_cp;
+    for(; i < len; counter++)
+    {
+        if((out_utf32_seq != NULL) && (counter >= capacity))
+        {
+            _uc_return(counter, UC_ERR_NOT_ENOUGH_CAPACITY);
+        }
+        
+        i_len = uc_utf8_unit_len(utf8_seq[i]);
+        switch(i_len)
+        {
+            case 1:
+                i_cp = (uint32_t)(utf8_seq[i]);
+                break;
+            case 2:
+                i_cp = ((uint32_t)(utf8_seq[i] & 0x3F)) << 6;
+                break;
+            case 3:
+                i_cp = ((uint32_t)(utf8_seq[i] & 0x1F) << 12);
+                break;
+            case 4:
+                i_cp = ((uint32_t)(utf8_seq[i] & 0x0F) << 18);
+                break;
+            default:
+                _uc_return(counter, UC_ERR_INVALID_SBYTE);
+        }
+
+        if((i + i_len) > len)
+        {
+            _uc_return(counter, UC_ERR_INVALID_SIZE);
+        }
+
+        // Process (it_len - 1) continuation bytes
+        size_t j, j_shift;
+        for(j = 1; j < i_len; j++)
+        {
+            if((utf8_seq[i + j] & 0xC0) != 0x80) // invalid continuation byte
+            {
+                _uc_return(counter, UC_ERR_INVALID_CBYTE);
+            }
+            j_shift = (i_len - j - 1) * 6;
+
+            i_cp |= ((utf8_seq[i + j] & 0x7F) << j_shift);
+        }
+        i += j;
+
+        // Check for overlong if needed
+        if(!(flags & UC_FLAG_ALLOW_OVERLONG) &&
+            _uc_utf8_overlong(i_cp, i_len))
+        {
+            _uc_return(counter, UC_ERR_OVERLONG);
+        }
+
+        // Check for surrogate if needed
+        if(!(flags & UC_FLAG_ALLOW_SURROGATE) && _uc_utf32_cp_surrogate(i_cp))
+        {
+            _uc_return(counter, UC_ERR_SURROGATE);
+        }
+
+        if(out_utf32_seq != NULL)
+            out_utf32_seq[counter] = i_cp;
+    }
+
+    _uc_return(counter, UC_SUCCESS);
+}
+
+
+#undef _uc_return
+#define _uc_return(width, len, status)                                         \
+    if(out_width != NULL)                                                      \
+        *out_width = (width);                                                  \
+    if(out_len != NULL)                                                        \
+        *out_len = (len);                                                      \
+    if(out_status != NULL)                                                     \
+        *out_status = (status);                                                \
+    return                                                                     \
+
+void uc_utf32_to_utf8(const uint32_t* utf32_seq, size_t width,
+        uint8_t* out_utf8_seq, size_t capacity, uc_flags flags,
+        size_t* out_width, size_t* out_len, uc_status* out_status)
+{
+    if(utf32_seq == NULL)
+    {
+        _uc_return(0, 0, UC_ERR_INVALID_ARG);
+    }
+
+    size_t i = 0, j;
+    size_t bcount = 0;
+    uint32_t i_cp;
+    size_t i_len;
+    uint8_t i_char;
+    for(; i < width; i++, bcount += i_len)
+    {
+        i_cp = utf32_seq[i];
+        if(!(flags & UC_FLAG_ALLOW_SURROGATE) && _uc_utf32_cp_surrogate(i_cp))
+        {
+            _uc_return(i, bcount, UC_ERR_SURROGATE);
+        }
+        if(_uc_utf32_cp_overflow(i_cp))
+        {
+            _uc_return(i, bcount, UC_ERR_INVALID_CODEPOINT);
+        }
+
+        if(i_cp <= UC_UTF8_1BYTE_UNIT_UNICODE_RANGE_END)
+        {
+            i_len = 1;
+            i_char = (uint8_t)i_cp;
+        }
+        else if(i_cp <= UC_UTF8_2BYTE_UNIT_UNICODE_RANGE_END)
+        {
+            // 0 0 00000abc defghijk
+            // 1. 110abcde
+            // 2. 10fghijk
+
+            i_len = 2;
+            i_char = ((uint8_t)(i_cp >> 6)) | 0xC0;
+        }
+        else if(i_cp <= UC_UTF8_3BYTE_UNIT_UNICODE_RANGE_END)
+        {
+            // 0 0 abcdefgh ijklmnop
+            // 1. 1110abcd
+            // 2. 10efghij
+            // 3. 10klmnop
+
+            i_len = 3;
+            i_char = ((uint8_t)(i_cp >> 12)) | 0xE0;
+        }
+        else // 4 bytes
+        {
+            // 0 000abcde fghijklm nopqrstu
+            // 1. 11110abc
+            // 2. 10defghi
+            // 3. 10jklmno
+            // 4. 10pqrstu
+
+            i_len = 4;
+            i_char = ((uint8_t)(i_cp >> 18)) | 0xF0;
+        }
+        
+        if(out_utf8_seq != NULL)
+            out_utf8_seq[bcount] = i_char;
+
+        if((out_utf8_seq != NULL) && ((bcount + i_len) > capacity))
+        {
+            _uc_return(i, bcount, UC_ERR_NOT_ENOUGH_CAPACITY);
+        }
+
+        // Process continuation bytes
+        size_t j_shift;
+        uint8_t j_cbyte;
+        for(j = 1; j < i_len; j++)
+        {
+            j_shift = 6 * (i_len - 1 - j);
+            j_cbyte = (((uint8_t)(i_cp >> j_shift)) & (~0xC0)) | 0x80;
+
+            if(out_utf8_seq != NULL) 
+                out_utf8_seq[bcount + j] = j_cbyte;
+        }
+
+    }
+
+    _uc_return(i, bcount, UC_SUCCESS);
+}
+
+#endif // _UCONV_IMPLEMENTATION_

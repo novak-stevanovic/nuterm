@@ -33,7 +33,7 @@ struct nt_key_event
     {
         struct
         {
-            size_t codepoint;
+            uint32_t codepoint;
             bool alt;
         } utf32_data;
 
@@ -43,6 +43,12 @@ struct nt_key_event
         } esc_key_data;
     };
 };
+
+/* Providing invalid `codepoint` is UB */
+struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
+
+/* Providing invalid `esc_key` is UB */
+struct nt_key_event nt_key_event_esc_key_new(enum nt_esc_key esc_key);
 
 /* ------------------------------------------------------ */
 /* RESIZE EVENT */
@@ -62,9 +68,9 @@ struct nt_resize_event
 
 typedef enum nt_event_type
 {
-    NT_EVENT_TYPE_KEY,
-    NT_EVENT_TYPE_RESIZE,
-    NT_EVENT_TYPE_TIMEOUT
+    NT_EVENT_KEY,
+    NT_EVENT_RESIZE,
+    NT_EVENT_TIMEOUT
 } nt_event_type;
 
 struct nt_event

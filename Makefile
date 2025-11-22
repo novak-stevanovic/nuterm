@@ -21,7 +21,7 @@ PC_PREFIX ?= /usr/local/lib/pkgconfig
 OPT ?= 2
 OPT_FLAG = -O$(OPT)
 
-DEBUG ?= 0
+DEBUG ?= 1
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
@@ -39,7 +39,8 @@ MAKE = make
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 
-INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h include/nt_esc.h include/nt_event.h include/nt_charbuff.h
+INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h \
+		  include/nt_esc.h include/nt_event.h include/nt_charbuff.h
 
 # -----------------------------------------------------------------------------
 # Build Flags
@@ -133,14 +134,14 @@ $(C_OBJ): build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(SRC_CFLAGS) $< -o $@
 
-# test -----------------------------------------------------
+# demo -----------------------------------------------------
 
-test: $(C_OBJ) build/tests.o $(LIB_FILE)
-	$(CC) build/tests.o -o $@ $(TEST_LFLAGS)
+demo: $(C_OBJ) build/demo.o $(LIB_FILE)
+	$(CC) build/demo.o -o $@ $(TEST_LFLAGS)
 
-build/tests.o: tests.c
+build/demo.o: demo.c
 	@mkdir -p $(dir $@)
-	$(CC) $(TEST_CFLAGS) tests.c -o $@
+	$(CC) $(TEST_CFLAGS) demo.c -o $@
 
 # install --------------------------------------------------
 
@@ -179,6 +180,6 @@ clean:
 	rm -rf build
 	rm -f $(LIB_AR_FILE)
 	rm -f $(LIB_SO_FILE)
-	rm -f test
+	rm -f demo
 	rm -f $(LIB_PC)
 	rm -f compile_commands.json

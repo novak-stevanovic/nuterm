@@ -9,11 +9,11 @@
 #include <stdint.h>
 #include <sys/poll.h>
 
-int nt_aread(int fd, void* dest, size_t count);
-int nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout);
-int nt_awrite(int fd, const void* src, size_t count);
+int _nt_aread(int fd, void* dest, size_t count);
+int _nt_apoll(struct pollfd pollfds[], size_t count, size_t timeout);
+int _nt_awrite(int fd, const void* src, size_t count);
 
-#define _return(ret_val, out_status_param, out_status)                         \
+#define _nt_return(ret_val, out_status_param, out_status)                      \
     do                                                                         \
     {                                                                          \
         if((out_status_param) != NULL)                                         \
@@ -21,7 +21,7 @@ int nt_awrite(int fd, const void* src, size_t count);
         return (ret_val);                                                      \
     } while(0);                                                                \
 
-#define _vreturn(out_status_param, out_status)                                 \
+#define _nt_vreturn(out_status_param, out_status)                              \
     do                                                                         \
     {                                                                          \
         if((out_status_param) != NULL)                                         \

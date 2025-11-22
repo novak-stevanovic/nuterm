@@ -47,15 +47,15 @@ void nt_charbuff_append(nt_charbuff* buff, const char* str, size_t len,
         nt_status* out_status)
 {
     if(buff == NULL)
-        _vreturn(out_status, NT_ERR_INVALID_ARG);
+        _nt_vreturn(out_status, NT_ERR_INVALID_ARG);
 
     if((buff->_len + len) > buff->_cap)
-        _vreturn(out_status, NT_ERR_OUT_OF_BOUNDS);
+        _nt_vreturn(out_status, NT_ERR_OUT_OF_BOUNDS);
 
     memcpy((buff->_data + buff->_len), str, len);
     buff->_len += len;
 
-    _vreturn(out_status, NT_SUCCESS);
+    _nt_vreturn(out_status, NT_SUCCESS);
 }
 
 void nt_charbuff_rewind(nt_charbuff* buff, const char** out_str,
