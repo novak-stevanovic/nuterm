@@ -2,220 +2,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, uint8_t b);
-static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, uint8_t b);
-
-static inline uint8_t _nt_clamp_uint8(uint8_t min, uint8_t mid, uint8_t max)
-{
-    if(mid < min)
-        mid = min;
-    else if(mid > max)
-        mid = max;
-
-    return mid;
-}
-
-bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
-{
-    return (memcmp(&rgb1, &rgb2, sizeof(struct nt_rgb)) == 0);
-}
-
-/* ------------------------------------------------------ */
-
-nt_color_8 nt_color_8_new(uint8_t code)
-{
-    return (nt_color_8) {
-        ._code = _nt_clamp_uint8(0, code, 7),
-        .__default = false
-    };
-}
-
-bool nt_color_8_cmp(nt_color_8 c1, nt_color_8 c2)
-{
-    return (memcmp(&c1, &c2, sizeof(nt_color_8)) == 0);
-}
-
-const nt_color_8 NT_COLOR_8_DEFAULT = {
-    ._code = 0,
-    .__default = true
-};
-
-const nt_color_8 NT_COLOR_8_BLACK = {
-    ._code = NT_COLOR_8_BLACK_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_RED = {
-    ._code = NT_COLOR_8_RED_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_GREEN = {
-    ._code = NT_COLOR_8_GREEN_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_YELLOW = {
-    ._code = NT_COLOR_8_YELLOW_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_BLUE = {
-    ._code = NT_COLOR_8_BLUE_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_MAGENTA = {
-    ._code = NT_COLOR_8_MAGENTA_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_CYAN = {
-    ._code = NT_COLOR_8_CYAN_CODE,
-    .__default = false
-};
-
-const nt_color_8 NT_COLOR_8_WHITE = {
-    ._code = NT_COLOR_8_WHITE_CODE,
-    .__default = false
-};
-
-/* ------------------------------------------------------ */
-
-nt_color_256 nt_color_256_new(uint8_t code)
-{
-    return (nt_color_256) {
-        ._code = code,
-        .__default = false
-    };
-}
-
-bool nt_color_256_cmp(nt_color_256 c1, nt_color_256 c2)
-{
-    return (memcmp(&c1, &c2, sizeof(nt_color_256)) == 0);
-}
-
-const nt_color_256 NT_COLOR_256_DEFAULT = {
-    ._code = 0,
-    .__default = true
-};
-
-/* ------------------------------------------------------ */
-
-nt_color_rgb nt_color_rgb_new_(struct nt_rgb rgb)
-{
-    return (nt_color_rgb) {
-        ._rgb = rgb,
-        .__default = false
-    };
-}
-
-nt_color_rgb nt_color_rgb_new(uint8_t r, uint8_t g, uint8_t b)
-{
-    return (nt_color_rgb) {
-        ._rgb = { .r = r, .g = g, .b = b },
-        .__default = false
-    };
-}
-
-bool nt_color_rgb_cmp(nt_color_rgb c1, nt_color_rgb c2)
-{
-    return (memcmp(&c1, &c2, sizeof(nt_color_rgb)) == 0);
-}
-
-const nt_color_rgb NT_COLOR_RGB_DEFAULT = {
-    ._rgb = (struct nt_rgb) {0},
-    .__default = true
-};
-
-/* ------------------------------------------------------ */
-
-nt_color_8 nt_color_8_from_rgb(nt_color_rgb color_rgb)
-{
-    if(color_rgb.__default)
-    {
-        return NT_COLOR_8_DEFAULT;
-    }
-    else
-    {
-        return nt_color_8_new(_rgb_to_c8(
-                    color_rgb._rgb.r,
-                    color_rgb._rgb.g,
-                    color_rgb._rgb.b));
-    }
-}
-
-nt_color_256 nt_color_256_from_rgb(nt_color_rgb color_rgb)
-{
-    if(color_rgb.__default)
-    {
-        return NT_COLOR_256_DEFAULT;
-    }
-    else
-    {
-        return nt_color_256_new(_rgb_to_c256(
-                    color_rgb._rgb.r,
-                    color_rgb._rgb.g,
-                    color_rgb._rgb.b));
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-/* GFX */
-/* -------------------------------------------------------------------------- */
-
-const struct nt_gfx_8 NT_GFX_8_DEFAULT = {
-    .bg = NT_COLOR_8_DEFAULT,
-    .fg = NT_COLOR_8_DEFAULT,
-    .style = NT_STYLE_DEFAULT
-};
-
-bool nt_gfx_8_cmp(struct nt_gfx_8 g1, struct nt_gfx_8 g2)
-{
-    return (memcmp(&g1, &g2, sizeof(struct nt_gfx_8)) == 0);
-}
-
-/* ------------------------------------------------------ */
-
-const struct nt_gfx_256 NT_GFX_256_DEFAULT = {
-    .bg = NT_COLOR_256_DEFAULT,
-    .fg = NT_COLOR_256_DEFAULT,
-    .style = NT_STYLE_DEFAULT
-};
-
-bool nt_gfx_256_cmp(struct nt_gfx_256 g1, struct nt_gfx_256 g2)
-{
-    return (memcmp(&g1, &g2, sizeof(struct nt_gfx_256)) == 0);
-}
-
-/* ------------------------------------------------------ */
-
-const struct nt_gfx_rgb NT_GFX_RGB_DEFAULT = {
-    .bg = NT_COLOR_RGB_DEFAULT,
-    .fg = NT_COLOR_RGB_DEFAULT,
-    .style = NT_STYLE_DEFAULT
-};
-
-bool nt_gfx_rgb_cmp(struct nt_gfx_rgb g1, struct nt_gfx_rgb g2)
-{
-    return (memcmp(&g1, &g2, sizeof(struct nt_gfx_rgb)) == 0);
-}
-
-/* ------------------------------------------------------ */
-
-bool nt_gfx_cmp(struct nt_gfx g1, struct nt_gfx g2)
-{
-    return (memcmp(&g1, &g2, sizeof(struct nt_gfx)) == 0);
-}
-
-const struct nt_gfx NT_GFX_DEFAULT = {
-    .gfx_8 = NT_GFX_8_DEFAULT,
-    .gfx_256 = NT_GFX_256_DEFAULT,
-    .gfx_rgb = NT_GFX_RGB_DEFAULT
-};
-
-/* -------------------------------------------------------------------------- */
-
 struct point3d
 {
     ssize_t x, y, z;
@@ -245,8 +31,44 @@ const static struct point3d _colors[] = {
     { .x = 255, .y = 255, .z = 255 }, // White
 };
 
-static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
+static inline int _nt_clamp_int(int min, int mid, int max)
 {
+    if(mid < min)
+        mid = min;
+    else if(mid > max)
+        mid = max;
+
+    return mid;
+}
+
+/* -------------------------------------------------------------------------- */
+/* COLOR */
+/* -------------------------------------------------------------------------- */
+
+struct nt_rgb nt_rgb_new(int r, int g, int b)
+{
+    int r_clamped = _nt_clamp_int(0, r, 255);
+    int g_clamped = _nt_clamp_int(0, g, 255);
+    int b_clamped = _nt_clamp_int(0, b, 255);
+
+    return (struct nt_rgb) {
+        .r = r_clamped,
+        .g = g_clamped,
+        .b = b_clamped
+    };
+}
+
+bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
+{
+    return (memcmp(&rgb1, &rgb2, sizeof(struct nt_rgb)) == 0);
+}
+
+uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
+{
+    uint8_t r = rgb.r;
+    uint8_t g = rgb.g;
+    uint8_t b = rgb.b;
+
     const struct point3d color = { .x = r, .y = g, .z = b };
 
     size_t count = sizeof(_colors) / sizeof(struct point3d);
@@ -268,8 +90,12 @@ static uint8_t _rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
     return min_idx;
 }
 
-static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, uint8_t b)
+uint8_t nt_rgb_to_c256(struct nt_rgb rgb)
 {
+    uint8_t r = rgb.r;
+    uint8_t g = rgb.g;
+    uint8_t b = rgb.b;
+
     if((r == g) && (g == b)) // gray
     {
         // 26 is derived from 24 gray colors + black + white
@@ -290,4 +116,77 @@ static uint8_t _rgb_to_c256(uint8_t r, uint8_t g, uint8_t b)
     }
 
     return 0;
+}
+
+/* -------------------------------------------------------------------------- */
+
+const nt_color NT_COLOR_DEFAULT = {
+    ._code8 = 255,
+    ._code256 = 255,
+    ._rgb = { 0, 0, 0 }
+};
+
+nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb)
+{
+    if(code8 > 7)
+    {
+        return NT_COLOR_DEFAULT;
+    }
+    else
+    {
+        return (nt_color) {
+            ._code8 = code8,
+                ._code256 = code256,
+                ._rgb = rgb
+        };
+    }
+}
+
+nt_color nt_color_new_rgb(struct nt_rgb rgb)
+{
+    return (nt_color) {
+        ._code8 = nt_rgb_to_c8(rgb),
+        ._code256 = nt_rgb_to_c256(rgb),
+        ._rgb = rgb
+    };
+}
+
+bool nt_color_are_equal(nt_color color1, nt_color color2)
+{
+    return (memcmp(&color1, &color2, sizeof(nt_color)) == 0);
+}
+
+/* -------------------------------------------------------------------------- */
+/* STYLE */
+/* -------------------------------------------------------------------------- */
+
+const nt_style NT_STYLE_DEFAULT = {0};
+
+nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb)
+{
+    return (nt_style) {
+        ._value_c8 = value8,
+        ._value_c256 = value256,
+        ._value_rgb = value_rgb
+    };
+}
+
+bool nt_style_are_equal(nt_style style1, nt_style style2)
+{
+    return (memcmp(&style1, &style2, sizeof(nt_style)) == 0);
+}
+
+/* -------------------------------------------------------------------------- */
+/* GFX */
+/* -------------------------------------------------------------------------- */
+
+const struct nt_gfx NT_GFX_DEFAULT = {
+    .fg = NT_COLOR_DEFAULT,
+    .bg = NT_COLOR_DEFAULT,
+    .style = NT_STYLE_DEFAULT
+};
+
+bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
+{
+    return (memcmp(&gfx1, &gfx2, sizeof(struct nt_gfx)) == 0);
 }

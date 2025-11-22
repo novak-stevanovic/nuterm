@@ -21,146 +21,84 @@ struct nt_rgb
     uint8_t r, g, b;
 };
 
+/* Clamps the values into range [0, 255] */
+struct nt_rgb nt_rgb_new(int r, int g, int b);
 bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2);
 
+uint8_t nt_rgb_to_c8(struct nt_rgb rgb);
+uint8_t nt_rgb_to_c256(struct nt_rgb rgb);
+
 /* ------------------------------------------------------ */
 
-typedef struct nt_color_8
+#define NT_COLOR_C8_BLACK      0
+#define NT_COLOR_C8_RED        1
+#define NT_COLOR_C8_GREEN      2
+#define NT_COLOR_C8_YELLOW     3
+#define NT_COLOR_C8_BLUE       4
+#define NT_COLOR_C8_MAGENTA    5
+#define NT_COLOR_C8_CYAN       6
+#define NT_COLOR_C8_WHITE      7
+
+typedef struct nt_color
 {
-    uint8_t _code; // read-only
-    bool __default; // private
-} nt_color_8;
+    /* read-only fields */
+    uint8_t _code8;
+    uint8_t _code256;
+    struct nt_rgb _rgb;
+} nt_color;
 
-/* Checks if the code is correct. */
-nt_color_8 nt_color_8_new(uint8_t code);
+extern const nt_color NT_COLOR_DEFAULT;
 
-bool nt_color_8_cmp(nt_color_8 c1, nt_color_8 c2);
+/* If provided an invalid `code8`, NT_COLOR_DEFAULT will be returned */
+nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb);
 
-extern const nt_color_8 NT_COLOR_8_DEFAULT;
-extern const nt_color_8 NT_COLOR_8_BLACK;
-extern const nt_color_8 NT_COLOR_8_RED;
-extern const nt_color_8 NT_COLOR_8_GREEN;
-extern const nt_color_8 NT_COLOR_8_YELLOW;
-extern const nt_color_8 NT_COLOR_8_BLUE;
-extern const nt_color_8 NT_COLOR_8_MAGENTA;
-extern const nt_color_8 NT_COLOR_8_CYAN;
-extern const nt_color_8 NT_COLOR_8_WHITE;
+/* Auto-converts to other colors */
+nt_color nt_color_new_rgb(struct nt_rgb rgb);
 
-#define NT_COLOR_8_BLACK_CODE      0
-#define NT_COLOR_8_RED_CODE        1
-#define NT_COLOR_8_GREEN_CODE      2
-#define NT_COLOR_8_YELLOW_CODE     3
-#define NT_COLOR_8_BLUE_CODE       4
-#define NT_COLOR_8_MAGENTA_CODE    5
-#define NT_COLOR_8_CYAN_CODE       6
-#define NT_COLOR_8_WHITE_CODE      7
-
-/* ------------------------------------------------------ */
-
-typedef struct nt_color_256
-{
-    uint8_t _code; // read-only
-    bool __default; // private
-} nt_color_256;
-
-/* Checks if the code is correct. */
-nt_color_256 nt_color_256_new(uint8_t code);
-
-bool nt_color_256_cmp(nt_color_256 c1, nt_color_256 c2);
-
-extern const nt_color_256 NT_COLOR_256_DEFAULT;
-
-/* ------------------------------------------------------ */
-
-typedef struct nt_color_rgb
-{
-    struct nt_rgb _rgb; // read-only
-    bool __default; // private
-} nt_color_rgb;
-
-nt_color_rgb nt_color_rgb_new(uint8_t r, uint8_t g, uint8_t b);
-nt_color_rgb nt_color_rgb_new_(struct nt_rgb rgb);
-
-bool nt_color_rgb_cmp(nt_color_rgb c1, nt_color_rgb c2);
-
-extern const nt_color_rgb NT_COLOR_RGB_DEFAULT;
-
-/* ------------------------------------------------------ */
-
-nt_color_8 nt_color_8_from_rgb(nt_color_rgb color_rgb);
-nt_color_256 nt_color_256_from_rgb(nt_color_rgb color_rgb);
+bool nt_color_are_equal(nt_color color1, nt_color color2);
 
 /* -------------------------------------------------------------------------- */
 /* STYLE */
 /* -------------------------------------------------------------------------- */
 
-typedef uint8_t nt_style;
+typedef struct nt_style
+{
+    /* read-only fields */
+    uint8_t _value_c8, _value_c256, _value_rgb;
+} nt_style;
 
-#define NT_STYLE_DEFAULT        0
-#define NT_STYLE_BOLD           (1 << 0)  // 00000001
-#define NT_STYLE_FAINT          (1 << 1)  // 00000010
-#define NT_STYLE_ITALIC         (1 << 2)  // 00000100
-#define NT_STYLE_UNDERLINE      (1 << 3)  // 00001000
-#define NT_STYLE_BLINK          (1 << 4)  // 00010000
-#define NT_STYLE_REVERSE        (1 << 5)  // 00100000
-#define NT_STYLE_HIDDEN         (1 << 6)  // 01000000
-#define NT_STYLE_STRIKETHROUGH  (1 << 7)  // 10000000
+extern const nt_style NT_STYLE_DEFAULT;
+
+nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
+
+bool nt_style_are_equal(nt_style style1, nt_style style2);
+
+#define NT_STYLE_VAL_DEFAULT        0
+#define NT_STYLE_VAL_BOLD           (1 << 0)  // 00000001
+#define NT_STYLE_VAL_FAINT          (1 << 1)  // 00000010
+#define NT_STYLE_VAL_ITALIC         (1 << 2)  // 00000100
+#define NT_STYLE_VAL_UNDERLINE      (1 << 3)  // 00001000
+#define NT_STYLE_VAL_BLINK          (1 << 4)  // 00010000
+#define NT_STYLE_VAL_REVERSE        (1 << 5)  // 00100000
+#define NT_STYLE_VAL_HIDDEN         (1 << 6)  // 01000000
+#define NT_STYLE_VAL_STRIKETHROUGH  (1 << 7)  // 10000000
+
+#ifdef __cplusplus
+}
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* GFX */
 /* -------------------------------------------------------------------------- */
 
-struct nt_gfx_8
-{
-    nt_color_8 bg, fg;
-    nt_style style;
-};
-
-extern const struct nt_gfx_8 NT_GFX_8_DEFAULT;
-
-bool nt_gfx_8_cmp(struct nt_gfx_8 g1, struct nt_gfx_8 g2);
-
-/* ------------------------------------------------------ */
-
-struct nt_gfx_256
-{
-    nt_color_256 bg, fg;
-    nt_style style;
-};
-
-bool nt_gfx_256_cmp(struct nt_gfx_256 g1, struct nt_gfx_256 g2);
-
-extern const struct nt_gfx_256 NT_GFX_256_DEFAULT;
-
-/* ------------------------------------------------------ */
-
-struct nt_gfx_rgb
-{
-    nt_color_rgb bg, fg;
-    nt_style style;
-};
-
-extern const struct nt_gfx_rgb NT_GFX_RGB_DEFAULT;
-
-bool nt_gfx_rgb_cmp(struct nt_gfx_rgb g1, struct nt_gfx_rgb g2);
-
-/* ------------------------------------------------------ */
-
 struct nt_gfx
 {
-    struct nt_gfx_8 gfx_8;
-    struct nt_gfx_256 gfx_256;
-    struct nt_gfx_rgb gfx_rgb;
+    nt_color bg, fg;
+    nt_style style;
 };
-
-bool nt_gfx_cmp(struct nt_gfx g1, struct nt_gfx g2);
 
 extern const struct nt_gfx NT_GFX_DEFAULT;
 
-/* -------------------------------------------------------------------------- */
-
-#ifdef __cplusplus
-}
-#endif
+bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2);
 
 #endif // _NT_GFX_H_

@@ -86,25 +86,25 @@ int main(int argc, char *argv[])
     __nt_init__(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_color_rgb fg = nt_color_rgb_new(255, 255, 255);
-    nt_color_rgb bg = nt_color_rgb_new(100, 0, 200);
+    nt_color fg = nt_color_new(
+            NT_COLOR_C8_BLACK,
+            nt_rgb_to_c256(nt_rgb_new(255, 0, 0)),
+            nt_rgb_new(100, 0, 200));
+
+    nt_color bg = nt_color_new(
+            NT_COLOR_C8_WHITE,
+            nt_rgb_to_c256(nt_rgb_new(0, 255, 0)),
+            nt_rgb_new(255, 255, 200));
+
+    nt_style style = nt_style_new(
+            NT_STYLE_VAL_BOLD,
+            NT_STYLE_VAL_DEFAULT,
+            NT_STYLE_VAL_DEFAULT);
 
     struct nt_gfx gfx = {
-        .gfx_8 = {
-            .fg = NT_COLOR_8_RED,
-            .bg = NT_COLOR_8_BLACK,
-            .style = NT_STYLE_BLINK
-        },
-        .gfx_256 = {
-            .fg = nt_color_256_from_rgb(fg),
-            .bg = nt_color_256_from_rgb(bg),
-            .style = NT_STYLE_DEFAULT
-        },
-        .gfx_rgb = {
-            .fg = fg,
-            .bg = bg,
-            .style = NT_STYLE_DEFAULT
-        }
+        .fg = fg,
+        .bg = bg,
+        .style = style
     };
 
     nt_write_str("Novak", gfx, &_status);

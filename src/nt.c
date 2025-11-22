@@ -302,154 +302,127 @@ static void _set_gfx(struct nt_gfx gfx, nt_status* out_status)
 {
     nt_status _status;
     nt_term_color_count colors = nt_term_get_color_count();
-    nt_style style;
 
-    switch(colors)
+    /* Set foreground --------------------------------------------------- */
+
+    if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.fg))
     {
-        case NT_TERM_COLOR_TC:
-            /* Set foreground */
-            if(nt_color_rgb_cmp(NT_COLOR_RGB_DEFAULT, gfx.gfx_rgb.fg))
-            {
-                _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_DEFAULT,
-                        false, &_status);
-
-            }
-            else
-            {
+        _execute_used_term_func(
+                NT_ESC_FUNC_FG_SET_DEFAULT,
+                false, &_status);
+    }
+    else
+    {
+        switch(colors)
+        {
+            case NT_TERM_COLOR_TC:
                 _execute_used_term_func(
                         NT_ESC_FUNC_FG_SET_RGB,
                         true, &_status,
-                        gfx.gfx_rgb.fg._rgb.r,
-                        gfx.gfx_rgb.fg._rgb.g,
-                        gfx.gfx_rgb.fg._rgb.b);
-            }
+                        gfx.fg._rgb.r,
+                        gfx.fg._rgb.g,
+                        gfx.fg._rgb.b);
+                break;
 
-            if(_status != NT_SUCCESS)
-            {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-
-            /* Set background */
-            if(nt_color_rgb_cmp(NT_COLOR_RGB_DEFAULT, gfx.gfx_rgb.bg))
-            {
+            case NT_TERM_COLOR_C256:
                 _execute_used_term_func(
-                        NT_ESC_FUNC_BG_SET_DEFAULT,
-                        false, &_status);
-            }
-            else
-            {
-                _execute_used_term_func(
-                        NT_ESC_FUNC_BG_SET_RGB,
+                        NT_ESC_FUNC_FG_SET_C256,
                         true, &_status,
-                        gfx.gfx_rgb.bg._rgb.r,
-                        gfx.gfx_rgb.bg._rgb.g,
-                        gfx.gfx_rgb.bg._rgb.b);
-            }
+                        gfx.fg._code256);
+                break;
 
-            if(_status != NT_SUCCESS)
-            {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-
-            style = gfx.gfx_rgb.style;
-            break;
-
-        case NT_TERM_COLOR_C256:
-            /* Set foreground */
-            if(nt_color_256_cmp(NT_COLOR_256_DEFAULT, gfx.gfx_256.fg))
-            {
+            case NT_TERM_COLOR_C8:
                 _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_DEFAULT,
-                        false, &_status);
-            }
-            else
-            {
-                _execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, true,
-                        &_status, gfx.gfx_256.fg._code);
-            }
+                        NT_ESC_FUNC_FG_SET_C8,
+                        true, &_status,
+                        gfx.fg._code8);
+                break;
 
-            if(_status != NT_SUCCESS)
-            {
+            default:
                 _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
+        }
 
-            /* Set background */
-            if(nt_color_256_cmp(NT_COLOR_256_DEFAULT, gfx.gfx_256.bg))
-            {
-                _execute_used_term_func(
-                        NT_ESC_FUNC_BG_SET_DEFAULT,
-                        false, &_status);
-            }
-            else
-            {
-                _execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, true,
-                        &_status, gfx.gfx_256.bg._code);
-            }
-
-            if(_status != NT_SUCCESS)
-            {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-
-            style = gfx.gfx_256.style;
-            break;
-
-        case NT_TERM_COLOR_C8:
-            /* Set foreground */
-            if(nt_color_8_cmp(NT_COLOR_8_DEFAULT, gfx.gfx_8.fg))
-            {
-                _execute_used_term_func(
-                        NT_ESC_FUNC_FG_SET_DEFAULT,
-                        false, &_status);
-            }
-            else
-            {
-                _execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, true,
-                        &_status, gfx.gfx_8.fg._code);
-            }
-
-            if(_status != NT_SUCCESS)
-            {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-
-            /* Set background */
-            if(nt_color_8_cmp(NT_COLOR_8_DEFAULT, gfx.gfx_8.bg))
-            {
-                _execute_used_term_func(
-                        NT_ESC_FUNC_BG_SET_DEFAULT,
-                        false, &_status);
-            }
-            else
-            {
-                _execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, true,
-                        &_status, gfx.gfx_8.bg._code);
-            }
-
-            if(_status != NT_SUCCESS)
-            {
-                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-            }
-
-            style = gfx.gfx_8.style;
-            break;
-
-        default:
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
-    }
-
-    size_t i;
-    size_t count = 8;
-    for(i = 0; i < count; i++)
-    {
-        if(style & (NT_STYLE_BOLD << i))
+        if(_status != NT_SUCCESS)
         {
-            _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
+            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+        }
+
+        /* Set background --------------------------------------------------- */
+
+        if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.bg))
+        {
+            _execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_DEFAULT,
+                    false, &_status);
+        }
+        else
+        {
+            switch(colors)
+            {
+                case NT_TERM_COLOR_TC:
+                    _execute_used_term_func(
+                            NT_ESC_FUNC_BG_SET_RGB,
+                            true, &_status,
+                            gfx.bg._rgb.r,
+                            gfx.bg._rgb.g,
+                            gfx.bg._rgb.b);
+                    break;
+
+                case NT_TERM_COLOR_C256:
+                    _execute_used_term_func(
+                            NT_ESC_FUNC_BG_SET_C256,
+                            true, &_status,
+                            gfx.bg._code256);
+                    break;
+
+                case NT_TERM_COLOR_C8:
+                    _execute_used_term_func(
+                            NT_ESC_FUNC_BG_SET_C8,
+                            true, &_status,
+                            gfx.bg._code8);
+                    break;
+
+                default:
+                    _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            }
+
             if(_status != NT_SUCCESS)
             {
-                if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-                    _nt_vreturn(out_status, _status);
+                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            }
+        }
+
+        /* Set style -------------------------------------------------------- */
+
+        uint8_t style;
+
+        switch(colors)
+        {
+            case NT_TERM_COLOR_C8:
+                style = gfx.style._value_c8;
+                break;
+            case NT_TERM_COLOR_C256:
+                style = gfx.style._value_c256;
+                break;
+            case NT_TERM_COLOR_TC:
+                style = gfx.style._value_rgb;
+                break;
+            default:
+                _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+        }
+
+        size_t i;
+        size_t count = 8;
+        for(i = 0; i < count; i++)
+        {
+            if(style & (NT_STYLE_VAL_BOLD << i))
+            {
+                _execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
+                if(_status != NT_SUCCESS)
+                {
+                    if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
+                        _nt_vreturn(out_status, _status);
+                }
             }
         }
     }
