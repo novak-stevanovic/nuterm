@@ -46,9 +46,15 @@ struct nt_key_event
 
 /* Providing invalid `codepoint` is UB */
 struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
+/* Checks if provided `key` matches description */
+bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt);
+/* Alt insensitive */
+bool nt_key_event_utf32_check_(struct nt_key_event key, uint32_t codepoint);
 
 /* Providing invalid `esc_key` is UB */
 struct nt_key_event nt_key_event_esc_key_new(enum nt_esc_key esc_key);
+/* Checks if provided `key` matches description */
+bool nt_key_event_esc_key_check(struct nt_key_event key, enum nt_esc_key esc_key);
 
 /* ------------------------------------------------------ */
 /* RESIZE EVENT */
