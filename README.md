@@ -6,6 +6,7 @@ __Nuterm__ is a lightweight C library for terminal control: for each terminal fu
 
 1. `make [LIB_TYPE=so/ar] [OPT={0...3}]` - This will compile the source files(and thirdparty dependencies, if they exist) and build the library file.
 2. `make install [LIB_TYPE=so/ar] [PREFIX={prefix}] [PC_PREFIX={pc_prefix}]` - This will place the public headers inside _{prefix}/include_ and the built library file inside _{prefix}/lib_.
+This will also place the .pc file inside _{pc_prefix}_.
 
 Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr/local/lib/pkgconfig`.
 
@@ -13,4 +14,4 @@ Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr
 
 To use the library in your project, you must first install it. This can be done on your system - globally, or locally, inside a project that is using this library.
 1. Install with desired `PREFIX` and `PC_PREFIX`.
-2. Compile your project with cflags: `pkfconf --cflags nuterm` and link with flags: `pkfconf --libs nuterm`. For this to work, make sure that pkgconf seaches in the directory `PC_PREFIX` when using pkgconfig.
+2. Compile your project with cflags: `pkgconf --cflags nuterm` and link with flags: `pkgconf --libs nuterm`. For this to work, make sure that pkgconf seaches in the directory `PC_PREFIX` when using pkgconfig.
