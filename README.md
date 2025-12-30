@@ -20,4 +20,3 @@ To use the library in your project, you must first install it. This can be done 
 1. Install with desired `PREFIX` and `PC_PREFIX`.
 
 2. Compile your project with cflags: `$(pkgconf --cflags nuterm)` and link with flags: `$(pkgconf --libs nuterm)`. For this to work, make sure that pkg-config seaches in the directory `PC_PREFIX` when using pkg-config.
-
