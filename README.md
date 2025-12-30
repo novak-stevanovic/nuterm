@@ -1,17 +1,23 @@
 # Nuterm
 
-__Nuterm__ is a lightweight C library for terminal control: for each terminal function(changing color, style, clearing display, etc.) it emits the correct escape codes(based on auto-detected terminal emulator and how many colors it supports). It offers optional output buffering for smooth redraws, unifies input events (key presses and window resizes) without pulling in larger dependencies.
+__Nuterm__ is a lightweight C library for terminal control: for each terminal function(changing color, style, clearing display, etc.) it emits the correct escape codes(based on auto-detected terminal emulator and how many colors it supports). It offers optional output buffering for smooth redraws, unifies input events (key presses and window resizes) and a simple main loop abstraction.
+
+## Dependencies
+
+This library relies on [UConv](https://github.com/novak-stevanovic/uconv) for UTF-32 conversion needs. This is bundled internally.
 
 ## Makefile instructions:
 
-1. `make [LIB_TYPE=so/ar] [OPT={0...3}]` - This will compile the source files(and thirdparty dependencies, if they exist) and build the library file.
-2. `make install [LIB_TYPE=so/ar] [PREFIX={prefix}] [PC_PREFIX={pc_prefix}]` - This will place the public headers inside _{prefix}/include_ and the built library file inside _{prefix}/lib_.
-This will also place the .pc file inside _{pc_prefix}_.
+1. `make [PC_WITH_PATH=...] [LIB_TYPE=so/ar] [OPT={0...3}]` - This will compile the source files and build the library file. If the library depends on packages discovered via pkg-config, you can specify where to search for their .pc files, in addition to PC\_PREFIX\_PATH.
+2. `make install [LIB_TYPE=so/ar] [PREFIX=...] [PC_PREFIX=...]` - This will place the public headers inside _PREFIX/include_ and the built library file inside _PREFIX/lib_. This will also place the .pc file inside _PC_PREFIX_.
 
-Default options are `PREFIX=/usr/local`, `OPT=2`, `LIB_TYPE=so`, `PC_PREFIX=/usr/local/lib/pkgconfig`.
+Default options are `PREFIX=/usr/local`, `PC_PREFIX=PREFIX/lib/pkgconfig`, `OPT=2`, `LIB_TYPE=so`.
 
 ## Usage instructions:
 
 To use the library in your project, you must first install it. This can be done on your system - globally, or locally, inside a project that is using this library.
+
 1. Install with desired `PREFIX` and `PC_PREFIX`.
-2. Compile your project with cflags: `pkgconf --cflags nuterm` and link with flags: `pkgconf --libs nuterm`. For this to work, make sure that pkgconf seaches in the directory `PC_PREFIX` when using pkgconfig.
+
+2. Compile your project with cflags: `$(pkgconf --cflags nuterm)` and link with flags: `$(pkgconf --libs nuterm)`. For this to work, make sure that pkg-config seaches in the directory `PC_PREFIX` when using pkg-config.
+

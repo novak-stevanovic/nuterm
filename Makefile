@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Validation & Global Settings
+# Validation
 # -----------------------------------------------------------------------------
 
 GOAL_COUNT := $(words $(MAKECMDGOALS))
@@ -10,15 +10,31 @@ ifneq ($(GOAL_COUNT),1)
     endif
 endif
 
-# ---------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Public Settings
+# -----------------------------------------------------------------------------
 
 LIB_TYPE ?= so
 
 PREFIX ?= /usr/local
-
-PC_PREFIX ?= /usr/local/lib/pkgconfig
+PC_PREFIX ?= $(PREFIX)/lib/pkgconfig
+PC_WITH_PATH =
 
 OPT ?= 2
+
+# -----------------------------------------------------------------------------
+# Private Settings
+# -----------------------------------------------------------------------------
+
+LIB_NAME = nuterm
+LIB_PC = $(LIB_NAME).pc
+
+C_SRC = $(shell find src -name "*.c")
+C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
+
+INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h \
+		  include/nt_esc.h include/nt_event.h include/nt_charbuff.h
+
 OPT_FLAG = -O$(OPT)
 
 DEBUG ?= 0
@@ -26,21 +42,6 @@ ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
 endif
-
-# ---------------------------------------------------------
-
-LIB_NAME = nuterm
-LIB_PC = $(LIB_NAME).pc
-
-CC = gcc
-AR = ar
-MAKE = make
-
-C_SRC = $(shell find src -name "*.c")
-C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
-
-INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h \
-		  include/nt_esc.h include/nt_event.h include/nt_charbuff.h
 
 # -----------------------------------------------------------------------------
 # Build Flags
@@ -64,8 +65,8 @@ _PC_REQUIRES_PRIVATE =
 
 PC_DEPS = $(_PC_REQUIRES)
 ifneq ($(PC_DEPS),)
-    PC_CFLAGS = $(shell pkgconf --silence-errors --cflags $(PC_DEPS))
-    PC_LFLAGS = $(shell pkgconf --silence-errors --libs $(PC_DEPS))
+    PC_CFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --cflags $(PC_DEPS))
+    PC_LFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --libs $(PC_DEPS))
 endif
 
 DEP_CFLAGS = $(PC_CFLAGS)
