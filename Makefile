@@ -68,8 +68,8 @@ _PC_REQUIRES_PRIVATE =
 
 PC_DEPS = $(_PC_REQUIRES)
 ifneq ($(PC_DEPS),)
-    PC_CFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --cflags $(PC_DEPS))
-    PC_LFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --libs $(PC_DEPS))
+    DEP_CFLAGS += $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --cflags $(PC_DEPS))
+    DEP_LFLAGS += $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --libs $(PC_DEPS))
 endif
 
 # ---------------------------------------------------------
