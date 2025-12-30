@@ -8,8 +8,8 @@ This library relies on [UConv](https://github.com/novak-stevanovic/uconv) for UT
 
 ## Makefile instructions:
 
-1. `make [PC_WITH_PATH=...] [LIB_TYPE=so/ar] [OPT={0...3}]` - This will compile the source files and build the library file. If the library depends on packages discovered via pkg-config, you can specify where to search for their .pc files, in addition to PC\_PREFIX\_PATH.
-2. `make install [LIB_TYPE=so/ar] [PREFIX=...] [PC_PREFIX=...]` - This will place the public headers inside _PREFIX/include_ and the built library file inside _PREFIX/lib_. This will also place the .pc file inside _PC_PREFIX_.
+1. `make [PC_WITH_PATH=...] [LIB_TYPE=so/ar] [OPT={0...3}]` - This will compile the source files and build the library file. If the library depends on packages discovered via pkg-config, you can specify where to search for their .pc files, in addition to `PC_PREFIX_PATH`
+2. `make install [LIB_TYPE=so/ar] [PREFIX=...] [PC_PREFIX=...]` - This will place the public headers inside `PREFIX/include` and the built library file inside `PREFIX/lib`. This will also place the .pc file inside `PC_PREFIX`.
 
 Default options are `PREFIX=/usr/local`, `PC_PREFIX=PREFIX/lib/pkgconfig`, `OPT=2`, `LIB_TYPE=so`.
 
