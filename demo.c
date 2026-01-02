@@ -1,12 +1,9 @@
 #include "nt.h"
 #include <assert.h>
 #include <pthread.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <poll.h>
 
 void loop_basic()
 {
@@ -38,21 +35,21 @@ void loop_lib()
         {
             printf("K(");
 
-            struct nt_event_key_data data = *(struct nt_event_key_data*)event.data;
+            struct nt_key key = *(struct nt_key*)event.data;
 
-            if(data.key.type == NT_KEY_UTF32)
+            if(key.type == NT_KEY_UTF32)
             {
-                if(data.key.utf32.alt == true)
+                if(key.utf32.alt == true)
                     printf("a+");
 
-                printf("%d", data.key.utf32.cp);
-                if(data.key.utf32.cp == 'q')
+                printf("%d", key.utf32.cp);
+                if(key.utf32.cp == 'q')
                     loop = false;
 
             }
             else
             {
-                printf("e%d", data.key.esc.val);
+                printf("e%d", key.esc.val);
             }
 
             printf(") | ");
@@ -60,9 +57,9 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_SIGNAL)
         {
-            struct nt_event_signal_data data = *(struct nt_event_signal_data*)event.data;
+            uint8_t signum = *(uint8_t*)event.data;
 
-            printf("S(%d)", data.signum);
+            printf("S(%d)", signum);
 
             printf(" | ");
 
@@ -104,12 +101,12 @@ int main(int argc, char *argv[])
 
     };
 
-    const char* str = "Novak";
+    // const char* str = "Novak";
 
-    nt_write_str(str, strlen(str), gfx, NULL);
-    nt_write_str("\n", 1, gfx, NULL);
+    // nt_write_str(str, strlen(str), gfx, NULL);
+    // nt_write_str("\n", 1, gfx, NULL);
 
-    // loop_lib();
+    loop_lib();
 
     nuterm_deinit();
 

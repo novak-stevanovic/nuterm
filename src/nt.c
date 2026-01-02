@@ -30,7 +30,8 @@
 pthread_t sigthread = 0;
 static atomic_bool sigthread_stop = false;
 static int signal_pipe[2];
-static struct pollfd poll_fds[2];
+static int custom_event_pipe[2];
+static struct pollfd poll_fds[3];
 static struct termios init_term_opts;
 
 static char* stdout_buff = NULL;
@@ -115,7 +116,12 @@ void nuterm_init(nt_status* out_status)
     if(status == -1)
         _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
 
-    int pipe_status = pipe(signal_pipe);
+    int pipe_status;
+    pipe_status = pipe(signal_pipe);
+    if(pipe_status != 0)
+        _nt_vreturn(out_status, NT_ERR_INIT_PIPE);
+
+    pipe_status = pipe(custom_event_pipe);
     if(pipe_status != 0)
         _nt_vreturn(out_status, NT_ERR_INIT_PIPE);
 
@@ -126,6 +132,11 @@ void nuterm_init(nt_status* out_status)
     };
     poll_fds[1] = (struct pollfd) {
         .fd = signal_pipe[0],
+        .events = POLLIN,
+        .revents = 0
+    };
+    poll_fds[2] = (struct pollfd) {
+        .fd = custom_event_pipe[0],
         .events = POLLIN,
         .revents = 0
     };
@@ -601,23 +612,47 @@ unsigned int nt_wait_for_event(struct nt_event* out_event,
     if(poll_fds[0].revents & POLLIN)
     {
         event.type = NT_EVENT_KEY;
-
         struct nt_key key = process_key_event(&_status);
-
-        struct nt_event_key_data event_data = { .key = key };
-        memcpy(event.data, &event_data, sizeof(struct nt_event_key_data));
+        if(_status != NT_SUCCESS)
+        {
+            if(out_event != NULL)
+                (*out_event) = event;
+            if(out_status != NULL)
+                (*out_status) = NT_ERR_UNEXPECTED;
+            return elapsed;
+        }
+        memcpy(event.data, &key, sizeof(struct nt_key));
     }
-    else // (poll_fds[1].revents & POLLIN)
+    else if(poll_fds[1].revents & POLLIN)
     {
         event.type = NT_EVENT_SIGNAL;
 
         uint8_t buff = 0;
         int read_status = read(signal_pipe[0], &buff, 1);
         if(read_status == -1)
-            _nt_return(255, out_status, NT_ERR_UNEXPECTED);
+        {
+            if(out_event != NULL)
+                (*out_event) = event;
+            if(out_status != NULL)
+                (*out_status) = NT_ERR_UNEXPECTED;
+            return elapsed;
+        }
 
-        struct nt_event_signal_data event_data = { .signum = buff };
-        memcpy(event.data, &event_data, sizeof(struct nt_event_signal_data));
+        memcpy(event.data, &buff, sizeof(uint8_t));
+    }
+    else // poll_fds[2].revents & POLLIN
+    {
+        int read_status = read(custom_event_pipe[0],
+                &event, sizeof(struct nt_event));
+
+        if(read_status == -1)
+        {
+            if(out_event != NULL)
+                (*out_event) = event;
+            if(out_status != NULL)
+                (*out_status) = NT_ERR_UNEXPECTED;
+            return elapsed;
+        }
     }
 
     if(out_event != NULL)
@@ -625,6 +660,19 @@ unsigned int nt_wait_for_event(struct nt_event* out_event,
     if(out_status != NULL)
         (*out_status) = NT_SUCCESS;
     return elapsed;
+}
+
+void nt_push_event(struct nt_event event, nt_status* out_status)
+{
+    if(event.type == NT_EVENT_INVALID)
+        _nt_vreturn(out_status, NT_ERR_INVALID_ARG);
+
+    int write_status = write(custom_event_pipe[1], &event, sizeof(struct nt_event));
+
+    if(write_status == -1)
+        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+
+    _nt_vreturn(out_status, NT_SUCCESS);
 }
 
 /* ------------------------------------------------------ */

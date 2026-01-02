@@ -57,15 +57,15 @@ struct nt_key
 };
 
 /* Providing invalid `codepoint` is UB */
-struct nt_key nt_key_event_utf32_new(uint32_t codepoint, bool alt);
+struct nt_key nt_key_utf32_new(uint32_t codepoint, bool alt);
 /* Checks if provided `key` matches description */
-bool nt_key_event_utf32_check(struct nt_key key, uint32_t codepoint, bool alt);
+bool nt_key_utf32_check(struct nt_key key, uint32_t codepoint, bool alt);
 /* Alt insensitive */
-bool nt_key_event_utf32_check_(struct nt_key key, uint32_t codepoint);
+bool nt_key_utf32_check_(struct nt_key key, uint32_t codepoint);
 
 /* Providing invalid `esc_key` is UB */
-struct nt_key nt_key_event_esc_key_new(enum nt_esc_key esc_key);
+struct nt_key nt_key_esc_new(enum nt_esc_key esc_key);
 /* Checks if provided `key` matches description */
-bool nt_key_event_esc_key_check(struct nt_key key, enum nt_esc_key esc_key);
+bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key);
 
 #endif // _NT_KEY_H_

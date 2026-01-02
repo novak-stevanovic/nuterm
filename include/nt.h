@@ -161,11 +161,17 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_UNEXPECTED - this can occur, for example, if read(), write()
- * or poll() fails and the failure is not internally handled. */
+ * 2) NT_ERR_UNEXPECTED. */
 unsigned int nt_wait_for_event(struct nt_event* out_event,
         unsigned int timeout, nt_status* out_status);
 
+/* Pushes event to queue. This will wake the thread which is blocked on
+ * `nt_wait_for_event`. Thread-safe.
+ *
+ * STATUS CODES:
+ * 1) NT_SUCCESS,
+ * 2) NT_ERR_INVALID_ARG - event's type is NT_EVENT_INVALID,
+ * 3) NT_ERR_UNEXPECTED. */
 void nt_push_event(struct nt_event event, nt_status* out_status);
 
 #ifdef __cplusplus
