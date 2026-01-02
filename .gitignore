@@ -1,2 +1,3 @@
 .cache/
 gdb.txt
+compile_commands.json

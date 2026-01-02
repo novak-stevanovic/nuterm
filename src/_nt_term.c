@@ -161,7 +161,7 @@ static struct nt_term_info _terms[] = {
     }
 };
 
-void nt_term_init(nt_status* out_status)
+void _nt_term_init_(nt_status* out_status)
 {
     char* env_term = getenv("TERM");
     char* env_colorterm = getenv("COLORTERM");

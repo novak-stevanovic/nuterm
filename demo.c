@@ -1,7 +1,10 @@
 #include "nt.h"
 #include <assert.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <poll.h>
 
@@ -22,39 +25,44 @@ void loop_basic()
 void loop_lib()
 {
     nt_status _status;
+    unsigned int elapsed;
+    struct nt_event event;
     bool loop = true;
     while(loop)
     {
-        struct nt_event event = nt_wait_for_event(LOOP_TIMEOUT, &_status);
-        printf("(e:%d)", event.elapsed);
+        elapsed = nt_wait_for_event(&event, LOOP_TIMEOUT, &_status);
+        printf("(e:%d)", elapsed);
 
         assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_KEY)
         {
             printf("K(");
 
-            if(event.key_data.type == NT_KEY_EVENT_UTF32)
+            struct nt_event_key_data data = *(struct nt_event_key_data*)event.data;
+
+            if(data.key.type == NT_KEY_UTF32)
             {
-                if(event.key_data.utf32_data.alt == true)
+                if(data.key.utf32.alt == true)
                     printf("a+");
 
-                printf("%d", event.key_data.utf32_data.codepoint);
-                if(event.key_data.utf32_data.codepoint == 'q')
+                printf("%d", data.key.utf32.cp);
+                if(data.key.utf32.cp == 'q')
                     loop = false;
 
             }
             else
             {
-                printf("e%d", event.key_data.esc_key_data.esc_key);
+                printf("e%d", data.key.esc.val);
             }
 
             printf(") | ");
             fflush(stdout);
         }
-        else if(event.type == NT_EVENT_RESIZE)
+        else if(event.type == NT_EVENT_SIGNAL)
         {
-            printf("R(%ld,%ld)", 
-                    event.resize_data.width, event.resize_data.height);
+            struct nt_event_signal_data data = *(struct nt_event_signal_data*)event.data;
+
+            printf("S(%d)", data.signum);
 
             printf(" | ");
 
@@ -70,42 +78,40 @@ void loop_lib()
     printf("Done\n");
 }
 
-void handler1(struct nt_key_event key_event, void* data)
+void* test_thread_fn(void* _)
 {
-    printf("EVENT1\n");
-}
+    while(true)
+    {
+        usleep(1000);
+    }
 
-void handler2(struct nt_key_event key_event, void* data)
-{
-    printf("EVENT2\n");
+    return NULL;
 }
 
 int main(int argc, char *argv[])
 {
     nt_status _status;
-    __nt_init__(&_status);
+    nuterm_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    nt_color fg = nt_color_new_rgb(nt_rgb_new(255, 0, 0));
-
-    nt_color bg = nt_color_new_rgb(nt_rgb_new(255, 0, 0));
-
-    nt_style style = nt_style_new(
-            NT_STYLE_VAL_BOLD,
-            NT_STYLE_VAL_DEFAULT,
-            NT_STYLE_VAL_DEFAULT);
+    pthread_t test_thread;
+    pthread_create(&test_thread, NULL, test_thread_fn, NULL);
 
     struct nt_gfx gfx = {
-        .fg = fg,
-        .bg = bg,
-        .style = style
+        .bg = nt_color_new_auto(nt_rgb_new(255, 0, 0)),
+        .fg = nt_color_new_auto(nt_rgb_new(0, 255, 0)),
+        .style = NT_STYLE_DEFAULT
+
     };
 
-    nt_write_str("Novak", gfx, &_status);
-    assert(_status == NT_SUCCESS);
+    const char* str = "Novak";
 
-    while(getchar() != 'q');
+    nt_write_str(str, strlen(str), gfx, NULL);
+    nt_write_str("\n", 1, gfx, NULL);
 
-    __nt_deinit__();
+    // loop_lib();
+
+    nuterm_deinit();
+
     return 0;
 }

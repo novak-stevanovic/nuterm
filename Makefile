@@ -20,7 +20,7 @@ PREFIX ?= /usr/local
 PC_PREFIX ?= $(PREFIX)/lib/pkgconfig
 PC_WITH_PATH =
 
-OPT ?= 2
+OPT ?= 3
 
 # -----------------------------------------------------------------------------
 # Private Settings
@@ -33,11 +33,11 @@ C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 
 INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h \
-		  include/nt_esc.h include/nt_event.h include/nt_charbuff.h
+		  include/nt_esc.h include/nt_event.h
 
 OPT_FLAG = -O$(OPT)
 
-DEBUG ?= 0
+DEBUG ?= 1
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
@@ -47,8 +47,8 @@ endif
 # Build Flags
 # -----------------------------------------------------------------------------
 
-DEP_CFLAGS =
-DEP_LFLAGS =
+DEP_CFLAGS = -pthread
+DEP_LFLAGS = -pthread
 
 # ---------------------------------------------------------
 # pkgconf

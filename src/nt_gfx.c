@@ -142,7 +142,7 @@ nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb)
     }
 }
 
-nt_color nt_color_new_rgb(struct nt_rgb rgb)
+nt_color nt_color_new_auto(struct nt_rgb rgb)
 {
     return (nt_color) {
         ._code8 = nt_rgb_to_c8(rgb),
@@ -171,7 +171,7 @@ nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb)
     };
 }
 
-nt_style nt_style_new_(uint8_t value)
+nt_style nt_style_new_uniform(uint8_t value)
 {
     return nt_style_new(value, value, value);
 }

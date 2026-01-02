@@ -1,9 +1,5 @@
-/*
- * Copyright (c) 2025 Novak Stevanović
- * Licensed under the MIT License. See LICENSE file in project root.
- */
-#ifndef _NT_SHARED_H_
-#define _NT_SHARED_H_
+#ifndef _NT_STATUS_H_
+#define _NT_STATUS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,9 +19,10 @@ typedef int nt_status;
 #define NT_ERR_INVALID_UTF32 (_NT_STATUS_BASE + 8)
 #define NT_ERR_BIND_ALREADY_EXISTS (_NT_STATUS_BASE + 9)
 #define NT_ERR_OUT_OF_BOUNDS (_NT_STATUS_BASE + 10)
+#define NT_ERR_ALR_BUFF (_NT_STATUS_BASE + 11)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _NT_SHARED_H_
+#endif // _NT_STATUS_H_

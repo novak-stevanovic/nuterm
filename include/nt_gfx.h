@@ -53,7 +53,7 @@ extern const nt_color NT_COLOR_DEFAULT;
 nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb);
 
 /* Auto-converts to other colors */
-nt_color nt_color_new_rgb(struct nt_rgb rgb);
+nt_color nt_color_new_auto(struct nt_rgb rgb);
 
 bool nt_color_are_equal(nt_color color1, nt_color color2);
 
@@ -70,7 +70,7 @@ typedef struct nt_style
 extern const nt_style NT_STYLE_DEFAULT;
 
 nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
-nt_style nt_style_new_(uint8_t value);
+nt_style nt_style_new_uniform(uint8_t value);
 
 bool nt_style_are_equal(nt_style style1, nt_style style2);
 

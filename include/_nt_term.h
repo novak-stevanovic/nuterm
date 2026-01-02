@@ -5,7 +5,7 @@
 #ifndef __NT_TERM_H__
 #define __NT_TERM_H__
 
-#include "nt_shared.h"
+#include "nt_status.h"
 
 struct nt_term_info
 {
@@ -37,7 +37,7 @@ typedef enum nt_term_color_count
  * STATUS CODES:
  * 1) NT_SUCCESS,
  * 2) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
-void nt_term_init(nt_status* out_status);
+void _nt_term_init_(nt_status* out_status);
 
 /* Returns NT_TERM_OTHER if not set. */
 const struct nt_term_info* nt_term_get_used();
