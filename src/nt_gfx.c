@@ -7,20 +7,20 @@ struct point3d
     ssize_t x, y, z;
 };
 
-static inline ssize_t _square_ssize(ssize_t val)
+static inline ssize_t square_ssize(ssize_t val)
 {
     return val * val;
 }
 
-static inline size_t _distance_point3d(struct point3d p1, struct point3d p2)
+static inline size_t distance_point3d(struct point3d p1, struct point3d p2)
 {
-    return (_square_ssize(p2.x - p1.x) +
-            _square_ssize(p2.y - p1.y) +
-            _square_ssize(p2.z - p1.z));
+    return (square_ssize(p2.x - p1.x) +
+            square_ssize(p2.y - p1.y) +
+            square_ssize(p2.z - p1.z));
 }
 
 /* Order is defined by ANSI esc sequence standards. */
-const static struct point3d _colors[] = {
+const static struct point3d colors[] = {
     { .x = 0, .y = 0, .z = 0 }, // Black
     { .x = 255, .y = 0, .z = 0 }, // Red
     { .x = 0, .y = 255, .z = 0 }, // Green
@@ -31,7 +31,7 @@ const static struct point3d _colors[] = {
     { .x = 255, .y = 255, .z = 255 }, // White
 };
 
-static inline int _nt_clamp_int(int min, int mid, int max)
+static inline int nt_clamp_int(int min, int mid, int max)
 {
     if(mid < min)
         mid = min;
@@ -47,9 +47,9 @@ static inline int _nt_clamp_int(int min, int mid, int max)
 
 struct nt_rgb nt_rgb_new(int r, int g, int b)
 {
-    int r_clamped = _nt_clamp_int(0, r, 255);
-    int g_clamped = _nt_clamp_int(0, g, 255);
-    int b_clamped = _nt_clamp_int(0, b, 255);
+    int r_clamped = nt_clamp_int(0, r, 255);
+    int g_clamped = nt_clamp_int(0, g, 255);
+    int b_clamped = nt_clamp_int(0, b, 255);
 
     return (struct nt_rgb) {
         .r = r_clamped,
@@ -71,7 +71,7 @@ uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
 
     const struct point3d color = { .x = r, .y = g, .z = b };
 
-    size_t count = sizeof(_colors) / sizeof(struct point3d);
+    size_t count = sizeof(colors) / sizeof(struct point3d);
     size_t i;
 
     ssize_t min_distance = -1;
@@ -79,7 +79,7 @@ uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
     size_t it_distance;
     for(i = 0; i < count; i++)
     {
-        it_distance = _distance_point3d(_colors[i], color);
+        it_distance = distance_point3d(colors[i], color);
         if((it_distance < min_distance) || (min_distance == -1))
         {
             min_distance = it_distance;

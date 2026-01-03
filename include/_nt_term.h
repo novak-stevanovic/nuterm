@@ -37,14 +37,14 @@ typedef enum nt_term_color_count
  * STATUS CODES:
  * 1) NT_SUCCESS,
  * 2) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
-void _nt_term_init_(nt_status* out_status);
+void _nt_term_init(nt_status* out_status);
 
 /* Returns NT_TERM_OTHER if not set. */
-const struct nt_term_info* nt_term_get_used();
+struct nt_term_info _nt_term_get_used();
 
 /* Returns NT_TERM_COLOR_OTHER if not set. */
-nt_term_color_count nt_term_get_color_count();
+nt_term_color_count _nt_term_get_color_count();
 
-void nt_term_destroy();
+void _nt_term_deinit();
 
 #endif // __NT_TERM_H__

@@ -72,7 +72,7 @@ void loop_lib()
         }
     }
 
-    printf("Done\n");
+    printf("Done\n\r");
 }
 
 void* test_thread_fn(void* _)
