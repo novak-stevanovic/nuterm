@@ -168,15 +168,17 @@ unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
         nt_status* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
- * `nt_event_wait`. If the calling thread is the main thread, next call
- * to `nt_event_wait` will return with the pushed event right away.
+ * `nt_event_wait()`. If the calling thread is the main thread, next call
+ * to `nt_event_wait()` will return with the pushed event right away.
+ *
+ * It is possible to push built-in library events(NT_EVENT_KEY, for example).
+ * Make sure to provide the correct payload and handle such situations properly.
  *
  * Thread-safe.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID or
- * `data_size` > NT_EVENT_DATA_MAX_SIZE, for example,
+ * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID or `data_size` is too large,
  * 3) NT_ERR_UNEXPECTED. */
 void nt_event_push(uint8_t type, void* data, uint8_t data_size, nt_status* out_status);
 

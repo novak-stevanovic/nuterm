@@ -634,7 +634,7 @@ struct nt_event_header
     uint8_t data_size;
 };
 
-/* Called by nt_wait_for_event() internally. */
+/* Called by nt_event_wait() internally. */
 static struct nt_key process_key_event(nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */

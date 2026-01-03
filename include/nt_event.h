@@ -18,16 +18,16 @@ extern "C" {
 #define NT_EVENT_INVALID 0
 
 #define NT_EVENT_KEY 1
-// For this event type, `data` buffer will contain: struct nt_key key
-
 #define NT_EVENT_SIGNAL 2
-// For this event type, `data` buffer will contain: unsigned int signum
-
 #define NT_EVENT_TIMEOUT 3
-// For this event type, `data` will be empty
 
-// Range [0, 99] is reserved.
+// Range [0, 99] is reserved for library events.
 #define NT_EVENT_CUSTOM_BASE 100
+
+/* Event payload(data field) for built-in events:
+ * 1) NT_EVENT_KEY:     struct nt_key
+ * 2) NT_EVENT_SIGNAL:  unsigned int (signum)
+ * 3) NT_EVENT_TIMEOUT: no payload */
 
 /* -------------------------------------------------------------------------- */
 
@@ -38,7 +38,7 @@ struct nt_event
     char data[NT_EVENT_DATA_MAX_SIZE];
     uint8_t type;
     uint8_t data_size;
-    bool custom;
+    bool custom; // True if event was pushed with `nt_event_push()`
     uint8_t __padding;
 };
 
