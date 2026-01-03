@@ -21,7 +21,7 @@ extern "C" {
 // For this event type, `data` buffer will contain: struct nt_key key
 
 #define NT_EVENT_SIGNAL 2
-// For this event type, `data` buffer will contain: uint8_t signum
+// For this event type, `data` buffer will contain: unsigned int signum
 
 #define NT_EVENT_TIMEOUT 3
 // For this event type, `data` will be empty
@@ -31,12 +31,15 @@ extern "C" {
 
 /* -------------------------------------------------------------------------- */
 
-#define NT_EVENT_DATA_SIZE 63
+#define NT_EVENT_DATA_MAX_SIZE 96
 
 struct nt_event
 {
-    char data[NT_EVENT_DATA_SIZE];
+    char data[NT_EVENT_DATA_MAX_SIZE];
     uint8_t type;
+    uint8_t data_size;
+    bool custom;
+    uint8_t __padding;
 };
 
 #ifdef __cplusplus

@@ -36,12 +36,12 @@ LIB_PC = $(LIB_NAME).pc
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 
-INSTALL_INCLUDE = include/nt_shared.h include/nt_gfx.h include/nt.h \
-		  include/nt_esc.h include/nt_event.h include/nt_key.h
+INSTALL_INCLUDE = include/nt.h include/nt_gfx.h include/nt_status.h \
+		  include/nt_event.h include/nt_key.h
 
 OPT_FLAG = -O$(OPT)
 
-DEBUG ?= 1
+DEBUG ?= 0
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
@@ -53,6 +53,8 @@ endif
 
 DEP_CFLAGS = -pthread
 DEP_LFLAGS = -pthread
+
+STD_FLAG = -std=c99
 
 # ---------------------------------------------------------
 # pkgconf
@@ -67,7 +69,7 @@ _PC_DESCRIPTION = Terminal event detection, function abstraction.
 _PC_VERSION = 1.0.0
 _PC_LIBS = -L$${libdir} -l$(LIB_NAME) $(DEP_CFLAGS)
 _PC_CFLAGS = -I$${includedir}/$(LIB_NAME) $(DEP_LFLAGS)
-_PC_REQUIRES =
+_PC_REQUIRES = uconv
 _PC_REQUIRES_PRIVATE =
 
 PC_DEPS = $(_PC_REQUIRES)
@@ -86,7 +88,7 @@ SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
 SRC_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
-SRC_CFLAGS = -c -fPIC $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
+SRC_CFLAGS = -c -fPIC $(STD_FLAG) $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
 $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
 
 # ---------------------------------------------------------
@@ -99,7 +101,7 @@ DEMO_CFLAGS_WARN = -Wall
 DEMO_CFLAGS_MAKE = -MMD -MP
 DEMO_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
-DEMO_CFLAGS = -c $(DEMO_CFLAGS_INCLUDE) $(DEMO_CFLAGS_MAKE) \
+DEMO_CFLAGS = -c $(STD_FLAG) $(DEMO_CFLAGS_INCLUDE) $(DEMO_CFLAGS_MAKE) \
 $(DEMO_CFLAGS_WARN) $(DEMO_CFLAGS_DEBUG) $(DEMO_CFLAGS_OPTIMIZATION)
 
 DEMO_LFLAGS = -L. -l$(LIB_NAME) $(DEP_LFLAGS) 

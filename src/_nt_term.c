@@ -168,7 +168,8 @@ void _nt_term_init(nt_status* out_status)
 
     if(env_term == NULL)
     {
-        _nt_vreturn(out_status, NT_ERR_INIT_TERM_ENV);
+        SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
+        return;
     }
 
     size_t i;
@@ -198,8 +199,8 @@ void _nt_term_init(nt_status* out_status)
             _color = NT_TERM_COLOR_C8;
     }
 
-    nt_status ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPPORTED;
-    _nt_vreturn(out_status, ret);
+    nt_status ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPP;
+    SET_OUT(out_status, ret);
 }
 
 struct nt_term_info _nt_term_get_used()

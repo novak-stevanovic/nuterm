@@ -40,20 +40,7 @@ enum nt_esc_fn
     NT_ESC_FUNC_COUNT // Must be last because internally used as count
 };
 
-#define _nt_return(ret_val, out_status_param, out_status)                      \
-    do                                                                         \
-    {                                                                          \
-        if((out_status_param) != NULL)                                         \
-            (*out_status_param) = (out_status);                                \
-        return (ret_val);                                                      \
-    } while(0);                                                                \
-
-#define _nt_vreturn(out_status_param, out_status)                              \
-    do                                                                         \
-    {                                                                          \
-        if((out_status_param) != NULL)                                         \
-            (*out_status_param) = (out_status);                                \
-        return;                                                                \
-    } while(0);                                                                \
+#define SET_OUT(out_param, out_val) \
+    if((out_param) != NULL) ((*out_param)) = out_val;
 
 #endif // __NT_SHARED_H__

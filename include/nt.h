@@ -154,25 +154,31 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
 /* EVENT */
 /* -------------------------------------------------------------------------- */
 
-#define NT_WAIT_FOREVER -1
+#define NT_EVENT_WAIT_FOREVER -1
 
-/* Waits for an event. The thread is blocked until the event occurs.
- * Returns elapsed time.
+/* Waits for an event. The thread is blocked until the event occurs. Meant to be
+ * used for main loop in TGUI applications. Should be called from the main thread.
+ *
+ * Returns elapsed time(in miliseconds).
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
-unsigned int nt_wait_for_event(struct nt_event* out_event,
-        unsigned int timeout, nt_status* out_status);
+unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
+        nt_status* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
- * `nt_wait_for_event`. Thread-safe.
+ * `nt_event_wait`. If the calling thread is the main thread, next call
+ * to `nt_event_wait` will return with the pushed event right away.
+ *
+ * Thread-safe.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - event's type is NT_EVENT_INVALID,
+ * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID or
+ * `data_size` > NT_EVENT_DATA_MAX_SIZE, for example,
  * 3) NT_ERR_UNEXPECTED. */
-void nt_push_event(struct nt_event event, nt_status* out_status);
+void nt_event_push(uint8_t type, void* data, uint8_t data_size, nt_status* out_status);
 
 #ifdef __cplusplus
 }

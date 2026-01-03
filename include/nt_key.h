@@ -1,8 +1,16 @@
+/*
+ * Copyright (c) 2025 Novak Stevanović
+ * Licensed under the MIT License. See LICENSE file in project root.
+ */
 #ifndef _NT_KEY_H_
 #define _NT_KEY_H_
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum nt_esc_key
 {
@@ -67,5 +75,9 @@ bool nt_key_utf32_check_(struct nt_key key, uint32_t codepoint);
 struct nt_key nt_key_esc_new(enum nt_esc_key esc_key);
 /* Checks if provided `key` matches description */
 bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _NT_KEY_H_

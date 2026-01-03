@@ -74,14 +74,14 @@ static void* sigthread_fn(void* data)
 {
     sigset_t set;
     sigfillset(&set);
-    int sig = 0;
-    uint8_t sig_byte;
+    int signal = 0;
+    unsigned int usignal;
     while(!sigthread_stop)
     {
-        sigwait(&set, &sig);
+        sigwait(&set, &signal);
 
-        sig_byte = sig;
-        write(signal_pipe[1], &sig_byte, 1);
+        usignal = (unsigned int)signal;
+        write(signal_pipe[1], &usignal, sizeof(unsigned int));
     }
 
     return NULL;
@@ -107,23 +107,34 @@ void nuterm_init(nt_status* out_status)
 
     status = tcgetattr(STDIN_FILENO, &init_term_opts);
     if(status == -1)
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
-    struct termios _raw_term_opts = init_term_opts;
-    term_opts_raw(&_raw_term_opts);
-
-    status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &_raw_term_opts);
+    struct termios raw_opts = init_term_opts;
+    term_opts_raw(&raw_opts);
+    status = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_opts);
     if(status == -1)
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
     int pipe_status;
     pipe_status = pipe(signal_pipe);
     if(pipe_status != 0)
-        _nt_vreturn(out_status, NT_ERR_INIT_PIPE);
+    {
+        SET_OUT(out_status, NT_ERR_INIT_PIPE);
+        return;
+    }
 
     pipe_status = pipe(custom_event_pipe);
     if(pipe_status != 0)
-        _nt_vreturn(out_status, NT_ERR_INIT_PIPE);
+    {
+        SET_OUT(out_status, NT_ERR_INIT_PIPE);
+        return;
+    }
 
     poll_fds[0] = (struct pollfd) {
         .fd = STDIN_FILENO,
@@ -145,26 +156,35 @@ void nuterm_init(nt_status* out_status)
     sigfillset(&set);
     int mask_status = pthread_sigmask(SIG_BLOCK, &set, NULL);
     if(mask_status != 0)
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
     int thread_status = pthread_create(&sigthread, NULL, sigthread_fn, NULL);
     if(thread_status != 0)
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
     _nt_term_init(&_status);
     switch(_status)
     {
         case NT_SUCCESS:
             break;
-        case NT_ERR_TERM_NOT_SUPPORTED:
+        case NT_ERR_TERM_NOT_SUPP:
             break;
         case NT_ERR_INIT_TERM_ENV:
-            _nt_vreturn(out_status, NT_ERR_INIT_TERM_ENV);
+            SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
+            return;
         default:
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return;
     }
 
-    _nt_vreturn(out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
+    return;
 }
 
 void nuterm_deinit()
@@ -199,7 +219,10 @@ static void execute_used_term_func(enum nt_esc_fn func, bool use_va,
 
     const char* esc_func = used_term.esc_func_seqs[func];
     if(esc_func == NULL)
-        _nt_vreturn(out_status, NT_ERR_FUNC_NOT_SUPPORTED);
+    {
+        SET_OUT(out_status, NT_ERR_FUNC_NOT_SUPP);
+        return;
+    }
 
     const char* _func;
     if(use_va)
@@ -211,7 +234,10 @@ static void execute_used_term_func(enum nt_esc_fn func, bool use_va,
 
         status = vsprintf(buff, esc_func, list);
         if(status < 0)
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+        {
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return;
+        }
 
         va_end(list);
 
@@ -221,7 +247,7 @@ static void execute_used_term_func(enum nt_esc_fn func, bool use_va,
 
     write_to_stdout(_func, strlen(_func));
 
-    _nt_vreturn(out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -229,10 +255,16 @@ static void execute_used_term_func(enum nt_esc_fn func, bool use_va,
 void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status)
 {
     if((buff == NULL) || (cap == 0))
-        _nt_vreturn(out_status, NT_ERR_INVALID_ARG);
+    {
+        SET_OUT(out_status, NT_ERR_INVALID_ARG);
+        return;
+    }
 
     if(stdout_buff != NULL)
-        _nt_vreturn(out_status, NT_ERR_ALR_BUFF);
+    {
+        SET_OUT(out_status, NT_ERR_ALR_BUFF);
+        return;
+    }
 
     stdout_buff = buff;
     stdout_buff[0] = 0;
@@ -364,13 +396,15 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         }
         else
         {
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return;
         }
     }
 
     if(_status != NT_SUCCESS)
     {
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
     }
 
     /* Set background --------------------------------------------------- */
@@ -398,13 +432,15 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         }
         else 
         {
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return;
         }
     }
 
     if(_status != NT_SUCCESS)
     {
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
     }
 
     /* Set style -------------------------------------------------------- */
@@ -417,7 +453,11 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         style = gfx.style._value_c256;
     else if(colors == NT_TERM_COLOR_C8)
         style = gfx.style._value_rgb;
-    else { _nt_vreturn(out_status, NT_ERR_UNEXPECTED); }
+    else 
+    { 
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
     size_t i;
     size_t count = 8;
@@ -426,15 +466,16 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         if(style & (NT_STYLE_VAL_BOLD << i))
         {
             execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
-            if(_status != NT_SUCCESS)
+            if((_status != NT_SUCCESS) && (_status != NT_ERR_FUNC_NOT_SUPP))
             {
-                if(_status != NT_ERR_FUNC_NOT_SUPPORTED)
-                    _nt_vreturn(out_status, _status);
+                SET_OUT(out_status, _status);
+                return;
             }
         }
     }
 
-    _nt_vreturn(out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
+    return;
 }
 
 // UTF-32
@@ -452,11 +493,14 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
         case UC_SUCCESS:
             break;
         case UC_ERR_SURROGATE:
-            _nt_vreturn(out_status, NT_ERR_INVALID_UTF32);
+            SET_OUT(out_status, NT_ERR_INVALID_UTF32);
+            return;
         case UC_ERR_INVALID_CODEPOINT:
-            _nt_vreturn(out_status, NT_ERR_INVALID_UTF32);
+            SET_OUT(out_status, NT_ERR_INVALID_UTF32);
+            return;
         default:
-            _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return;
     }
 
     utf8[utf8_len] = '\0';
@@ -472,11 +516,17 @@ void nt_write_str(const char* str, size_t len,
 
     execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
-        _nt_vreturn(out_status, _status);
+    {
+        SET_OUT(out_status, _status);
+        return;
+    }
 
     set_gfx(gfx, &_status);
     if(_status != NT_SUCCESS)
-        _nt_vreturn(out_status, _status);
+    {
+        SET_OUT(out_status, _status);
+        return;
+    }
 
     /* In some terminals, a newline will fill the next row with currently set bg.
      * To avoid this, any time we run into a newline, we will reset the gfx,
@@ -495,13 +545,19 @@ void nt_write_str(const char* str, size_t len,
 
                 execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
                 if(_status != NT_SUCCESS)
-                    _nt_vreturn(out_status, _status);
+                {
+                    SET_OUT(out_status, _status);
+                    return;
+                }
 
                 write_to_stdout("\n", 1);
 
                 set_gfx(gfx, &_status);
                 if(_status != NT_SUCCESS)
-                    _nt_vreturn(out_status, _status);
+                {
+                    SET_OUT(out_status, _status);
+                    return;
+                }
 
                 if(it_end < (str + len - 1))
                     it_begin = (it_end + 1);
@@ -517,7 +573,7 @@ void nt_write_str(const char* str, size_t len,
         }
     }
 
-    _nt_vreturn(out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
 }
 
 void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
@@ -528,14 +584,18 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
 
     if((x >= _width) || (y >= _height))
     {
-        _nt_vreturn(out_status, NT_ERR_OUT_OF_BOUNDS);
+        SET_OUT(out_status, NT_ERR_OUT_OF_BOUNDS);
+        return;
     }
 
     nt_status _status;
 
     execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
-        _nt_vreturn(out_status, _status);
+    {
+        SET_OUT(out_status, _status);
+        return;
+    }
 
     nt_write_char(codepoint, gfx, out_status);
 }
@@ -548,14 +608,18 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
 
     if((x >= _width) || (y >= _height))
     {
-        _nt_vreturn(out_status, NT_ERR_OUT_OF_BOUNDS);
+        SET_OUT(out_status, NT_ERR_OUT_OF_BOUNDS);
+        return;
     }
 
     nt_status _status;
 
     execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
     if(_status != NT_SUCCESS)
-        _nt_vreturn(out_status, _status);
+    {
+        SET_OUT(out_status, _status);
+        return;
+    }
 
     nt_write_str(str, len, gfx, out_status);
 }
@@ -564,6 +628,12 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
 /* EVENT */
 /* -------------------------------------------------------------------------- */
 
+struct nt_event_header
+{
+    uint8_t type;
+    uint8_t data_size;
+};
+
 /* Called by nt_wait_for_event() internally. */
 static struct nt_key process_key_event(nt_status* out_status);
 
@@ -571,13 +641,13 @@ static struct nt_key process_key_event(nt_status* out_status);
 
 static const struct nt_event NT_EVENT_EMPTY = {0};
 
-unsigned int nt_wait_for_event(struct nt_event* out_event,
+unsigned int nt_event_wait(struct nt_event* out_event,
         unsigned int timeout, nt_status* out_status)
 {
     struct timespec _time1, _time2;
     clock_gettime(CLOCK_REALTIME, &_time1);
 
-    int poll_status = poll(poll_fds, 2, timeout);
+    int poll_status = poll(poll_fds, 3, timeout);
 
     clock_gettime(CLOCK_REALTIME, &_time2);
 
@@ -590,21 +660,19 @@ unsigned int nt_wait_for_event(struct nt_event* out_event,
 
     if(poll_status == -1)
     {
-        if(out_event != NULL)
-            (*out_event) = event;
-        if(out_status != NULL)
-            (*out_status) = NT_ERR_UNEXPECTED;
+        SET_OUT(out_event, event);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
         return elapsed;
     }
 
     if(poll_status == 0)
     {
         event.type = NT_EVENT_TIMEOUT;
+        event.custom = false;
+        event.data_size = 0;
 
-        if(out_event != NULL)
-            (*out_event) = event;
-        if(out_status != NULL)
-            (*out_status) = NT_SUCCESS;
+        SET_OUT(out_event, event);
+        SET_OUT(out_status, NT_SUCCESS);
         return elapsed;
     }
 
@@ -612,13 +680,14 @@ unsigned int nt_wait_for_event(struct nt_event* out_event,
     if(poll_fds[0].revents & POLLIN)
     {
         event.type = NT_EVENT_KEY;
+        event.custom = false;
+        event.data_size = sizeof(struct nt_key);
+
         struct nt_key key = process_key_event(&_status);
         if(_status != NT_SUCCESS)
         {
-            if(out_event != NULL)
-                (*out_event) = event;
-            if(out_status != NULL)
-                (*out_status) = NT_ERR_UNEXPECTED;
+            SET_OUT(out_event, event);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return elapsed;
         }
         memcpy(event.data, &key, sizeof(struct nt_key));
@@ -626,53 +695,92 @@ unsigned int nt_wait_for_event(struct nt_event* out_event,
     else if(poll_fds[1].revents & POLLIN)
     {
         event.type = NT_EVENT_SIGNAL;
+        event.custom = false;
+        event.data_size = sizeof(unsigned int);
 
-        uint8_t buff = 0;
-        int read_status = read(signal_pipe[0], &buff, 1);
+        unsigned int buff = 0;
+        int read_status = read(signal_pipe[0], &buff, sizeof(unsigned int));
         if(read_status == -1)
         {
-            if(out_event != NULL)
-                (*out_event) = event;
-            if(out_status != NULL)
-                (*out_status) = NT_ERR_UNEXPECTED;
+            SET_OUT(out_event, event);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return elapsed;
         }
 
-        memcpy(event.data, &buff, sizeof(uint8_t));
+        memcpy(event.data, &buff, sizeof(unsigned int));
     }
     else // poll_fds[2].revents & POLLIN
     {
-        int read_status = read(custom_event_pipe[0],
-                &event, sizeof(struct nt_event));
+        // Read header to determine type and data_size
+        struct nt_event_header header = {0};
+        int read_status = read(
+                custom_event_pipe[0],
+                &header,
+                sizeof(struct nt_event_header));
 
         if(read_status == -1)
         {
-            if(out_event != NULL)
-                (*out_event) = event;
-            if(out_status != NULL)
-                (*out_status) = NT_ERR_UNEXPECTED;
+            SET_OUT(out_event, event);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return elapsed;
         }
+
+        event.data_size = header.data_size;
+        event.type = header.type;
+        event.custom = true;
+        
+        // If event has data, read it
+        if(header.data_size > 0)
+        {
+            uint8_t buff[NT_EVENT_DATA_MAX_SIZE] = {0};
+            read_status = read(custom_event_pipe[0], buff, header.data_size);
+            if(read_status == -1)
+            {
+                SET_OUT(out_event, event);
+                SET_OUT(out_status, NT_ERR_UNEXPECTED);
+                return elapsed;
+            }
+
+            memcpy(event.data, buff, header.data_size);
+        }
+
     }
 
-    if(out_event != NULL)
-        (*out_event) = event;
-    if(out_status != NULL)
-        (*out_status) = NT_SUCCESS;
+    SET_OUT(out_event, event);
+    SET_OUT(out_status, NT_SUCCESS);
     return elapsed;
 }
 
-void nt_push_event(struct nt_event event, nt_status* out_status)
+void nt_event_push(uint8_t type, void* data, uint8_t data_size,
+        nt_status* out_status)
 {
-    if(event.type == NT_EVENT_INVALID)
-        _nt_vreturn(out_status, NT_ERR_INVALID_ARG);
+    if((type == NT_EVENT_INVALID) || (data_size > NT_EVENT_DATA_MAX_SIZE) ||
+            ((data_size > 0) && (data == NULL)))
+    {
+        SET_OUT(out_status, NT_ERR_INVALID_ARG);
+        return;
+    }
 
-    int write_status = write(custom_event_pipe[1], &event, sizeof(struct nt_event));
+    // Prepare buffer for writing
+    uint8_t buff[sizeof(struct nt_event_header) + NT_EVENT_DATA_MAX_SIZE] = {0};
+    buff[0] = type;
+    buff[1] = data_size;
 
+    // If there's data, write it to buffer
+    if(data_size > 0) memcpy(buff + 2, data, data_size);
+
+    // Write to the pipe
+    int write_status = write(
+            custom_event_pipe[1],
+            buff,
+            sizeof(struct nt_event_header) + data_size);
     if(write_status == -1)
-        _nt_vreturn(out_status, NT_ERR_UNEXPECTED);
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
 
-    _nt_vreturn(out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
 }
 
 /* ------------------------------------------------------ */
@@ -706,7 +814,8 @@ static struct nt_key process_key_event(nt_status* out_status)
     read_status = read(STDIN_FILENO, buff, 1);
     if(read_status < 0)
     {
-        _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return NT_KEY_EMPTY;
     }
 
     if(buff[0] == 0x1b) // ESC or ESC SEQ or ALT + PRINTABLE
@@ -714,7 +823,8 @@ static struct nt_key process_key_event(nt_status* out_status)
         poll_status = poll(poll_fds, 1, ESC_TIMEOUT);
         if(poll_status == -1)
         {
-            _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return NT_KEY_EMPTY;
         }
 
         if(poll_status == 0) // timeout - just ESC
@@ -727,13 +837,15 @@ static struct nt_key process_key_event(nt_status* out_status)
                 }
             };
 
-            _nt_return(key_event, out_status, NT_SUCCESS);
+            SET_OUT(out_status, NT_SUCCESS);
+            return key_event;
         }
 
         read_status = read(STDIN_FILENO, buff + 1, 1);
         if(read_status == -1)
         {
-            _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return NT_KEY_EMPTY;
         }
 
         /* Probably ESC KEY, will be sure after poll() */
@@ -742,7 +854,8 @@ static struct nt_key process_key_event(nt_status* out_status)
             poll_status = poll(poll_fds, 1, ESC_TIMEOUT);
             if(poll_status == -1)
             {
-                _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                SET_OUT(out_status, NT_ERR_UNEXPECTED);
+                return NT_KEY_EMPTY;
             }
 
             if(poll_status == 0) // Not in fact an ESC key...
@@ -754,20 +867,22 @@ static struct nt_key process_key_event(nt_status* out_status)
                         .alt = true,
                     }
                 };
-                _nt_return(key_event, out_status, NT_SUCCESS);
+                SET_OUT(out_status, NT_SUCCESS);
+                return key_event;
             }
 
             // ESC KEY
 
-            struct nt_key key_event =
-                process_key_event_esc_key(buff, &_status);
+            struct nt_key key_event = process_key_event_esc_key(buff, &_status);
 
             switch(_status)
             {
                 case NT_SUCCESS:
-                    _nt_return(key_event, out_status, NT_SUCCESS);
+                    SET_OUT(out_status, NT_SUCCESS);
+                    return key_event;
                 default:
-                    _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                    SET_OUT(out_status, NT_ERR_UNEXPECTED);
+                    return NT_KEY_EMPTY;
             }
 
         }
@@ -779,9 +894,11 @@ static struct nt_key process_key_event(nt_status* out_status)
             switch(_status)
             {
                 case NT_SUCCESS:
-                    _nt_return(key_event, out_status, NT_SUCCESS);
+                    SET_OUT(out_status, NT_SUCCESS);
+                    return key_event;
                 default:
-                    _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                    SET_OUT(out_status, NT_ERR_UNEXPECTED);
+                    return NT_KEY_EMPTY;
             }
         }
     }
@@ -793,9 +910,11 @@ static struct nt_key process_key_event(nt_status* out_status)
         switch(_status)
         {
             case NT_SUCCESS:
-                _nt_return(key_event, out_status, NT_SUCCESS);
+                SET_OUT(out_status, NT_SUCCESS);
+                return key_event;
             default:
-                _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+                SET_OUT(out_status, NT_ERR_UNEXPECTED);
+                return NT_KEY_EMPTY;
         }
     }
 }
@@ -807,19 +926,22 @@ static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
     utf32_len = uc_utf8_unit_len(utf8_sbyte[0]);
     if(utf32_len == SIZE_MAX)
     {
-        _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return NT_KEY_EMPTY;
     }
 
     // read()
     int read_status = read(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1);
     if(read_status < 0)
     {
-        _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return NT_KEY_EMPTY;
     }
     
     if(read_status != (utf32_len - 1))
     {
-        _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED); // ?
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return NT_KEY_EMPTY;
     }
 
     uint32_t utf32;
@@ -828,7 +950,8 @@ static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
     uc_utf8_to_utf32(utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width, &_status);
     if(_status != UC_SUCCESS)
     {
-        _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return NT_KEY_EMPTY;
     }
 
     struct nt_key key_event = {
@@ -839,7 +962,8 @@ static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
         }
     };
 
-    _nt_return(key_event, out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
+    return key_event;
 }
 
 static struct nt_key process_key_event_esc_key(uint8_t* buff,
@@ -852,7 +976,8 @@ static struct nt_key process_key_event_esc_key(uint8_t* buff,
         read_status = read(STDIN_FILENO, buff + read_count, 1);
         if(read_status < 0)
         {
-            _nt_return(NT_KEY_EMPTY, out_status, NT_ERR_UNEXPECTED);
+            SET_OUT(out_status, NT_ERR_UNEXPECTED);
+            return NT_KEY_EMPTY;
         }
 
         if((buff[read_count] >= 0x40) && (buff[read_count] <= 0x7E))
@@ -879,7 +1004,8 @@ static struct nt_key process_key_event_esc_key(uint8_t* buff,
                 }
             };
 
-            _nt_return(ret, out_status, NT_SUCCESS);
+            SET_OUT(out_status, NT_SUCCESS);
+            return ret;
         }
     }
 
@@ -890,5 +1016,6 @@ static struct nt_key process_key_event_esc_key(uint8_t* buff,
         }
     };
 
-    _nt_return(ret, out_status, NT_SUCCESS);
+    SET_OUT(out_status, NT_SUCCESS);
+    return ret;
 }
