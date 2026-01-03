@@ -51,14 +51,11 @@ endif
 # Build Flags
 # -----------------------------------------------------------------------------
 
-DEP_CFLAGS = -pthread
-DEP_LFLAGS = -pthread
-
-STD_FLAG = -std=c99
-
 # ---------------------------------------------------------
 # pkgconf
 # ---------------------------------------------------------
+
+PC_DEPS = uconv
 
 _PC_PREFIX = $(PREFIX)
 _PC_EXEC_PREFIX = $${prefix}
@@ -67,41 +64,42 @@ _PC_INCLUDEDIR = $${exec_prefix}/include
 _PC_NAME = $(LIB_NAME)
 _PC_DESCRIPTION = Terminal event detection, function abstraction.
 _PC_VERSION = 1.0.0
-_PC_LIBS = -L$${libdir} -l$(LIB_NAME) $(DEP_CFLAGS)
-_PC_CFLAGS = -I$${includedir}/$(LIB_NAME) $(DEP_LFLAGS)
-_PC_REQUIRES = uconv
+_PC_LIBS = -L$${libdir} -l$(LIB_NAME) -pthread
+_PC_CFLAGS = -I$${includedir}/$(LIB_NAME)
+_PC_REQUIRES = $(PC_DEPS)
 _PC_REQUIRES_PRIVATE =
 
-PC_DEPS = $(_PC_REQUIRES)
 ifneq ($(PC_DEPS),)
-    DEP_CFLAGS += $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --cflags $(PC_DEPS))
-    DEP_LFLAGS += $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --libs $(PC_DEPS))
+    DEP_CFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --cflags $(PC_DEPS))
+    DEP_LFLAGS = $(shell pkgconf --with-path=$(PC_WITH_PATH) --silence-errors --libs $(PC_DEPS))
 endif
 
 # ---------------------------------------------------------
 # Source Flags
 # ---------------------------------------------------------
 
+SRC_CFLAGS_STD = -std=c99
 SRC_CFLAGS_DEBUG = $(DEBUG_FLAG)
 SRC_CFLAGS_OPTIMIZATION = $(OPT_FLAG)
 SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
 SRC_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
-SRC_CFLAGS = -c -fPIC $(STD_FLAG) $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
+SRC_CFLAGS = -c -fPIC -pthread $(SRC_CFLAGS_STD) $(SRC_CFLAGS_INCLUDE) $(SRC_CFLAGS_MAKE) \
 $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
 
 # ---------------------------------------------------------
 # Test Flags
 # ---------------------------------------------------------
 
+DEMO_CFLAGS_STD = -std=c99
 DEMO_CFLAGS_DEBUG = $(DEBUG_FLAG)
 DEMO_CFLAGS_OPTIMIZATION = -O0
 DEMO_CFLAGS_WARN = -Wall
 DEMO_CFLAGS_MAKE = -MMD -MP
 DEMO_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
-DEMO_CFLAGS = -c $(STD_FLAG) $(DEMO_CFLAGS_INCLUDE) $(DEMO_CFLAGS_MAKE) \
+DEMO_CFLAGS = -c -pthread $(DEMO_CFLAGS_STD) $(DEMO_CFLAGS_INCLUDE) $(DEMO_CFLAGS_MAKE) \
 $(DEMO_CFLAGS_WARN) $(DEMO_CFLAGS_DEBUG) $(DEMO_CFLAGS_OPTIMIZATION)
 
 DEMO_LFLAGS = -L. -l$(LIB_NAME) $(DEP_LFLAGS) 
