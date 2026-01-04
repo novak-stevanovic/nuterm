@@ -172,9 +172,11 @@ void nt_init(nt_status* out_status)
     switch(_status)
     {
         case NT_SUCCESS:
-            break;
+            SET_OUT(out_status, NT_SUCCESS);
+            return;
         case NT_ERR_TERM_NOT_SUPP:
-            break;
+            SET_OUT(out_status, NT_ERR_TERM_NOT_SUPP);
+            return;
         case NT_ERR_INIT_TERM_ENV:
             SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
             return;
@@ -182,9 +184,6 @@ void nt_init(nt_status* out_status)
             SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return;
     }
-
-    SET_OUT(out_status, NT_SUCCESS);
-    return;
 }
 
 void nt_deinit()
@@ -267,21 +266,22 @@ void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status)
     }
 
     stdout_buff = buff;
-    stdout_buff[0] = 0;
     stdout_buff_cap = cap;
     stdout_buff_pos = 0;
+
+    SET_OUT(out_status, NT_SUCCESS);
 }
 
 char* nt_buffer_disable(nt_buffact buffact)
 {
     if(stdout_buff != NULL)
     {
-        if(NT_BUFF_FLUSH && (stdout_buff_pos > 0))
+        if((buffact == NT_BUFF_FLUSH) && (stdout_buff_pos > 0))
             write(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
 
         stdout_buff = NULL;
-        stdout_buff_cap = 0;
         stdout_buff_pos = 0;
+        stdout_buff_cap = 0;
     }
 
     return stdout_buff;
@@ -289,10 +289,11 @@ char* nt_buffer_disable(nt_buffact buffact)
 
 void nt_buffer_flush()
 {
-    if(stdout_buff == NULL) return;
-
-    stdout_buff[0] = 0;
-    stdout_buff_pos = 0;
+    if((stdout_buff != NULL) && (stdout_buff_pos > 0))
+    {
+        write(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
+        stdout_buff_pos = 0;
+    }
 }
 
 /* ----------------------------------------------------- */

@@ -2,8 +2,11 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define ENABLE_PRINT 0
 
 void loop_basic()
 {
@@ -12,7 +15,7 @@ void loop_basic()
     {
         c = getchar();
         if(c == 'q') break;
-        printf("%x ", c);
+        if(ENABLE_PRINT) printf("%x ", c);
         fflush(stdout);
     }
 }
@@ -25,57 +28,57 @@ void loop_lib()
     bool loop = true;
     while(loop)
     {
-        elapsed = nt_event_wait(&event, 1000, &_status);
-        printf("(e:%d)", elapsed);
+        elapsed = nt_event_wait(&event, NT_EVENT_WAIT_FOREVER, &_status);
+        if(ENABLE_PRINT) printf("(e:%d)", elapsed);
 
         assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_KEY)
         {
-            printf("K(");
+            if(ENABLE_PRINT) printf("K(");
 
             struct nt_key key = *(struct nt_key*)event.data;
 
             if(key.type == NT_KEY_UTF32)
             {
                 if(key.utf32.alt == true)
-                    printf("a+");
+                    if(ENABLE_PRINT) printf("a+");
 
-                printf("%d", key.utf32.cp);
+                if(ENABLE_PRINT) printf("%d", key.utf32.cp);
                 if(key.utf32.cp == 'q')
                     loop = false;
 
             }
             else
             {
-                printf("e%d", key.esc.val);
+                if(ENABLE_PRINT) printf("e%d", key.esc.val);
             }
 
-            printf(") | ");
+            if(ENABLE_PRINT) printf(") | ");
             fflush(stdout);
         }
         else if(event.type == NT_EVENT_SIGNAL)
         {
             uint8_t signum = *(uint8_t*)event.data;
 
-            printf("S(%d)", signum);
+            if(ENABLE_PRINT) printf("S(%d)", signum);
 
-            printf(" | ");
+            if(ENABLE_PRINT) printf(" | ");
 
             fflush(stdout);
         }
         else if(event.type == NT_EVENT_TIMEOUT)
         {
-            printf("T | ");
+            if(ENABLE_PRINT) printf("T | ");
             fflush(stdout);
         }
         else // other
         {
-            printf("C(%d) | ", event.type);
+            if(ENABLE_PRINT) printf("C(%d) | ", event.type);
             fflush(stdout);
         }
     }
 
-    printf("Done\n\r");
+    if(ENABLE_PRINT) printf("Done\n\r");
 }
 
 void loop_lib2()
@@ -95,12 +98,12 @@ void loop_lib2()
         else if(event.type >= 100)
         {
             assert(event.data_size = sizeof(size_t));
-            printf("%zu ", *(size_t*)event.data);
+            if(ENABLE_PRINT) printf("%zu ", *(size_t*)event.data);
         }
-        else printf("%d", event.type);
+        else if(ENABLE_PRINT) printf("%d", event.type);
     }
 
-    printf("Done\n\r");
+    if(ENABLE_PRINT) printf("Done\n\r");
 }
 
 void* test_thread_fn(void* _)
@@ -124,14 +127,32 @@ int main(int argc, char *argv[])
     nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
-    pthread_t test_threads[1];
-    long int i;
-    for(i = 0; i < 1; i++)
+    // pthread_t test_threads[1];
+    // long int i;
+    // for(i = 0; i < 1; i++)
+    // {
+    //     pthread_create(test_threads + i, NULL, test_thread_fn, (void*)i);
+    // }
+    //
+    // loop_lib();
+    //
+    void* buff = malloc(100000);
+
+    nt_buffer_enable(buff, 1000, &_status);
+    assert(_status == NT_SUCCESS);
+
+    const char* str = "Novak";
+
+    size_t i;
+    for(i = 0; i < 10; i++)
     {
-        pthread_create(test_threads + i, NULL, test_thread_fn, (void*)i);
+        nt_buffer_flush();
+        nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
+        assert(_status == NT_SUCCESS);
     }
 
     loop_lib();
+    nt_buffer_disable(NT_BUFF_FLUSH);
 
     nt_deinit();
 

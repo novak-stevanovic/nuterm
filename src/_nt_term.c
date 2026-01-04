@@ -11,7 +11,7 @@
 #include "_nt_term.h"
 #include "_nt_shared.h"
 
-static nt_term_color_count _color = NT_TERM_COLOR_OTHER;
+static nt_term_color_count _color = NT_TERM_COLOR_COUNT;
 static struct nt_term_info _term = {0};
 
 static char* xterm_esc_key_seqs[] = {
@@ -215,6 +215,6 @@ nt_term_color_count _nt_term_get_color_count()
 
 void _nt_term_deinit()
 {
-    _color = NT_TERM_COLOR_OTHER;
+    _color = NT_TERM_COLOR_COUNT;
     _term = (struct nt_term_info) {0};
 }

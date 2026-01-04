@@ -32,13 +32,14 @@ extern "C" {
  * 3) NT_ERR_INIT_PIPE - pipe() failed and errno was set to ENFILE or EMFILE,
  * 4) NT_ERR_INIT_TERM_ENV - failure to detect terminal due to $TERM not being
  * set,
- * 5) NT_ERR_TERM_NOT_SUPPORTED - terminal emulator not supported - library
+ * 5) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
  * 6) NT_ERR_UNEXPECTED. */
 void nt_init(nt_status* out_status);
 
 /* Destroys the library and reverts terminal settings to old values.
- * Frees dynamically allocated memory. */
+ * Frees resources used by the library. Output will NOT be flushed(if
+ * buffering is on). */
 void nt_deinit();
 
 /* -------------------------------------------------------------------------- */
@@ -84,7 +85,7 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
 /* The functions below share the same STATUS CODES:
  *
  * 1) NT_SUCCESS,
- * 2) NT_ERR_FUNC_NOT_SUPPORTED - terminal emulator doesn't support this
+ * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
  * function,
  * 3) NT_ERR_UNEXPECTED. */
 
@@ -123,7 +124,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
  *
  * STATUS CODES:
  * 1) NT_SUCCESS, 
- * 2) NT_ERR_FUNC_NOT_SUPPORTED - one of the functions invoked is not supported
+ * 2) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
  * by the terminal - resetting gfx, setting color.
  * 3) NT_ERR_UNEXPECTED. */
 
@@ -133,7 +134,7 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out
  *
  * The status codes returned match those specified for nt_write_char().
  * Additionally, the following status codes can be returned:
- * 1) NT_ERR_FUNC_NOT_SUPPORTED - terminal doesn't support moving the cursor or
+ * 1) NT_ERR_FUNC_NOT_SUPP - terminal doesn't support moving the cursor or
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
@@ -144,7 +145,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  *
  * The status codes returned match those specified for nt_write_str().
  * Additionally, the following status codes can be returned:
- * 1) NT_ERR_FUNC_NOT_SUPPORTED - terminal doesn't support moving the cursor or
+ * 1) NT_ERR_FUNC_NOT_SUPP - terminal doesn't support moving the cursor or
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
