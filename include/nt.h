@@ -35,11 +35,11 @@ extern "C" {
  * 5) NT_ERR_TERM_NOT_SUPPORTED - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
  * 6) NT_ERR_UNEXPECTED. */
-void nuterm_init(nt_status* out_status);
+void nt_init(nt_status* out_status);
 
 /* Destroys the library and reverts terminal settings to old values.
  * Frees dynamically allocated memory. */
-void nuterm_deinit();
+void nt_deinit();
 
 /* -------------------------------------------------------------------------- */
 /* TERMINAL FUNCTIONS */
@@ -57,23 +57,24 @@ typedef enum nt_buffact
 } nt_buffact;
 
 /* Enables buffering. When `buff` reaches its capacity, its contents will be
- * flushed to stdout. If buffering is already enabled, this function has no
- * effect.
+ * flushed to stdout. If buffering is already enabled, this function will return
+ * with an error code.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_ALLOC_FAIL - failure to allocate memory needed for internal
- * resources,
- * 3) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
- * 4) NT_ERR_ALR_BUFF - buffering is already enabled. */
+ * 2) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
+ * 3) NT_ERR_ALR_BUFF - buffering is already enabled. */
+
 void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
  * Returns used buffer. */
+
 char* nt_buffer_disable(nt_buffact buffact);
 
 /* Flushes the buffer to stdout if buffering is currently enabled. */
+
 void nt_buffer_flush();
 
 /* ----------------------------------------------------- */
@@ -83,11 +84,9 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
 /* The functions below share the same STATUS CODES:
  *
  * 1) NT_SUCCESS,
- * 2) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
- * buffer failed,
- * 3) NT_ERR_FUNC_NOT_SUPPORTED - terminal emulator doesn't support this
+ * 2) NT_ERR_FUNC_NOT_SUPPORTED - terminal emulator doesn't support this
  * function,
- * 4) NT_ERR_UNEXPECTED. */
+ * 3) NT_ERR_UNEXPECTED. */
 
 void nt_cursor_hide(nt_status* out_status);
 void nt_cursor_show(nt_status* out_status);
@@ -109,6 +108,7 @@ void nt_alt_screen_disable(nt_status* out_status);
  * Additionally, the following status codes can be returned:
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
+
 void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status);
 
 /* Prints `str` of size `len` to screen. The text printed will have
@@ -125,9 +125,8 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
  * 1) NT_SUCCESS, 
  * 2) NT_ERR_FUNC_NOT_SUPPORTED - one of the functions invoked is not supported
  * by the terminal - resetting gfx, setting color.
- * 3) NT_ERR_ALLOC_FAIL - buffering is enabled and allocation to expand the
- * buffer failed,
- * 4) NT_ERR_UNEXPECTED. */
+ * 3) NT_ERR_UNEXPECTED. */
+
 void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
@@ -137,6 +136,7 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out
  * 1) NT_ERR_FUNC_NOT_SUPPORTED - terminal doesn't support moving the cursor or
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
+
 void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
         nt_status* out_status);
 
@@ -147,6 +147,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * 1) NT_ERR_FUNC_NOT_SUPPORTED - terminal doesn't support moving the cursor or
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
+
 void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
         size_t x, size_t y, nt_status* out_status);
 
@@ -164,6 +165,7 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
  * STATUS CODES:
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
+
 unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
         nt_status* out_status);
 
@@ -180,6 +182,7 @@ unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
  * 1) NT_SUCCESS,
  * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID or `data_size` is too large,
  * 3) NT_ERR_UNEXPECTED. */
+
 void nt_event_push(uint8_t type, void* data, uint8_t data_size, nt_status* out_status);
 
 #ifdef __cplusplus

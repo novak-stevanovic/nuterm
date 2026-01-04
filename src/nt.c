@@ -100,7 +100,7 @@ static inline void term_opts_raw(struct termios* term_opts)
     term_opts->c_cc[VTIME] = 0;
 }
 
-void nuterm_init(nt_status* out_status)
+void nt_init(nt_status* out_status)
 {
     nt_status _status;
     int status;
@@ -187,7 +187,7 @@ void nuterm_init(nt_status* out_status)
     return;
 }
 
-void nuterm_deinit()
+void nt_deinit()
 {
     sigthread_stop = true;
     kill(0, SIGINT);

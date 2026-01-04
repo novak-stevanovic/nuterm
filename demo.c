@@ -121,7 +121,7 @@ void* test_thread_fn(void* _)
 int main(int argc, char *argv[])
 {
     nt_status _status;
-    nuterm_init(&_status);
+    nt_init(&_status);
     assert(_status == NT_SUCCESS);
 
     pthread_t test_threads[1];
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 
     loop_lib();
 
-    nuterm_deinit();
+    nt_deinit();
 
     return 0;
 }
