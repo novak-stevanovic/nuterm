@@ -15,4 +15,4 @@ Default options are `PREFIX=/usr/local`, `PC_PREFIX=PREFIX/lib/pkgconfig`, `OPT=
 
 ## Usage instructions:
 
-Compile your project with flags: `$(pkgconf --cflags nuterm)` and link with flags: `$(pkgconf --libs nuterm)`. For this to work, make sure that pkg-config seaches in the directory `PC_PREFIX` when using pkg-config.
+Compile your project with flags: `$(pkgconf --cflags nuterm)` and link with flags: `$(pkgconf --libs nuterm)`. For this to work, make sure that pkg-config searches in the directory of the .pc file generated in the installation process.
