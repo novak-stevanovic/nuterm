@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ENABLE_PRINT 0
+#define ENABLE_PRINT 1
 
 void loop_basic()
 {
@@ -106,6 +106,21 @@ void loop_lib2()
     if(ENABLE_PRINT) printf("Done\n\r");
 }
 
+void loop_lib_byte()
+{
+    char c;
+    while(true)
+    {
+        c = getchar();
+        if(c == 'q') break;
+        else
+        {
+            printf("%d ", c);
+            fflush(stdout);
+        }
+    }
+}
+
 void* test_thread_fn(void* _)
 {
     nt_status _status;
@@ -125,7 +140,6 @@ int main(int argc, char *argv[])
 {
     nt_status _status;
     nt_init(&_status);
-    assert(_status == NT_SUCCESS);
 
     // pthread_t test_threads[1];
     // long int i;
@@ -136,23 +150,23 @@ int main(int argc, char *argv[])
     //
     // loop_lib();
     //
-    void* buff = malloc(100000);
+    // void* buff = malloc(100000);
 
-    nt_buffer_enable(buff, 1000, &_status);
-    assert(_status == NT_SUCCESS);
+    // nt_buffer_enable(buff, 1000, &_status);
+    // assert(_status == NT_SUCCESS);
 
-    const char* str = "Novak";
+    // const char* str = "Novak";
 
-    size_t i;
-    for(i = 0; i < 10; i++)
-    {
-        nt_buffer_flush();
-        nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
-        assert(_status == NT_SUCCESS);
-    }
+    // size_t i;
+    // for(i = 0; i < 10; i++)
+    // {
+    //     nt_buffer_flush();
+    //     nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
+    //     assert(_status == NT_SUCCESS);
+    // }
 
-    loop_lib();
-    nt_buffer_disable(NT_BUFF_FLUSH);
+    loop_lib_byte();
+    // nt_buffer_disable(NT_BUFF_FLUSH);
 
     nt_deinit();
 

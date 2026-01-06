@@ -2,6 +2,13 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
+// TODO:
+// 1) implement mouse event detection
+// 2) implement resize event detection
+// 3) non-blocking modes for read() on STDIN, resize pipe?
+// reconsider while(true) read() when processing esc seq
+// 4) custom flag in nt_event?
+// 5) cleanup if init fails
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -9,10 +16,9 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "nt_status.h"
 #include "nt_event.h"
-#include "nt_key.h"
 #include "nt_gfx.h"
+#include "nt_status.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,6 +105,9 @@ void nt_erase_scrollback(nt_status* out_status);
 void nt_alt_screen_enable(nt_status* out_status);
 void nt_alt_screen_disable(nt_status* out_status);
 
+void nt_mouse_mode_enable(nt_status* out_status);
+void nt_mouse_mode_disable(nt_status* out_status);
+
 /* -------------------------------------------------------------------------- */
 /* WRITE TO TERMINAL */
 /* -------------------------------------------------------------------------- */
@@ -181,10 +190,11 @@ unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID or `data_size` is too large,
+ * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID, has more than 1 bit set,
+ * `data_size` is too large, or `data` is NULL while `data_size` is non-zero,
  * 3) NT_ERR_UNEXPECTED. */
 
-void nt_event_push(uint8_t type, void* data, uint8_t data_size, nt_status* out_status);
+void nt_event_push(uint32_t type, void* data, uint8_t data_size, nt_status* out_status);
 
 #ifdef __cplusplus
 }

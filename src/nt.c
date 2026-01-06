@@ -4,7 +4,6 @@
  */
 #include "nt.h"
 
-#include <stdatomic.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -16,22 +15,29 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
-
-#include "_nt_term.h"
+#include <fcntl.h>
 
 #include "uconv.h"
+#include "nt_internal.h"
 
-#include "_nt_shared.h"
+#define STDIN_POLL_FD 0
+#define RESIZE_POLL_FD 1
+#define SIGNAL_POLL_FD 2
+#define CUSTOM_POLL_FD 3
+#define POLL_FD_COUNT 4
 
 /* ------------------------------------------------------------------------- */
 /* GENERAL */
 /* ------------------------------------------------------------------------- */
 
-pthread_t sigthread = 0;
-static atomic_bool sigthread_stop = false;
+static pthread_t sigthread = 0;
+static pthread_mutex_t sigthread_lock;
+static bool sigthread_stop = false;
+
 static int signal_pipe[2];
+static int resize_pipe[2];
 static int custom_event_pipe[2];
-static struct pollfd poll_fds[3];
+static struct pollfd poll_fds[POLL_FD_COUNT];
 static struct termios init_term_opts;
 
 static char* stdout_buff = NULL;
@@ -76,9 +82,22 @@ static void* sigthread_fn(void* data)
     sigfillset(&set);
     int signal = 0;
     unsigned int usignal;
-    while(!sigthread_stop)
+    while(true)
     {
+        pthread_mutex_lock(&sigthread_lock);
+        if(sigthread_stop)
+        {
+            pthread_mutex_unlock(&sigthread_lock);
+            break;
+        }
+        else pthread_mutex_unlock(&sigthread_lock);
+
         sigwait(&set, &signal);
+
+        if(signal == SIGWINCH)
+        {
+            write(resize_pipe[1], &usignal, sizeof(unsigned int));
+        }
 
         usignal = (unsigned int)signal;
         write(signal_pipe[1], &usignal, sizeof(unsigned int));
@@ -136,17 +155,29 @@ void nt_init(nt_status* out_status)
         return;
     }
 
-    poll_fds[0] = (struct pollfd) {
+    pipe_status = pipe(resize_pipe);
+    if(pipe_status != 0)
+    {
+        SET_OUT(out_status, NT_ERR_INIT_PIPE);
+        return;
+    }
+
+    poll_fds[STDIN_POLL_FD] = (struct pollfd) {
         .fd = STDIN_FILENO,
         .events = POLLIN,
         .revents = 0
     };
-    poll_fds[1] = (struct pollfd) {
+    poll_fds[RESIZE_POLL_FD] = (struct pollfd) {
+        .fd = resize_pipe[0],
+        .events = POLLIN,
+        .revents = 0
+    };
+    poll_fds[SIGNAL_POLL_FD] = (struct pollfd) {
         .fd = signal_pipe[0],
         .events = POLLIN,
         .revents = 0
     };
-    poll_fds[2] = (struct pollfd) {
+    poll_fds[CUSTOM_POLL_FD] = (struct pollfd) {
         .fd = custom_event_pipe[0],
         .events = POLLIN,
         .revents = 0
@@ -163,6 +194,13 @@ void nt_init(nt_status* out_status)
 
     int thread_status = pthread_create(&sigthread, NULL, sigthread_fn, NULL);
     if(thread_status != 0)
+    {
+        SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        return;
+    }
+
+    int lock_status = pthread_mutex_init(&sigthread_lock, NULL);
+    if(lock_status != 0)
     {
         SET_OUT(out_status, NT_ERR_UNEXPECTED);
         return;
@@ -188,7 +226,9 @@ void nt_init(nt_status* out_status)
 
 void nt_deinit()
 {
+    pthread_mutex_lock(&sigthread_lock);
     sigthread_stop = true;
+    pthread_mutex_unlock(&sigthread_lock);
     kill(0, SIGINT);
 
     pthread_join(sigthread, NULL);
@@ -201,6 +241,8 @@ void nt_deinit()
     nt_write_str("", 0, NT_GFX_DEFAULT, &_status);
     assert(_status == NT_SUCCESS);
 
+    pthread_mutex_destroy(&sigthread_lock);
+
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &init_term_opts);
     _nt_term_deinit();
 }
@@ -209,8 +251,8 @@ void nt_deinit()
 /* TERMINAL FUNCTIONS */
 /* -------------------------------------------------------------------------- */
 
-static void execute_used_term_func(enum nt_esc_fn func, bool use_va,
-        nt_status* out_status, ...)
+static void execute_used_term_func(enum nt_esc_func func,
+        bool use_va, nt_status* out_status, ...)
 {
     int status;
 
@@ -355,6 +397,16 @@ void nt_alt_screen_enable(nt_status* out_status)
 void nt_alt_screen_disable(nt_status* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, false, out_status);
+}
+
+void nt_mouse_mode_enable(nt_status* out_status)
+{
+    execute_used_term_func(NT_ESC_FUNC_MOUSE_ENABLE, false, out_status);
+}
+
+void nt_mouse_mode_disable(nt_status* out_status)
+{
+    execute_used_term_func(NT_ESC_FUNC_MOUSE_DISABLE, false, out_status);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -636,7 +688,7 @@ struct nt_event_header
 };
 
 /* Called by nt_event_wait() internally. */
-static struct nt_key process_key_event(nt_status* out_status);
+static struct nt_key_event process_key_event(nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */
 
@@ -648,7 +700,7 @@ unsigned int nt_event_wait(struct nt_event* out_event,
     struct timespec _time1, _time2;
     clock_gettime(CLOCK_REALTIME, &_time1);
 
-    int poll_status = poll(poll_fds, 3, timeout);
+    int poll_status = poll(poll_fds, 4, timeout);
 
     clock_gettime(CLOCK_REALTIME, &_time2);
 
@@ -678,22 +730,25 @@ unsigned int nt_event_wait(struct nt_event* out_event,
     }
 
     nt_status _status;
-    if(poll_fds[0].revents & POLLIN)
+    if(poll_fds[STDIN_POLL_FD].revents & POLLIN)
     {
         event.type = NT_EVENT_KEY;
         event.custom = false;
-        event.data_size = sizeof(struct nt_key);
+        event.data_size = sizeof(struct nt_key_event);
 
-        struct nt_key key = process_key_event(&_status);
+        struct nt_key_event key = process_key_event(&_status);
         if(_status != NT_SUCCESS)
         {
             SET_OUT(out_event, event);
             SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return elapsed;
         }
-        memcpy(event.data, &key, sizeof(struct nt_key));
+        memcpy(event.data, &key, sizeof(struct nt_key_event));
     }
-    else if(poll_fds[1].revents & POLLIN)
+    else if(poll_fds[RESIZE_POLL_FD].revents & POLLIN)
+    {
+    }
+    else if(poll_fds[SIGNAL_POLL_FD].revents & POLLIN)
     {
         event.type = NT_EVENT_SIGNAL;
         event.custom = false;
@@ -710,7 +765,7 @@ unsigned int nt_event_wait(struct nt_event* out_event,
 
         memcpy(event.data, &buff, sizeof(unsigned int));
     }
-    else // poll_fds[2].revents & POLLIN
+    else // poll_fds[CUSTOM_POLL_FD].revents & POLLIN
     {
         // Read header to determine type and data_size
         struct nt_event_header header = {0};
@@ -752,11 +807,15 @@ unsigned int nt_event_wait(struct nt_event* out_event,
     return elapsed;
 }
 
-void nt_event_push(uint8_t type, void* data, uint8_t data_size,
-        nt_status* out_status)
+void nt_event_push(uint32_t type, void* data, uint8_t data_size, nt_status* out_status)
 {
-    if((type == NT_EVENT_INVALID) || (data_size > NT_EVENT_DATA_MAX_SIZE) ||
-            ((data_size > 0) && (data == NULL)))
+    if((type == NT_EVENT_INVALID) || ((type & (type - 1)) != 0))
+    {
+        SET_OUT(out_status, NT_ERR_INVALID_ARG);
+        return;
+    }
+
+    if((data_size > NT_EVENT_DATA_MAX_SIZE) || ((data_size > 0) && (data == NULL)))
     {
         SET_OUT(out_status, NT_ERR_INVALID_ARG);
         return;
@@ -788,25 +847,36 @@ void nt_event_push(uint8_t type, void* data, uint8_t data_size,
 /* KEY EVENT */
 /* ------------------------------------------------------ */
 
-#define ESC_TIMEOUT 10
+#define ESC_TIMEOUT 2
 
-static const struct nt_key NT_KEY_EMPTY = {0};
+static const struct nt_key_event NT_KEY_EMPTY = {0};
 
 /* Called by _process_key_event() internally.
  * `utf8_sbyte` - ptr to first byte of utf8.
  * Other bytes will be read into `utf8_sbyte` in the function. */
-static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
+static struct nt_key_event process_key_event_utf32(uint8_t* utf8_sbyte,
         bool alt, nt_status* out_status);
+
+enum process_esc_key_rv_type { ESC_KEY, MOUSE_CLICK };
+
+struct process_esc_key_rv
+{
+    enum process_esc_key_rv_type type;
+    // union
+    // {
+    //     struct 
+    // };
+};
 
 /* Called by _process_key_event() internally.
  * `buff` - ptr to the first byte of the ESC sequence(ESC char).
  * The whole escape sequences will be read into the buffer inside the function. */
-static struct nt_key process_key_event_esc_key(uint8_t* buff,
+static struct nt_key_event process_key_event_esc_key(uint8_t* buff,
         nt_status* out_status);
 
 /* ------------------------------------------------------ */
 
-static struct nt_key process_key_event(nt_status* out_status)
+static struct nt_key_event process_key_event(nt_status* out_status)
 {
     unsigned char buff[64];
     int poll_status, read_status;
@@ -830,12 +900,9 @@ static struct nt_key process_key_event(nt_status* out_status)
 
         if(poll_status == 0) // timeout - just ESC
         {
-            struct nt_key key_event = {
-                .type = NT_KEY_UTF32,
-                .utf32 = {
-                    .cp = 27,
-                    .alt = false
-                }
+            struct nt_key_event key_event = {
+                .type = NT_KEY_EVENT_UTF32,
+                .utf32 = { .cp = 27, .alt = false }
             };
 
             SET_OUT(out_status, NT_SUCCESS);
@@ -861,8 +928,8 @@ static struct nt_key process_key_event(nt_status* out_status)
 
             if(poll_status == 0) // Not in fact an ESC key...
             {
-                struct nt_key key_event = {
-                    .type = NT_KEY_UTF32,
+                struct nt_key_event key_event = {
+                    .type = NT_KEY_EVENT_UTF32,
                     .utf32 = {
                         .cp = buff[1],
                         .alt = true,
@@ -874,7 +941,7 @@ static struct nt_key process_key_event(nt_status* out_status)
 
             // ESC KEY
 
-            struct nt_key key_event = process_key_event_esc_key(buff, &_status);
+            struct nt_key_event key_event = process_key_event_esc_key(buff, &_status);
 
             switch(_status)
             {
@@ -889,14 +956,13 @@ static struct nt_key process_key_event(nt_status* out_status)
         }
         else
         {
-            struct nt_key key_event =
-                process_key_event_utf32(buff + 1, true, &_status);
+            struct nt_key_event key = process_key_event_utf32(buff + 1, true, &_status);
 
             switch(_status)
             {
                 case NT_SUCCESS:
                     SET_OUT(out_status, NT_SUCCESS);
-                    return key_event;
+                    return key;
                 default:
                     SET_OUT(out_status, NT_ERR_UNEXPECTED);
                     return NT_KEY_EMPTY;
@@ -905,14 +971,13 @@ static struct nt_key process_key_event(nt_status* out_status)
     }
     else // UTF32
     {
-        struct nt_key key_event =
-            process_key_event_utf32(buff, false, &_status);
+        struct nt_key_event key = process_key_event_utf32(buff, false, &_status);
 
         switch(_status)
         {
             case NT_SUCCESS:
                 SET_OUT(out_status, NT_SUCCESS);
-                return key_event;
+                return key;
             default:
                 SET_OUT(out_status, NT_ERR_UNEXPECTED);
                 return NT_KEY_EMPTY;
@@ -920,7 +985,7 @@ static struct nt_key process_key_event(nt_status* out_status)
     }
 }
 
-static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
+static struct nt_key_event process_key_event_utf32(uint8_t* utf8_sbyte,
         bool alt, nt_status* out_status)
 {
     size_t utf32_len;
@@ -955,19 +1020,16 @@ static struct nt_key process_key_event_utf32(uint8_t* utf8_sbyte,
         return NT_KEY_EMPTY;
     }
 
-    struct nt_key key_event = {
-        .type = NT_KEY_UTF32,
-        .utf32 = {
-            .cp = utf32,
-            .alt = alt
-        }
+    struct nt_key_event key_event = {
+        .type = NT_KEY_EVENT_UTF32,
+        .utf32 = { .cp = utf32, .alt = alt }
     };
 
     SET_OUT(out_status, NT_SUCCESS);
     return key_event;
 }
 
-static struct nt_key process_key_event_esc_key(uint8_t* buff,
+static struct nt_key_event process_key_event_esc_key(uint8_t* buff,
         nt_status* out_status)
 {
     int read_status;
@@ -992,17 +1054,15 @@ static struct nt_key process_key_event_esc_key(uint8_t* buff,
     char* cbuff = (char*)buff;
 
     int i;
-    struct nt_key ret;
+    struct nt_key_event ret;
     struct nt_term_info term = _nt_term_get_used();
-    for(i = 0; i < NT_ESC_KEY_COUNT; i++)
+    for(i = 0; i < NT_ESC_KEY_OTHER; i++)
     {
         if(strcmp(cbuff, term.esc_key_seqs[i]) == 0)
         {
-            ret = (struct nt_key) {
-                .type = NT_KEY_ESC,
-                .esc = {
-                    .val = i
-                }
+            ret = (struct nt_key_event) {
+                .type = NT_KEY_EVENT_ESC,
+                .esc = { .val = i }
             };
 
             SET_OUT(out_status, NT_SUCCESS);
@@ -1010,11 +1070,9 @@ static struct nt_key process_key_event_esc_key(uint8_t* buff,
         }
     }
 
-    ret = (struct nt_key) {
-        .type = NT_KEY_ESC,
-        .esc = {
-            .val = NT_ESC_KEY_COUNT
-        }
+    ret = (struct nt_key_event) {
+        .type = NT_KEY_EVENT_ESC,
+        .esc = { .val = NT_ESC_KEY_OTHER }
     };
 
     SET_OUT(out_status, NT_SUCCESS);
