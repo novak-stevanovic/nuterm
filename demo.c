@@ -8,6 +8,9 @@
 
 #define ENABLE_PRINT 1
 
+size_t sig_count = 0;
+size_t resize_count = 0;
+
 void loop_basic()
 {
     unsigned char c;
@@ -28,7 +31,7 @@ void loop_lib()
     bool loop = true;
     while(loop)
     {
-        elapsed = nt_event_wait(&event, NT_EVENT_WAIT_FOREVER, &_status);
+        elapsed = nt_event_wait(&event, 10000, &_status);
         if(ENABLE_PRINT) printf("(e:%d)", elapsed);
 
         assert(_status == NT_SUCCESS);
@@ -36,9 +39,9 @@ void loop_lib()
         {
             if(ENABLE_PRINT) printf("K(");
 
-            struct nt_key key = *(struct nt_key*)event.data;
+            struct nt_key_event key = *(struct nt_key_event*)event.data;
 
-            if(key.type == NT_KEY_UTF32)
+            if(key.type == NT_KEY_EVENT_UTF32)
             {
                 if(key.utf32.alt == true)
                     if(ENABLE_PRINT) printf("a+");
@@ -58,12 +61,19 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_SIGNAL)
         {
+            sig_count++;
             uint8_t signum = *(uint8_t*)event.data;
 
             if(ENABLE_PRINT) printf("S(%d)", signum);
 
             if(ENABLE_PRINT) printf(" | ");
 
+            fflush(stdout);
+        }
+        else if(event.type == NT_EVENT_RESIZE)
+        {
+            resize_count++;
+            if(ENABLE_PRINT) printf("R | ");
             fflush(stdout);
         }
         else if(event.type == NT_EVENT_TIMEOUT)
@@ -92,8 +102,8 @@ void loop_lib2()
 
         if(event.type == NT_EVENT_KEY)
         {
-            struct nt_key key = *(struct nt_key*)event.data;
-            if(nt_key_utf32_check(key, 'q', false)) break;
+            struct nt_key_event key = *(struct nt_key_event*)event.data;
+            if(nt_key_event_utf32_check(key, 'q', false)) break;
         }
         else if(event.type >= 100)
         {
@@ -129,7 +139,7 @@ void* test_thread_fn(void* _)
     while(true)
     {
         sleep(5);
-        nt_event_push(type, &data, sizeof(long int), &_status);
+        nt_event_push(nt_event_new(type, &data, sizeof(long int)), &_status);
         assert(_status == NT_SUCCESS);
     }
 
@@ -165,10 +175,12 @@ int main(int argc, char *argv[])
     //     assert(_status == NT_SUCCESS);
     // }
 
-    loop_lib_byte();
+    nt_mouse_mode_enable(&_status);
+    loop_lib();
     // nt_buffer_disable(NT_BUFF_FLUSH);
 
     nt_deinit();
 
+    printf("%zu %zu\n", sig_count, resize_count);
     return 0;
 }

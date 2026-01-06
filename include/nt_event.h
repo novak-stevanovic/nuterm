@@ -21,7 +21,8 @@ extern "C" {
 #define NT_EVENT_KEY (1 << 0)
 #define NT_EVENT_MOUSE (1 << 1)
 #define NT_EVENT_SIGNAL (1 << 2)
-#define NT_EVENT_TIMEOUT (1 << 3)
+#define NT_EVENT_RESIZE (1 << 3)
+#define NT_EVENT_TIMEOUT (1 << 4)
 
 // Range [0, 16) is reserved for library events. Range [16, 32) is for
 // user-defined events.
@@ -43,8 +44,12 @@ struct nt_event
     char data[NT_EVENT_DATA_MAX_SIZE];
     uint32_t type; // only 1 bit set
     uint8_t data_size;
-    bool custom; // True if event was pushed via `nt_event_push()`
 };
+
+// Assumes correct arguments. Returns invalid event on fail.
+struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size);
+
+bool nt_event_is_valid(struct nt_event event);
 
 /* -------------------------------------------------------------------------- */
 /* NT_KEY_EVENT */
@@ -136,6 +141,11 @@ struct nt_mouse_event
 /* -------------------------------------------------------------------------- */
 /* NT_RESIZE_EVENT */
 /* -------------------------------------------------------------------------- */
+
+struct nt_resize_event
+{
+    size_t new_x, new_y;
+};
 
 #ifdef __cplusplus
 }

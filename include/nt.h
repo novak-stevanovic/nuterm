@@ -4,10 +4,6 @@
  */
 // TODO:
 // 1) implement mouse event detection
-// 2) implement resize event detection
-// 3) non-blocking modes for read() on STDIN, resize pipe?
-// reconsider while(true) read() when processing esc seq
-// 4) custom flag in nt_event?
 // 5) cleanup if init fails
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
@@ -92,7 +88,7 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
  *
  * 1) NT_SUCCESS,
  * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
- * function,
+ * function(not very reliable),
  * 3) NT_ERR_UNEXPECTED. */
 
 void nt_cursor_hide(nt_status* out_status);
@@ -105,6 +101,7 @@ void nt_erase_scrollback(nt_status* out_status);
 void nt_alt_screen_enable(nt_status* out_status);
 void nt_alt_screen_disable(nt_status* out_status);
 
+// Status is always NT_SUCCESS
 void nt_mouse_mode_enable(nt_status* out_status);
 void nt_mouse_mode_disable(nt_status* out_status);
 
@@ -170,7 +167,11 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
 /* Waits for an event. The thread is blocked until the event occurs. Meant to be
  * used for main loop in TGUI applications. Should be called from the main thread.
  *
- * Returns elapsed time(in miliseconds).
+ * A resize triggers both a SIGWINCH signal event and a resize event. If several
+ * resize events are queued, only the last one is delivered.
+ *
+ * Returns elapsed time(in milliseconds). If an error occurs, the type of`out_event`
+ * will be NT_EVENT_INVALID.
  *
  * STATUS CODES:
  * 1) NT_SUCCESS,
@@ -187,14 +188,13 @@ unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
  * Make sure to provide the correct payload and handle such situations properly.
  *
  * Thread-safe.
- *
+ 
  * STATUS CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - `type` is NT_EVENT_INVALID, has more than 1 bit set,
- * `data_size` is too large, or `data` is NULL while `data_size` is non-zero,
+ * 2) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
  * 3) NT_ERR_UNEXPECTED. */
 
-void nt_event_push(uint32_t type, void* data, uint8_t data_size, nt_status* out_status);
+void nt_event_push(struct nt_event event, nt_status* out_status);
 
 #ifdef __cplusplus
 }

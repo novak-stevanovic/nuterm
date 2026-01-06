@@ -40,7 +40,7 @@ INSTALL_INCLUDE = include/nt.h include/nt_gfx.h include/nt_event.h include/nt_st
 
 OPT_FLAG = -O$(OPT)
 
-DEBUG ?= 0
+DEBUG ?= 1
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
