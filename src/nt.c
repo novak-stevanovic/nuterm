@@ -797,6 +797,8 @@ unsigned int nt_event_wait(struct nt_event* out_event,
             return elapsed;
         }
 
+        timeout -= elapsed; // for the next poll(), if _ignore == true
+
         if(poll_fds[STDIN_POLL_FD].revents & POLLIN)
         {
             event = process_stdin(&_status, &_ignore);

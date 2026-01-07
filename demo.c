@@ -158,9 +158,9 @@ int main(int argc, char *argv[])
     //     assert(_status == NT_SUCCESS);
     // }
 
-    // nt_mouse_mode_enable(&_status);
-    // loop_lib();
-    // nt_mouse_mode_disable(&_status);
+    nt_mouse_mode_enable(&_status);
+    loop_lib();
+    nt_mouse_mode_disable(&_status);
     // nt_buffer_disable(NT_BUFF_FLUSH);
 
     nt_deinit();
