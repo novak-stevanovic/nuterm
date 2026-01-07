@@ -8,9 +8,6 @@
 
 #define ENABLE_PRINT 1
 
-size_t sig_count = 0;
-size_t resize_count = 0;
-
 void loop_basic()
 {
     unsigned char c;
@@ -32,7 +29,7 @@ void loop_lib()
     while(loop)
     {
         elapsed = nt_event_wait(&event, 10000, &_status);
-        if(ENABLE_PRINT) printf("(e:%d)", elapsed);
+        // if(ENABLE_PRINT) printf("(e:%d)", elapsed);
 
         assert(_status == NT_SUCCESS);
         if(event.type == NT_EVENT_KEY)
@@ -59,9 +56,18 @@ void loop_lib()
             if(ENABLE_PRINT) printf(") | ");
             fflush(stdout);
         }
+        else if(event.type == NT_EVENT_MOUSE)
+        {
+            struct nt_mouse_event mouse_event = *(struct nt_mouse_event*)event.data;
+            if(ENABLE_PRINT) printf("M(%d, %ld, %ld))", mouse_event.type,
+                    mouse_event.x, mouse_event.y);
+
+            if(ENABLE_PRINT) printf(" | ");
+
+            fflush(stdout);
+        }
         else if(event.type == NT_EVENT_SIGNAL)
         {
-            sig_count++;
             uint8_t signum = *(uint8_t*)event.data;
 
             if(ENABLE_PRINT) printf("S(%d)", signum);
@@ -72,7 +78,6 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_RESIZE)
         {
-            resize_count++;
             if(ENABLE_PRINT) printf("R | ");
             fflush(stdout);
         }
@@ -83,34 +88,9 @@ void loop_lib()
         }
         else // other
         {
-            if(ENABLE_PRINT) printf("C(%d) | ", event.type);
+            if(ENABLE_PRINT) printf("C(%d, %ld) | ", event.type, *(long int*)event.data);
             fflush(stdout);
         }
-    }
-
-    if(ENABLE_PRINT) printf("Done\n\r");
-}
-
-void loop_lib2()
-{
-    nt_status _status;
-    struct nt_event event;
-    while(true)
-    {
-        nt_event_wait(&event, 4000, &_status);
-        assert(_status == NT_SUCCESS);
-
-        if(event.type == NT_EVENT_KEY)
-        {
-            struct nt_key_event key = *(struct nt_key_event*)event.data;
-            if(nt_key_event_utf32_check(key, 'q', false)) break;
-        }
-        else if(event.type >= 100)
-        {
-            assert(event.data_size = sizeof(size_t));
-            if(ENABLE_PRINT) printf("%zu ", *(size_t*)event.data);
-        }
-        else if(ENABLE_PRINT) printf("%d", event.type);
     }
 
     if(ENABLE_PRINT) printf("Done\n\r");
@@ -134,12 +114,15 @@ void loop_lib_byte()
 void* test_thread_fn(void* _)
 {
     nt_status _status;
-    size_t type = 100;
+    uint32_t type = (NT_EVENT_CUSTOM_BASE << 1);
     long int data = (long int)_;
+    struct nt_event event;
     while(true)
     {
         sleep(5);
-        nt_event_push(nt_event_new(type, &data, sizeof(long int)), &_status);
+        event = nt_event_new(type, &data, sizeof(long int));
+        assert(nt_event_is_valid(event));
+        nt_event_push(event, &_status);
         assert(_status == NT_SUCCESS);
     }
 
@@ -155,7 +138,7 @@ int main(int argc, char *argv[])
     // long int i;
     // for(i = 0; i < 1; i++)
     // {
-    //     pthread_create(test_threads + i, NULL, test_thread_fn, (void*)i);
+    //     pthread_create(test_threads + i, NULL, test_thread_fn, (void*)69);
     // }
     //
     // loop_lib();
@@ -175,12 +158,12 @@ int main(int argc, char *argv[])
     //     assert(_status == NT_SUCCESS);
     // }
 
-    nt_mouse_mode_enable(&_status);
-    loop_lib();
+    // nt_mouse_mode_enable(&_status);
+    // loop_lib();
+    // nt_mouse_mode_disable(&_status);
     // nt_buffer_disable(NT_BUFF_FLUSH);
 
     nt_deinit();
 
-    printf("%zu %zu\n", sig_count, resize_count);
     return 0;
 }

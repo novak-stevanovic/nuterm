@@ -2,9 +2,6 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-// TODO:
-// 1) implement mouse event detection
-// 5) cleanup if init fails
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
@@ -89,7 +86,9 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
  * 1) NT_SUCCESS,
  * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
  * function(not very reliable),
- * 3) NT_ERR_UNEXPECTED. */
+ * 3) NT_ERR_UNEXPECTED.
+ *
+ * With buffering enabled, output is buffered. */
 
 void nt_cursor_hide(nt_status* out_status);
 void nt_cursor_show(nt_status* out_status);
@@ -170,7 +169,7 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
  * A resize triggers both a SIGWINCH signal event and a resize event. If several
  * resize events are queued, only the last one is delivered.
  *
- * Returns elapsed time(in milliseconds). If an error occurs, the type of`out_event`
+ * Returns elapsed time(in milliseconds). If an error occurs, the type of `out_event`
  * will be NT_EVENT_INVALID.
  *
  * STATUS CODES:
