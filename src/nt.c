@@ -1077,7 +1077,7 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
 
     uint32_t utf32;
     size_t utf32_width;
-    uc_status _status;
+    int _status;
     uc_utf8_to_utf32(utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width, &_status);
     if(_status != UC_SUCCESS) return NT_EVENT_EMPTY;
 
