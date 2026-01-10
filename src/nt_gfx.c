@@ -58,11 +58,6 @@ struct nt_rgb nt_rgb_new(int r, int g, int b)
     };
 }
 
-bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
-{
-    return (memcmp(&rgb1, &rgb2, sizeof(struct nt_rgb)) == 0);
-}
-
 uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
 {
     uint8_t r = rgb.r;
@@ -151,11 +146,6 @@ nt_color nt_color_new_auto(struct nt_rgb rgb)
     };
 }
 
-bool nt_color_are_equal(nt_color color1, nt_color color2)
-{
-    return (memcmp(&color1, &color2, sizeof(nt_color)) == 0);
-}
-
 /* -------------------------------------------------------------------------- */
 /* STYLE */
 /* -------------------------------------------------------------------------- */
@@ -176,11 +166,6 @@ nt_style nt_style_new_uniform(uint8_t value)
     return nt_style_new(value, value, value);
 }
 
-bool nt_style_are_equal(nt_style style1, nt_style style2)
-{
-    return (memcmp(&style1, &style2, sizeof(nt_style)) == 0);
-}
-
 /* -------------------------------------------------------------------------- */
 /* GFX */
 /* -------------------------------------------------------------------------- */
@@ -190,8 +175,3 @@ const struct nt_gfx NT_GFX_DEFAULT = {
     .bg = NT_COLOR_DEFAULT,
     .style = NT_STYLE_DEFAULT
 };
-
-bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
-{
-    return (memcmp(&gfx1, &gfx2, sizeof(struct nt_gfx)) == 0);
-}

@@ -11,6 +11,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 /* -------------------------------------------------------------------------- */
 /* COLOR */
@@ -23,7 +24,11 @@ struct nt_rgb
 
 /* Clamps the values into range [0, 255] */
 struct nt_rgb nt_rgb_new(int r, int g, int b);
-bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2);
+
+static inline bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
+{
+    return ((rgb1.r == rgb2.r) && (rgb1.g == rgb2.g) && (rgb1.b == rgb2.b));
+}
 
 uint8_t nt_rgb_to_c8(struct nt_rgb rgb);
 uint8_t nt_rgb_to_c256(struct nt_rgb rgb);
@@ -55,7 +60,12 @@ nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb);
 /* Auto-converts to other colors */
 nt_color nt_color_new_auto(struct nt_rgb rgb);
 
-bool nt_color_are_equal(nt_color color1, nt_color color2);
+static inline bool nt_color_are_equal(nt_color color1, nt_color color2)
+{
+    return ((color1._code8 == color2._code8) &&
+        (color1._code256 == color2._code256) &&
+        nt_rgb_are_equal(color1._rgb, color2._rgb));
+}
 
 /* -------------------------------------------------------------------------- */
 /* STYLE */
@@ -72,7 +82,10 @@ extern const nt_style NT_STYLE_DEFAULT;
 nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
 nt_style nt_style_new_uniform(uint8_t value);
 
-bool nt_style_are_equal(nt_style style1, nt_style style2);
+static inline bool nt_style_are_equal(nt_style style1, nt_style style2)
+{
+    return (memcmp(&style1, &style2, sizeof(nt_style)) == 0);
+}
 
 #define NT_STYLE_VAL_DEFAULT        0
 #define NT_STYLE_VAL_BOLD           (1 << 0)  // 00000001
@@ -100,6 +113,11 @@ struct nt_gfx
 
 extern const struct nt_gfx NT_GFX_DEFAULT;
 
-bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2);
+static inline bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
+{
+    return (nt_color_are_equal(gfx1.fg, gfx2.fg) &&
+        nt_color_are_equal(gfx1.bg, gfx2.bg) &&
+        nt_style_are_equal(gfx1.style, gfx2.style));
+}
 
 #endif // _NT_GFX_H_
