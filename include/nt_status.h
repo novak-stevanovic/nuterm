@@ -1,5 +1,5 @@
-#ifndef _NT_STATUS_H_
-#define _NT_STATUS_H_
+#ifndef NT_STATUS_H
+#define NT_STATUS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,4 +26,4 @@ typedef int nt_status;
 }
 #endif
 
-#endif // _NT_STATUS_H_
+#endif // NT_STATUS_H

@@ -2,8 +2,8 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-#ifndef _NT_INTERNAL_H_
-#define _NT_INTERNAL_H_
+#ifndef NT_INTERNAL_H
+#define NT_INTERNAL_H
 
 #include "nt_shared.h"
 #include "nt_status.h"
@@ -92,4 +92,4 @@ void _nt_term_deinit();
 }
 #endif
 
-#endif // _NT_INTERNAL_H_
+#endif // NT_INTERNAL_H

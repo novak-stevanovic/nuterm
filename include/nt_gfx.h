@@ -2,8 +2,8 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-#ifndef _NT_GFX_H_
-#define _NT_GFX_H_
+#ifndef NT_GFX_H
+#define NT_GFX_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,4 +123,4 @@ static inline bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
 }
 #endif
 
-#endif // _NT_GFX_H_
+#endif // NT_GFX_H

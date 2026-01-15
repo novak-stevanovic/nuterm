@@ -2,8 +2,8 @@
  * Copyright (c) 2025 Novak Stevanović
  * Licensed under the MIT License. See LICENSE file in project root.
  */
-#ifndef _NUTERM_H_
-#define _NUTERM_H_
+#ifndef NT_H
+#define NT_H
 
 #include "nt_shared.h"
 
@@ -201,4 +201,4 @@ NT_API void nt_event_push(struct nt_event event, nt_status* out_status);
 }
 #endif
 
-#endif // _NUTERM_H_
+#endif // NT_H
