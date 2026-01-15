@@ -36,7 +36,7 @@ LIB_PC = $(LIB_NAME).pc
 C_SRC = $(shell find src -name "*.c")
 C_OBJ = $(patsubst src/%.c,build/%.o,$(C_SRC))
 
-INSTALL_INCLUDE = include/nt.h include/nt_gfx.h include/nt_event.h include/nt_status.h 
+INSTALL_INCLUDE = include/nt.h include/nt_gfx.h include/nt_event.h include/nt_status.h include/nt_shared.h
 
 OPT_FLAG = -O$(OPT)
 
