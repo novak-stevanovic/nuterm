@@ -4,7 +4,7 @@ __Nuterm__ is a lightweight C library for terminal control: for each terminal fu
 
 ## Dependencies
 
-This library relies on [UConv](https://github.com/novak-stevanovic/uconv) for UTF-32 conversion needs. To fetch compile and link flags, pkg-config is used. This means that, when compiling the library, pkg-config must be able to find UConv's .pc file.
+This library relies on [UConv](https://github.com/novak-stevanovic/uconv) for UTF-32 conversion needs. This is bundled internally.
 
 ## Makefile instructions:
 

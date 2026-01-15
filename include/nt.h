@@ -5,6 +5,8 @@
 #ifndef _NUTERM_H_
 #define _NUTERM_H_
 
+#include "nt_shared.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -34,12 +36,12 @@ extern "C" {
  * 5) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
  * 6) NT_ERR_UNEXPECTED. */
-void nt_init(nt_status* out_status);
+NT_API void nt_init(nt_status* out_status);
 
 /* Destroys the library and reverts terminal settings to old values.
  * Frees resources used by the library. Output will NOT be flushed(if
  * buffering is on). */
-void nt_deinit();
+NT_API void nt_deinit();
 
 /* -------------------------------------------------------------------------- */
 /* TERMINAL FUNCTIONS */
@@ -65,21 +67,21 @@ typedef enum nt_buffact
  * 2) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
  * 3) NT_ERR_ALR_BUFF - buffering is already enabled. */
 
-void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status);
+NT_API void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
  * Returns used buffer. */
 
-char* nt_buffer_disable(nt_buffact buffact);
+NT_API char* nt_buffer_disable(nt_buffact buffact);
 
 /* Flushes the buffer to stdout if buffering is currently enabled. */
 
-void nt_buffer_flush();
+NT_API void nt_buffer_flush();
 
 /* ----------------------------------------------------- */
 
-void nt_get_term_size(size_t* out_width, size_t* out_height);
+NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 
 /* The functions below share the same STATUS CODES:
  *
@@ -90,19 +92,19 @@ void nt_get_term_size(size_t* out_width, size_t* out_height);
  *
  * With buffering enabled, output is buffered. */
 
-void nt_cursor_hide(nt_status* out_status);
-void nt_cursor_show(nt_status* out_status);
+NT_API void nt_cursor_hide(nt_status* out_status);
+NT_API void nt_cursor_show(nt_status* out_status);
 
-void nt_erase_screen(nt_status* out_status);
-void nt_erase_line(nt_status* out_status);
-void nt_erase_scrollback(nt_status* out_status);
+NT_API void nt_erase_screen(nt_status* out_status);
+NT_API void nt_erase_line(nt_status* out_status);
+NT_API void nt_erase_scrollback(nt_status* out_status);
 
-void nt_alt_screen_enable(nt_status* out_status);
-void nt_alt_screen_disable(nt_status* out_status);
+NT_API void nt_alt_screen_enable(nt_status* out_status);
+NT_API void nt_alt_screen_disable(nt_status* out_status);
 
 // Status is always NT_SUCCESS
-void nt_mouse_mode_enable(nt_status* out_status);
-void nt_mouse_mode_disable(nt_status* out_status);
+NT_API void nt_mouse_mode_enable(nt_status* out_status);
+NT_API void nt_mouse_mode_disable(nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */
 /* WRITE TO TERMINAL */
@@ -115,7 +117,7 @@ void nt_mouse_mode_disable(nt_status* out_status);
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
 
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status);
+NT_API void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status);
 
 /* Prints `str` of size `len` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
@@ -133,7 +135,7 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
  * by the terminal - resetting gfx, setting color.
  * 3) NT_ERR_UNEXPECTED. */
 
-void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
+NT_API void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
  *
@@ -143,7 +145,7 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
-void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+NT_API void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
         nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_str(). 
@@ -154,7 +156,7 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
-void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
+NT_API void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
         size_t x, size_t y, nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */
@@ -176,7 +178,7 @@ void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
 
-unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
+NT_API unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
         nt_status* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
@@ -193,7 +195,7 @@ unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
  * 2) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
  * 3) NT_ERR_UNEXPECTED. */
 
-void nt_event_push(struct nt_event event, nt_status* out_status);
+NT_API void nt_event_push(struct nt_event event, nt_status* out_status);
 
 #ifdef __cplusplus
 }

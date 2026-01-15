@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 
+#include "nt_shared.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -23,15 +24,15 @@ struct nt_rgb
 };
 
 /* Clamps the values into range [0, 255] */
-struct nt_rgb nt_rgb_new(int r, int g, int b);
+NT_API struct nt_rgb nt_rgb_new(int r, int g, int b);
 
 static inline bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
 {
     return ((rgb1.r == rgb2.r) && (rgb1.g == rgb2.g) && (rgb1.b == rgb2.b));
 }
 
-uint8_t nt_rgb_to_c8(struct nt_rgb rgb);
-uint8_t nt_rgb_to_c256(struct nt_rgb rgb);
+NT_API uint8_t nt_rgb_to_c8(struct nt_rgb rgb);
+NT_API uint8_t nt_rgb_to_c256(struct nt_rgb rgb);
 
 /* ------------------------------------------------------ */
 
@@ -52,13 +53,13 @@ typedef struct nt_color
     struct nt_rgb _rgb;
 } nt_color;
 
-extern const nt_color NT_COLOR_DEFAULT;
+NT_API extern const nt_color NT_COLOR_DEFAULT;
 
 /* If provided an invalid `code8`, NT_COLOR_DEFAULT will be returned */
-nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb);
+NT_API nt_color nt_color_new(uint8_t code8, uint8_t code256, struct nt_rgb rgb);
 
 /* Auto-converts to other colors */
-nt_color nt_color_new_auto(struct nt_rgb rgb);
+NT_API nt_color nt_color_new_auto(struct nt_rgb rgb);
 
 static inline bool nt_color_are_equal(nt_color color1, nt_color color2)
 {
@@ -77,14 +78,16 @@ typedef struct nt_style
     uint8_t _value_c8, _value_c256, _value_rgb;
 } nt_style;
 
-extern const nt_style NT_STYLE_DEFAULT;
+NT_API extern const nt_style NT_STYLE_DEFAULT;
 
-nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
-nt_style nt_style_new_uniform(uint8_t value);
+NT_API nt_style nt_style_new(uint8_t value8, uint8_t value256, uint8_t value_rgb);
+NT_API nt_style nt_style_new_uniform(uint8_t value);
 
 static inline bool nt_style_are_equal(nt_style style1, nt_style style2)
 {
-    return (memcmp(&style1, &style2, sizeof(nt_style)) == 0);
+    return ((style1._value_c8 == style2._value_c8) &&
+            (style1._value_c256 == style2._value_c256) &&
+            (style1._value_rgb == style2._value_rgb));
 }
 
 #define NT_STYLE_VAL_DEFAULT        0
@@ -97,10 +100,6 @@ static inline bool nt_style_are_equal(nt_style style1, nt_style style2)
 #define NT_STYLE_VAL_HIDDEN         (1 << 6)  // 01000000
 #define NT_STYLE_VAL_STRIKETHROUGH  (1 << 7)  // 10000000
 
-#ifdef __cplusplus
-}
-#endif
-
 /* -------------------------------------------------------------------------- */
 /* GFX */
 /* -------------------------------------------------------------------------- */
@@ -111,7 +110,7 @@ struct nt_gfx
     nt_style style;
 };
 
-extern const struct nt_gfx NT_GFX_DEFAULT;
+NT_API extern const struct nt_gfx NT_GFX_DEFAULT;
 
 static inline bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
 {
@@ -119,5 +118,9 @@ static inline bool nt_gfx_are_equal(struct nt_gfx gfx1, struct nt_gfx gfx2)
         nt_color_are_equal(gfx1.bg, gfx2.bg) &&
         nt_style_are_equal(gfx1.style, gfx2.style));
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _NT_GFX_H_

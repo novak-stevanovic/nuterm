@@ -157,7 +157,6 @@ int main(int argc, char *argv[])
     //     nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
     //     assert(_status == NT_SUCCESS);
     // }
-
     nt_mouse_mode_enable(&_status);
     loop_lib();
     nt_mouse_mode_disable(&_status);

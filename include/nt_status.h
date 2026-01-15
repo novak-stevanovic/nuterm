@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "nt_shared.h"
+
 typedef int nt_status;
 
 #define _NT_STATUS_BASE 0

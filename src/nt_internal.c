@@ -253,7 +253,7 @@ void _nt_term_init(nt_status* out_status)
 
     if(env_term == NULL)
     {
-        SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
+        NT_SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
         return;
     }
 
@@ -285,7 +285,7 @@ void _nt_term_init(nt_status* out_status)
     }
 
     nt_status ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPP;
-    SET_OUT(out_status, ret);
+    NT_SET_OUT(out_status, ret);
 }
 
 struct nt_term_info _nt_term_get_used()

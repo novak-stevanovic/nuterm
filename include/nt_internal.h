@@ -5,6 +5,7 @@
 #ifndef _NT_INTERNAL_H_
 #define _NT_INTERNAL_H_
 
+#include "nt_shared.h"
 #include "nt_status.h"
 
 #ifdef __cplusplus
@@ -84,7 +85,7 @@ nt_term_color_count _nt_term_get_color_count();
 
 void _nt_term_deinit();
 
-#define SET_OUT(out_param, out_val) \
+#define NT_SET_OUT(out_param, out_val) \
     if((out_param) != NULL) ((*out_param)) = out_val;
 
 #ifdef __cplusplus

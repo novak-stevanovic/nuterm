@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 
+#include "nt_shared.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -47,9 +48,9 @@ struct nt_event
 };
 
 // Assumes correct arguments. Returns invalid event on fail.
-struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size);
+NT_API struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size);
 
-bool nt_event_is_valid(struct nt_event event);
+NT_API bool nt_event_is_valid(struct nt_event event);
 
 /* -------------------------------------------------------------------------- */
 /* NT_KEY_EVENT */
@@ -108,16 +109,16 @@ struct nt_key_event
 };
 
 /* Providing invalid `codepoint` is UB */
-struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
+NT_API struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
 /* Checks if provided `key` matches description */
-bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt);
+NT_API bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt);
 /* Alt insensitive */
-bool nt_key_event_utf32_check_(struct nt_key_event key, uint32_t codepoint);
+NT_API bool nt_key_event_utf32_check_(struct nt_key_event key, uint32_t codepoint);
 
 /* Providing invalid `esc_key` is UB */
-struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key);
+NT_API struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key);
 /* Checks if provided `key` matches description */
-bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key);
+NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key);
 
 /* -------------------------------------------------------------------------- */
 /* NT_MOUSE_EVENT */

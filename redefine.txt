@@ -1,0 +1,6 @@
+uc_utf32_is_in_range nt_uc_utf32_is_in_range
+uc_utf32_to_utf8 nt_uc_utf32_to_utf8
+uc_utf32_to_utf8_single nt_uc_utf32_to_utf8_single
+uc_utf8_to_utf32 nt_uc_utf8_to_utf32
+uc_utf8_to_utf32_single nt_uc_utf8_to_utf32_single
+uc_utf8_unit_len nt_uc_utf8_unit_len
