@@ -26,11 +26,11 @@ struct nt_rgb
 /* Clamps the values into range [0, 255] */
 NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b);
 
-NT_API uint8_t nt_rgb_to_c8(struct nt_rgb rgb);
-NT_API uint8_t nt_rgb_to_c256(struct nt_rgb rgb);
+NT_API uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b);
+NT_API uint8_t nt_rgb_to_c256(uint8_t r, uint8_t g, uint8_t b);
 
-NT_API uint8_t nt_rgb_to_c8_raw(uint8_t r, uint8_t g, uint8_t b);
-NT_API uint8_t nt_rgb_to_c256_raw(uint8_t r, uint8_t g, uint8_t b);
+NT_API uint8_t nt_rgb_to_c8_rgb(struct nt_rgb rgb);
+NT_API uint8_t nt_rgb_to_c256_rgb(struct nt_rgb rgb);
 
 static inline bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
 {
@@ -58,8 +58,8 @@ struct nt_color
 NT_API extern const struct nt_color NT_COLOR_DEFAULT;
 
 /* Auto-converts to other colors */
-NT_API struct nt_color nt_color_new_auto(struct nt_rgb rgb);
-NT_API struct nt_color nt_color_new_auto_raw(uint8_t r, uint8_t g, uint8_t b);
+NT_API struct nt_color nt_color_new_auto(uint8_t r, uint8_t g, uint8_t b);
+NT_API struct nt_color nt_color_new_auto_rgb(struct nt_rgb rgb);
 
 static inline bool 
 nt_color_are_equal(struct nt_color color1, struct nt_color color2)

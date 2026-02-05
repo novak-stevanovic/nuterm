@@ -58,12 +58,8 @@ NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b)
     };
 }
 
-uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
+NT_API uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
 {
-    uint8_t r = rgb.r;
-    uint8_t g = rgb.g;
-    uint8_t b = rgb.b;
-
     const struct point3d color = { .x = r, .y = g, .z = b };
 
     size_t count = sizeof(colors) / sizeof(struct point3d);
@@ -85,19 +81,13 @@ uint8_t nt_rgb_to_c8(struct nt_rgb rgb)
     return min_idx;
 }
 
-NT_API uint8_t nt_rgb_to_c8_raw(uint8_t r, uint8_t g, uint8_t b)
+uint8_t nt_rgb_to_c8_rgb(struct nt_rgb rgb)
 {
-    struct nt_rgb rgb = { .r = r, .g = g, .b = b };
-
-    return nt_rgb_to_c8(rgb);
+    return nt_rgb_to_c8(rgb.r, rgb.g, rgb.b);
 }
 
-uint8_t nt_rgb_to_c256(struct nt_rgb rgb)
+NT_API uint8_t nt_rgb_to_c256(uint8_t r, uint8_t g, uint8_t b)
 {
-    uint8_t r = rgb.r;
-    uint8_t g = rgb.g;
-    uint8_t b = rgb.b;
-
     if((r == g) && (g == b)) // gray
     {
         // 26 is derived from 24 gray colors + black + white
@@ -120,11 +110,9 @@ uint8_t nt_rgb_to_c256(struct nt_rgb rgb)
     return 0;
 }
 
-NT_API uint8_t nt_rgb_to_c256_raw(uint8_t r, uint8_t g, uint8_t b)
+uint8_t nt_rgb_to_c256_rgb(struct nt_rgb rgb)
 {
-    struct nt_rgb rgb = { .r = r, .g = g, .b = b };
-
-    return nt_rgb_to_c256(rgb);
+    return nt_rgb_to_c256(rgb.r, rgb.g, rgb.b);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -135,24 +123,18 @@ const struct nt_color NT_COLOR_DEFAULT = {
     .rgb = { 0, 0, 0 }
 };
 
-struct nt_color nt_color_new_auto(struct nt_rgb rgb)
+struct nt_color nt_color_new_auto(uint8_t r, uint8_t g, uint8_t b)
 {
     return (struct nt_color) {
-        .code8 = nt_rgb_to_c8(rgb),
-        .code256 = nt_rgb_to_c256(rgb),
-        .rgb = rgb
+        .code8 = nt_rgb_to_c8(r, g, b),
+        .code256 = nt_rgb_to_c256(r, g, b),
+        .rgb = (struct nt_rgb) { .r = r, .g = g, .b = b }
     };
 }
 
-struct nt_color nt_color_new_auto_raw(uint8_t r, uint8_t g, uint8_t b)
+struct nt_color nt_color_new_auto_rgb(struct nt_rgb rgb)
 {
-    struct nt_rgb rgb = { .r = r, .g = g, .b = b };
-
-    return (struct nt_color) {
-        .code8 = nt_rgb_to_c8(rgb),
-        .code256 = nt_rgb_to_c256(rgb),
-        .rgb = rgb
-    };
+    return nt_color_new_auto(rgb.r, rgb.g, rgb.b);
 }
 
 /* -------------------------------------------------------------------------- */
