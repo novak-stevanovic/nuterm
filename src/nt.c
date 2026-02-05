@@ -484,7 +484,6 @@ void nt_mouse_mode_disable(nt_status* out_status)
 /* WRITE TO TERMINAL */
 /* ------------------------------------------------------------------------- */
 
-
 /* This function assumes:
  * 1) The terminal has the capability to set default fg and bg colors.
  * 2) If the terminal supports RGB, then the library holds the terminal's
@@ -506,17 +505,17 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         if(colors == NT_TERM_COLOR_TC)
         {
             execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, true,
-                    &_status, gfx.fg._rgb.r, gfx.fg._rgb.g, gfx.fg._rgb.b);
+                    &_status, gfx.fg.rgb.r, gfx.fg.rgb.g, gfx.fg.rgb.b);
         }
         else if(colors == NT_TERM_COLOR_C256)
         {
             execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, true,
-                    &_status, gfx.fg._code256);
+                    &_status, gfx.fg.code256);
         }
         else if(colors == NT_TERM_COLOR_C8)
         {
             execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, true,
-                    &_status, gfx.fg._code8);
+                    &_status, gfx.fg.code8);
         }
         else
         {
@@ -542,17 +541,17 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         if(colors == NT_TERM_COLOR_TC)
         {
             execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, true,
-                    &_status, gfx.bg._rgb.r, gfx.bg._rgb.g, gfx.bg._rgb.b);
+                    &_status, gfx.bg.rgb.r, gfx.bg.rgb.g, gfx.bg.rgb.b);
         }
         else if(colors == NT_TERM_COLOR_C256)
         {
             execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, true,
-                    &_status, gfx.bg._code256);
+                    &_status, gfx.bg.code256);
         }
         else if(colors == NT_TERM_COLOR_C8)
         {
             execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, true,
-                    &_status, gfx.bg._code8);
+                    &_status, gfx.bg.code8);
         }
         else 
         {
@@ -572,11 +571,11 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     uint8_t style;
 
     if(colors == NT_TERM_COLOR_TC)
-        style = gfx.style._value_c8;
+        style = gfx.style.value_c8;
     else if(colors == NT_TERM_COLOR_C256)
-        style = gfx.style._value_c256;
+        style = gfx.style.value_c256;
     else if(colors == NT_TERM_COLOR_C8)
-        style = gfx.style._value_rgb;
+        style = gfx.style.value_rgb;
     else 
     { 
         NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
@@ -603,7 +602,10 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
 }
 
 // UTF-32
-void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
+void nt_write_char(
+        uint32_t codepoint,
+        struct nt_gfx gfx,
+        nt_status* out_status)
 {
     char utf8[5];
     size_t utf8_len;
@@ -633,10 +635,16 @@ void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status)
 }
 
 // UTF-8
-void nt_write_str(const char* str, size_t len,
-        struct nt_gfx gfx, nt_status* out_status)
+void nt_write_str(
+        const char* str,
+        size_t len,
+        struct nt_gfx gfx,
+        nt_status* out_status)
 {
     nt_status _status;
+
+    gfx.bg.code8 = (gfx.bg.code8 <= 7) ? gfx.bg.code8 : 0;
+    gfx.fg.code8 = (gfx.fg.code8 <= 7) ? gfx.fg.code8 : 0;
 
     execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
@@ -700,7 +708,10 @@ void nt_write_str(const char* str, size_t len,
     NT_SET_OUT(out_status, NT_SUCCESS);
 }
 
-void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+void nt_write_char_at(
+        uint32_t codepoint,
+        struct nt_gfx gfx,
+        size_t x, size_t y,
         nt_status* out_status)
 {
     size_t _width, _height;
@@ -724,8 +735,12 @@ void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
     nt_write_char(codepoint, gfx, out_status);
 }
 
-void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
-        size_t x, size_t y, nt_status* out_status)
+void nt_write_str_at(
+        const char* str,
+        size_t len,
+        struct nt_gfx gfx,
+        size_t x, size_t y,
+        nt_status* out_status)
 {
     size_t _width, _height;
     nt_get_term_size(&_width, &_height);
@@ -769,8 +784,10 @@ static struct nt_event process_custom(nt_status* out_status, bool* out_ignore);
 
 static const struct nt_event NT_EVENT_EMPTY = {0};
 
-unsigned int nt_event_wait(struct nt_event* out_event,
-        unsigned int timeout, nt_status* out_status)
+unsigned int nt_event_wait(
+        struct nt_event* out_event,
+        unsigned int timeout,
+        nt_status* out_status)
 {
     struct timespec _time1, _time2;
     int poll_status;
@@ -1234,4 +1251,3 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
     NT_SET_OUT(out_event, event);
     return MOUSE_EVENT_SUPPORTED;
 }
-

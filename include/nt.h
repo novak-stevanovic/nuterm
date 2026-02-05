@@ -117,7 +117,10 @@ NT_API void nt_mouse_mode_disable(nt_status* out_status);
  * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
  * value. */
 
-NT_API void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_status);
+NT_API void nt_write_char(
+        uint32_t codepoint,
+        struct nt_gfx gfx,
+        nt_status* out_status);
 
 /* Prints `str` of size `len` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
@@ -135,7 +138,11 @@ NT_API void nt_write_char(uint32_t codepoint, struct nt_gfx gfx, nt_status* out_
  * by the terminal - resetting gfx, setting color.
  * 3) NT_ERR_UNEXPECTED. */
 
-NT_API void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
+NT_API void nt_write_str(
+        const char* str,
+        size_t len,
+        struct nt_gfx gfx,
+        nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
  *
@@ -145,7 +152,10 @@ NT_API void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_stat
  * nt_write_char() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
-NT_API void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, size_t y,
+NT_API void nt_write_char_at(
+        uint32_t codepoint,
+        struct nt_gfx gfx,
+        size_t x, size_t y,
         nt_status* out_status);
 
 /* Moves cursor to specified `row` and `col` and then invokes nt_write_str(). 
@@ -156,8 +166,12 @@ NT_API void nt_write_char_at(uint32_t codepoint, struct nt_gfx gfx, size_t x, si
  * nt_write_str() failed with this code,
  * 2) NT_ERR_OUT_OF_BOUNDS. */
 
-NT_API void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
-        size_t x, size_t y, nt_status* out_status);
+NT_API void nt_write_str_at(
+        const char* str,
+        size_t len,
+        struct nt_gfx gfx,
+        size_t x, size_t y,
+        nt_status* out_status);
 
 /* -------------------------------------------------------------------------- */
 /* EVENT */
@@ -178,7 +192,9 @@ NT_API void nt_write_str_at(const char* str, size_t len, struct nt_gfx gfx,
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
 
-NT_API unsigned int nt_event_wait(struct nt_event* out_event, unsigned int timeout,
+NT_API unsigned int nt_event_wait(
+        struct nt_event* out_event,
+        unsigned int timeout,
         nt_status* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
