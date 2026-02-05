@@ -58,7 +58,7 @@ NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b)
     };
 }
 
-NT_API uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
+NT_API enum nt_color_c8 nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
 {
     const struct point3d color = { .x = r, .y = g, .z = b };
 
@@ -81,7 +81,7 @@ NT_API uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
     return min_idx;
 }
 
-uint8_t nt_rgb_to_c8_rgb(struct nt_rgb rgb)
+NT_API enum nt_color_c8 nt_rgb_to_c8_rgb(struct nt_rgb rgb)
 {
     return nt_rgb_to_c8(rgb.r, rgb.g, rgb.b);
 }

@@ -18,6 +18,8 @@ extern "C" {
 /* COLOR */
 /* -------------------------------------------------------------------------- */
 
+enum nt_color_c8;
+
 struct nt_rgb
 {
     uint8_t r, g, b;
@@ -26,10 +28,10 @@ struct nt_rgb
 /* Clamps the values into range [0, 255] */
 NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b);
 
-NT_API uint8_t nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b);
+NT_API enum nt_color_c8 nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b);
 NT_API uint8_t nt_rgb_to_c256(uint8_t r, uint8_t g, uint8_t b);
 
-NT_API uint8_t nt_rgb_to_c8_rgb(struct nt_rgb rgb);
+NT_API enum nt_color_c8 nt_rgb_to_c8_rgb(struct nt_rgb rgb);
 NT_API uint8_t nt_rgb_to_c256_rgb(struct nt_rgb rgb);
 
 static inline bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
@@ -39,18 +41,21 @@ static inline bool nt_rgb_are_equal(struct nt_rgb rgb1, struct nt_rgb rgb2)
 
 /* ------------------------------------------------------ */
 
-#define NT_COLOR_C8_BLACK      0
-#define NT_COLOR_C8_RED        1
-#define NT_COLOR_C8_GREEN      2
-#define NT_COLOR_C8_YELLOW     3
-#define NT_COLOR_C8_BLUE       4
-#define NT_COLOR_C8_MAGENTA    5
-#define NT_COLOR_C8_CYAN       6
-#define NT_COLOR_C8_WHITE      7
+enum nt_color_c8
+{
+    NT_COLOR_C8_BLACK = 0,
+    NT_COLOR_C8_RED,
+    NT_COLOR_C8_GREEN,
+    NT_COLOR_C8_YELLOW,
+    NT_COLOR_C8_BLUE,
+    NT_COLOR_C8_MAGENTA,
+    NT_COLOR_C8_CYAN,
+    NT_COLOR_C8_WHITE
+};
 
 struct nt_color
 {
-    uint8_t code8;
+    enum nt_color_c8 code8;
     uint8_t code256;
     struct nt_rgb rgb;
 };
@@ -65,8 +70,8 @@ static inline bool
 nt_color_are_equal(struct nt_color color1, struct nt_color color2)
 {
     return ((color1.code8 == color2.code8) &&
-        (color1.code256 == color2.code256) &&
-        nt_rgb_are_equal(color1.rgb, color2.rgb));
+            (color1.code256 == color2.code256) &&
+            nt_rgb_are_equal(color1.rgb, color2.rgb));
 }
 
 /* -------------------------------------------------------------------------- */

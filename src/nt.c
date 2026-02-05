@@ -502,6 +502,8 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     }
     else
     {
+        gfx.fg = (gfx.fg.code8 <= NT_COLOR_C8_WHITE) ? gfx.fg : NT_COLOR_DEFAULT;
+
         if(colors == NT_TERM_COLOR_TC)
         {
             execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, true,
@@ -538,6 +540,8 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     }
     else
     {
+        gfx.bg = (gfx.bg.code8 <= NT_COLOR_C8_WHITE) ? gfx.bg : NT_COLOR_DEFAULT;
+
         if(colors == NT_TERM_COLOR_TC)
         {
             execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, true,
@@ -642,9 +646,6 @@ void nt_write_str(
         nt_status* out_status)
 {
     nt_status _status;
-
-    gfx.bg.code8 = (gfx.bg.code8 <= 7) ? gfx.bg.code8 : 0;
-    gfx.fg.code8 = (gfx.fg.code8 <= 7) ? gfx.fg.code8 : 0;
 
     execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
     if(_status != NT_SUCCESS)
