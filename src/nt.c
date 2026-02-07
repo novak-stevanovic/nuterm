@@ -276,6 +276,12 @@ void nt_init(nt_status* out_status)
     }
 }
 
+static void close_pipe(int p[2])
+{
+    if(p[0] >= 0) { close(p[0]); p[0] = -1; }
+    if(p[1] >= 0) { close(p[1]); p[1] = -1; }
+}
+
 void nt_deinit()
 {
     if(init_sigthread_create)
@@ -283,7 +289,7 @@ void nt_deinit()
         pthread_mutex_lock(&sigthread_lock);
         sigthread_stop = true;
         pthread_mutex_unlock(&sigthread_lock);
-        kill(0, SIGINT);
+        pthread_kill(sigthread, SIGINT);
 
         pthread_join(sigthread, NULL);
 
@@ -314,6 +320,10 @@ void nt_deinit()
         pthread_sigmask(SIG_SETMASK, &set, NULL);
         init_sigmask_set = false;
     }
+
+    close_pipe(signal_pipe);
+    close_pipe(custom_event_pipe);
+    close_pipe(resize_pipe);
 
     init_default_values();
 }
@@ -387,6 +397,7 @@ void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status)
 
 char* nt_buffer_disable(nt_buffact buffact)
 {
+    void* old = stdout_buff;
     if(stdout_buff != NULL)
     {
         if((buffact == NT_BUFF_FLUSH) && (stdout_buff_pos > 0))
@@ -397,7 +408,7 @@ char* nt_buffer_disable(nt_buffact buffact)
         stdout_buff_cap = 0;
     }
 
-    return stdout_buff;
+    return old;
 }
 
 void nt_buffer_flush()
@@ -575,11 +586,11 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     uint8_t style;
 
     if(colors == NT_TERM_COLOR_TC)
-        style = gfx.style.value_c8;
+        style = gfx.style.value_rgb;
     else if(colors == NT_TERM_COLOR_C256)
         style = gfx.style.value_c256;
     else if(colors == NT_TERM_COLOR_C8)
-        style = gfx.style.value_rgb;
+        style = gfx.style.value_c8;
     else 
     { 
         NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
@@ -661,6 +672,8 @@ void nt_write_str(
         return;
     }
 
+    size_t rem;
+
     /* In some terminals, a newline will fill the next row with currently set bg.
      * To avoid this, any time we run into a newline, we will reset the gfx,
      * print it in default GFX, and then resume printing */
@@ -670,7 +683,8 @@ void nt_write_str(
 
         while(true)
         {
-            it_end = memchr(it_begin, '\n', len);
+            rem = (str + len) - it_begin;
+            it_end = memchr(it_begin, '\n', rem);
             
             if(it_end != NULL)
             {
@@ -822,18 +836,22 @@ unsigned int nt_event_wait(
         if(poll_fds[STDIN_POLL_FD].revents & POLLIN)
         {
             event = process_stdin(&_status, &_ignore);
+            poll_fds[STDIN_POLL_FD].revents = 0;
         }
         else if(poll_fds[RESIZE_POLL_FD].revents & POLLIN)
         {
             event = process_resize(&_status, &_ignore);
+            poll_fds[RESIZE_POLL_FD].revents = 0;
         }
         else if(poll_fds[SIGNAL_POLL_FD].revents & POLLIN)
         {
             event = process_signal(&_status, &_ignore);
+            poll_fds[SIGNAL_POLL_FD].revents = 0;
         }
         else if(poll_fds[CUSTOM_POLL_FD].revents & POLLIN)
         {
             event = process_custom(&_status, &_ignore);
+            poll_fds[CUSTOM_POLL_FD].revents = 0;
         }
         else return elapsed;
 
@@ -957,7 +975,7 @@ static struct nt_event process_custom(nt_status* out_status, bool* out_ignore)
     uint32_t type = (1 << header.type);
 
     NT_SET_OUT(out_status, NT_SUCCESS);
-    return nt_event_new(type, &buff, header.data_size);
+    return nt_event_new(type, buff, header.data_size);
 }
 
 /* ------------------------------------------------------ */
