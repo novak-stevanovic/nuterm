@@ -104,11 +104,8 @@ NT_API void nt_buffer_flush();
  * by the terminal - resetting gfx, setting color.
  * 3) NT_ERR_UNEXPECTED. */
 
-NT_API void nt_write_str(
-        const char* str,
-        size_t len,
-        struct nt_gfx gfx,
-        nt_status* out_status);
+NT_API void 
+nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
 
 /* The functions below share the same status codes:
  *
@@ -123,7 +120,7 @@ NT_API void nt_cursor_hide(nt_status* out_status);
 NT_API void nt_cursor_show(nt_status* out_status);
 /* Zero-based indexing. When an attempt is made to move the cursor out of bounds,
  * the position is silently capped. */
-NT_API void nt_cursor_move(nt_status* out_status, size_t x, size_t y);
+NT_API void nt_cursor_move(size_t x, size_t y, nt_status* out_status);
 
 NT_API void nt_erase_screen(nt_status* out_status);
 NT_API void nt_erase_line(nt_status* out_status);
@@ -157,10 +154,8 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
 
-NT_API unsigned int nt_event_wait(
-        struct nt_event* out_event,
-        unsigned int timeout,
-        nt_status* out_status);
+NT_API unsigned int 
+nt_event_wait(struct nt_event* out_event, unsigned int timeout, nt_status* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
  * `nt_event_wait()`. If the calling thread is the main thread, next call

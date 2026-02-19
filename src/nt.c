@@ -332,8 +332,11 @@ void nt_deinit()
 /* TERMINAL FUNCTIONS */
 /* -------------------------------------------------------------------------- */
 
-static void execute_used_term_func(enum nt_esc_func func,
-        bool use_va, nt_status* out_status, ...)
+static void execute_used_term_func(
+        enum nt_esc_func func,
+        bool use_va,
+        nt_status* out_status,
+        ...)
 {
     int status;
 
@@ -432,9 +435,9 @@ void nt_cursor_show(nt_status* out_status)
     execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, false, out_status);
 }
 
-void nt_cursor_move(nt_status* out_status, size_t x, size_t y)
+void nt_cursor_move(size_t x, size_t y, nt_status* out_status)
 {
-    execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, out_status, x + 1, y + 1);
+    execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, out_status, y + 1, x + 1);
 }
 
 void nt_erase_screen(nt_status* out_status)
@@ -621,11 +624,8 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     return;
 }
 
-void nt_write_str(
-        const char* str,
-        size_t len,
-        struct nt_gfx gfx,
-        nt_status* out_status)
+void
+nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status)
 {
     nt_status _status;
 
@@ -643,11 +643,10 @@ void nt_write_str(
         return;
     }
 
-    size_t rem;
-
     /* In some terminals, a newline will fill the next row with currently set bg.
      * To avoid this, any time we run into a newline, we will reset the gfx,
      * print it in default GFX, and then resume printing */
+    size_t rem;
     if(len > 0) 
     {
         const char *it_begin = str, *it_end;
