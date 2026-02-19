@@ -42,7 +42,11 @@ extern "C" {
 
 struct nt_event
 {
-    char data[NT_EVENT_DATA_MAX_SIZE];
+    union
+    {
+        char data[NT_EVENT_DATA_MAX_SIZE];
+        max_align_t _align;
+    };
     uint32_t type; // only 1 bit set
     uint8_t data_size;
 };

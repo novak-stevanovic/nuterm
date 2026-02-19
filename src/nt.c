@@ -422,27 +422,6 @@ void nt_buffer_flush()
 
 /* ----------------------------------------------------- */
 
-void nt_get_term_size(size_t* out_width, size_t* out_height)
-{
-    struct winsize size;
-    int status = ioctl(STDIN_FILENO, TIOCGWINSZ, &size);
-    size_t ret_width, ret_height;
-    if(status == -1)
-    {
-        ret_width = 0;
-        ret_height =  0;
-        return;
-    }
-    else
-    {
-        ret_width = size.ws_col;
-        ret_height = size.ws_row;
-    }
-
-    if(out_width != NULL) *out_width = ret_width;
-    if(out_height != NULL) *out_height = ret_height;
-}
-
 void nt_cursor_hide(nt_status* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, false, out_status);
@@ -451,6 +430,11 @@ void nt_cursor_hide(nt_status* out_status)
 void nt_cursor_show(nt_status* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, false, out_status);
+}
+
+void nt_cursor_move(nt_status* out_status, size_t x, size_t y)
+{
+    execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, out_status, x + 1, y + 1);
 }
 
 void nt_erase_screen(nt_status* out_status)
@@ -489,6 +473,27 @@ void nt_mouse_mode_enable(nt_status* out_status)
 void nt_mouse_mode_disable(nt_status* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_MOUSE_DISABLE, false, out_status);
+}
+
+void nt_get_term_size(size_t* out_width, size_t* out_height)
+{
+    struct winsize size;
+    int status = ioctl(STDIN_FILENO, TIOCGWINSZ, &size);
+    size_t ret_width, ret_height;
+    if(status == -1)
+    {
+        ret_width = 0;
+        ret_height =  0;
+        return;
+    }
+    else
+    {
+        ret_width = size.ws_col;
+        ret_height = size.ws_row;
+    }
+
+    if(out_width != NULL) *out_width = ret_width;
+    if(out_height != NULL) *out_height = ret_height;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -616,40 +621,6 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
     return;
 }
 
-// UTF-32
-void nt_write_char(
-        uint32_t codepoint,
-        struct nt_gfx gfx,
-        nt_status* out_status)
-{
-    char utf8[5];
-    size_t utf8_len;
-    nt_status _status;
-
-    uc_utf32_to_utf8(&codepoint, 1, (uint8_t*)utf8,
-            4, 0, NULL, &utf8_len, &_status);
-
-    switch(_status)
-    {
-        case UC_SUCCESS:
-            break;
-        case UC_ERR_SURROGATE:
-            NT_SET_OUT(out_status, NT_ERR_INVALID_UTF32);
-            return;
-        case UC_ERR_INVALID_CODEPOINT:
-            NT_SET_OUT(out_status, NT_ERR_INVALID_UTF32);
-            return;
-        default:
-            NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
-            return;
-    }
-
-    utf8[utf8_len] = '\0';
-
-    nt_write_str(utf8, utf8_len, gfx, out_status);
-}
-
-// UTF-8
 void nt_write_str(
         const char* str,
         size_t len,
@@ -721,61 +692,6 @@ void nt_write_str(
     }
 
     NT_SET_OUT(out_status, NT_SUCCESS);
-}
-
-void nt_write_char_at(
-        uint32_t codepoint,
-        struct nt_gfx gfx,
-        size_t x, size_t y,
-        nt_status* out_status)
-{
-    size_t _width, _height;
-    nt_get_term_size(&_width, &_height);
-
-    if((x >= _width) || (y >= _height))
-    {
-        NT_SET_OUT(out_status, NT_ERR_OUT_OF_BOUNDS);
-        return;
-    }
-
-    nt_status _status;
-
-    execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
-    if(_status != NT_SUCCESS)
-    {
-        NT_SET_OUT(out_status, _status);
-        return;
-    }
-
-    nt_write_char(codepoint, gfx, out_status);
-}
-
-void nt_write_str_at(
-        const char* str,
-        size_t len,
-        struct nt_gfx gfx,
-        size_t x, size_t y,
-        nt_status* out_status)
-{
-    size_t _width, _height;
-    nt_get_term_size(&_width, &_height);
-
-    if((x >= _width) || (y >= _height))
-    {
-        NT_SET_OUT(out_status, NT_ERR_OUT_OF_BOUNDS);
-        return;
-    }
-
-    nt_status _status;
-
-    execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, &_status, y + 1, x + 1);
-    if(_status != NT_SUCCESS)
-    {
-        NT_SET_OUT(out_status, _status);
-        return;
-    }
-
-    nt_write_str(str, len, gfx, out_status);
 }
 
 /* -------------------------------------------------------------------------- */

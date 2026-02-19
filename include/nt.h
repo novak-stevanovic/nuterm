@@ -51,6 +51,8 @@ NT_API void nt_deinit();
  * (this includes terminal function codes and text). */
 
 /* ------------------------------------------------------ */
+/* BUFFERING */
+/* ------------------------------------------------------ */
 
 typedef enum nt_buffact
 { 
@@ -79,48 +81,12 @@ NT_API char* nt_buffer_disable(nt_buffact buffact);
 
 NT_API void nt_buffer_flush();
 
-/* ----------------------------------------------------- */
+/* ------------------------------------------------------ */
+/* CORE */
+/* ------------------------------------------------------ */
 
-NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
-
-/* The functions below share the same STATUS CODES:
- *
- * 1) NT_SUCCESS,
- * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
- * function(not very reliable),
- * 3) NT_ERR_UNEXPECTED.
- *
- * With buffering enabled, output is buffered. */
-
-NT_API void nt_cursor_hide(nt_status* out_status);
-NT_API void nt_cursor_show(nt_status* out_status);
-
-NT_API void nt_erase_screen(nt_status* out_status);
-NT_API void nt_erase_line(nt_status* out_status);
-NT_API void nt_erase_scrollback(nt_status* out_status);
-
-NT_API void nt_alt_screen_enable(nt_status* out_status);
-NT_API void nt_alt_screen_disable(nt_status* out_status);
-
-// Status is always NT_SUCCESS
-NT_API void nt_mouse_mode_enable(nt_status* out_status);
-NT_API void nt_mouse_mode_disable(nt_status* out_status);
-
-/* -------------------------------------------------------------------------- */
-/* WRITE TO TERMINAL */
-/* -------------------------------------------------------------------------- */
-
-/* Converts UTF-32 `codepoint` to UTF-8 and then invokes nt_write_str().
- *
- * The status codes returned match those specified for nt_write_str().
- * Additionally, the following status codes can be returned:
- * 1) NT_ERR_INVALID_UTF32 - if `codepoint` is invalid or has a surrogate
- * value. */
-
-NT_API void nt_write_char(
-        uint32_t codepoint,
-        struct nt_gfx gfx,
-        nt_status* out_status);
+/* Functions below may be used for moving the cursor, or setting the gfx
+ * of a program without actually writing anything to the screen. */
 
 /* Prints `str` of size `len` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
@@ -144,34 +110,33 @@ NT_API void nt_write_str(
         struct nt_gfx gfx,
         nt_status* out_status);
 
-/* Moves cursor to specified `row` and `col` and then invokes nt_write_char(). 
+/* The functions below share the same status codes:
  *
- * The status codes returned match those specified for nt_write_char().
- * Additionally, the following status codes can be returned:
- * 1) NT_ERR_FUNC_NOT_SUPP - terminal doesn't support moving the cursor or
- * nt_write_char() failed with this code,
- * 2) NT_ERR_OUT_OF_BOUNDS. */
-
-NT_API void nt_write_char_at(
-        uint32_t codepoint,
-        struct nt_gfx gfx,
-        size_t x, size_t y,
-        nt_status* out_status);
-
-/* Moves cursor to specified `row` and `col` and then invokes nt_write_str(). 
+ * 1) NT_SUCCESS,
+ * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
+ * function(not very reliable),
+ * 3) NT_ERR_UNEXPECTED.
  *
- * The status codes returned match those specified for nt_write_str().
- * Additionally, the following status codes can be returned:
- * 1) NT_ERR_FUNC_NOT_SUPP - terminal doesn't support moving the cursor or
- * nt_write_str() failed with this code,
- * 2) NT_ERR_OUT_OF_BOUNDS. */
+ * With buffering enabled, output is buffered. */
 
-NT_API void nt_write_str_at(
-        const char* str,
-        size_t len,
-        struct nt_gfx gfx,
-        size_t x, size_t y,
-        nt_status* out_status);
+NT_API void nt_cursor_hide(nt_status* out_status);
+NT_API void nt_cursor_show(nt_status* out_status);
+/* Zero-based indexing. When an attempt is made to move the cursor out of bounds,
+ * the position is silently capped. */
+NT_API void nt_cursor_move(nt_status* out_status, size_t x, size_t y);
+
+NT_API void nt_erase_screen(nt_status* out_status);
+NT_API void nt_erase_line(nt_status* out_status);
+NT_API void nt_erase_scrollback(nt_status* out_status);
+
+NT_API void nt_alt_screen_enable(nt_status* out_status);
+NT_API void nt_alt_screen_disable(nt_status* out_status);
+
+// Status is always NT_SUCCESS
+NT_API void nt_mouse_mode_enable(nt_status* out_status);
+NT_API void nt_mouse_mode_disable(nt_status* out_status);
+
+NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 
 /* -------------------------------------------------------------------------- */
 /* EVENT */
