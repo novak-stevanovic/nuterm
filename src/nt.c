@@ -1168,8 +1168,8 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
     num_buff[read_count - semicol_idx[1] - 2] = 0;
     cy = atoi(num_buff);
 
-    event.x = cx;
-    event.y = cy;
+    event.x = (cx > 0) ? (cx - 1) : 0;
+    event.y = (cy > 0) ? (cy - 1) : 0;
     if(cb == 64)
         event.type = NT_MOUSE_EVENT_SCROLL_UP;
     else if(cb == 65)

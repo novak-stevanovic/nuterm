@@ -140,7 +140,7 @@ enum nt_mouse_event_type
 struct nt_mouse_event
 {
     enum nt_mouse_event_type type;
-    size_t x, y;
+    size_t x, y; // Indexing starts at 0
 };
 
 /* -------------------------------------------------------------------------- */
