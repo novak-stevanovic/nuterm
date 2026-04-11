@@ -1177,9 +1177,9 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
     else if((cb & 0b11) == 0)
         event.type = NT_MOUSE_EVENT_CLICK_LEFT;
     else if((cb & 0b11) == 1)
-        event.type = NT_MOUSE_EVENT_CLICK_RIGHT;
-    else if((cb & 0b11) == 2)
         event.type = NT_MOUSE_EVENT_CLICK_MIDDLE;
+    else if((cb & 0b11) == 2)
+        event.type = NT_MOUSE_EVENT_CLICK_RIGHT;
     else return MOUSE_EVENT_UNSUPPORTED;
     
     NT_SET_OUT(out_event, event);
