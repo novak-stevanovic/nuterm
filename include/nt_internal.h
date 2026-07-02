@@ -6,7 +6,7 @@
 #define NT_INTERNAL_H
 
 #include "nt_shared.h"
-#include "nt_status.h"
+#include "nt_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,10 +72,9 @@ typedef enum nt_term_color_count
 /* Detects terminal(based on $TERM) and color palette(based on $TERM, $COLORTERM).
  * Sets internal values that can be retrieved by getter funcs below.
  *
- * STATUS CODES:
- * 1) NT_SUCCESS,
- * 2) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
-void _nt_term_init(nt_status* out_status);
+ * ERROR CODES:
+ * 1) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
+void _nt_term_init(int* out_status);
 
 /* Returns NT_TERM_COUNT if not set. */
 struct nt_term_info _nt_term_get_used();

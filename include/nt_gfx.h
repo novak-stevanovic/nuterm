@@ -70,8 +70,8 @@ static inline bool
 nt_color_are_equal(struct nt_color color1, struct nt_color color2)
 {
     return ((color1.code8 == color2.code8) &&
-            (color1.code256 == color2.code256) &&
-            nt_rgb_are_equal(color1.rgb, color2.rgb));
+        (color1.code256 == color2.code256) &&
+        nt_rgb_are_equal(color1.rgb, color2.rgb));
 }
 
 /* -------------------------------------------------------------------------- */

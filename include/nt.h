@@ -13,7 +13,6 @@
 
 #include "nt_event.h"
 #include "nt_gfx.h"
-#include "nt_status.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,17 +25,16 @@ extern "C" {
 /* Initializes the nuterm library. Calling any of the functions from the library
  * without initializing first is undefined behavior.
  *
- * STATUS CODES:
- * 1) NT_SUCCESS,
- * 2) NT_ERR_ALLOC_FAIL - failure to allocate memory needed for internal
+ * ERROR CODES:
+ * 1) NT_ERR_ALLOC_FAIL - failure to allocate memory needed for internal
  * resources,
- * 3) NT_ERR_INIT_PIPE - pipe() failed and errno was set to ENFILE or EMFILE,
- * 4) NT_ERR_INIT_TERM_ENV - failure to detect terminal due to $TERM not being
+ * 2) NT_ERR_INIT_PIPE - pipe() failed and errno was set to ENFILE or EMFILE,
+ * 3) NT_ERR_INIT_TERM_ENV - failure to detect terminal due to $TERM not being
  * set,
- * 5) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
+ * 4) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
- * 6) NT_ERR_UNEXPECTED. */
-NT_API void nt_init(nt_status* out_status);
+ * 5) NT_ERR_UNEXPECTED. */
+NT_API void nt_init(int* out_status);
 
 /* Destroys the library and reverts terminal settings to old values.
  * Frees resources used by the library. Output will NOT be flushed(if
@@ -64,12 +62,11 @@ typedef enum nt_buffact
  * flushed to stdout. If buffering is already enabled, this function will return
  * with an error code.
  *
- * STATUS CODES:
- * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
- * 3) NT_ERR_ALR_BUFF - buffering is already enabled. */
+ * ERROR CODES:
+ * 1) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
+ * 2) NT_ERR_ALR_BUFF - buffering is already enabled. */
 
-NT_API void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status);
+NT_API void nt_buffer_enable(char* buff, size_t cap, int* out_status);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
@@ -98,14 +95,13 @@ NT_API void nt_buffer_flush();
  * If a style is specified in `gfx` but the terminal doesn't support the style,
  * the status variable will not indicate this.
  *
- * STATUS CODES:
- * 1) NT_SUCCESS, 
- * 2) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
+ * ERROR CODES:
+ * 1) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
  * by the terminal - resetting gfx, setting color.
- * 3) NT_ERR_UNEXPECTED. */
+ * 2) NT_ERR_UNEXPECTED. */
 
 NT_API void 
-nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status);
+nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status);
 
 /* The functions below share the same status codes:
  *
@@ -116,22 +112,22 @@ nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_stat
  *
  * With buffering enabled, output is buffered. */
 
-NT_API void nt_cursor_hide(nt_status* out_status);
-NT_API void nt_cursor_show(nt_status* out_status);
+NT_API void nt_cursor_hide(int* out_status);
+NT_API void nt_cursor_show(int* out_status);
 /* Zero-based indexing. When an attempt is made to move the cursor out of bounds,
  * the position is silently capped. */
-NT_API void nt_cursor_move(size_t x, size_t y, nt_status* out_status);
+NT_API void nt_cursor_move(size_t x, size_t y, int* out_status);
 
-NT_API void nt_erase_screen(nt_status* out_status);
-NT_API void nt_erase_line(nt_status* out_status);
-NT_API void nt_erase_scrollback(nt_status* out_status);
+NT_API void nt_erase_screen(int* out_status);
+NT_API void nt_erase_line(int* out_status);
+NT_API void nt_erase_scrollback(int* out_status);
 
-NT_API void nt_alt_screen_enable(nt_status* out_status);
-NT_API void nt_alt_screen_disable(nt_status* out_status);
+NT_API void nt_alt_screen_enable(int* out_status);
+NT_API void nt_alt_screen_disable(int* out_status);
 
 // Status is always NT_SUCCESS
-NT_API void nt_mouse_mode_enable(nt_status* out_status);
-NT_API void nt_mouse_mode_disable(nt_status* out_status);
+NT_API void nt_mouse_mode_enable(int* out_status);
+NT_API void nt_mouse_mode_disable(int* out_status);
 
 NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 
@@ -150,12 +146,12 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
  * Returns elapsed time(in milliseconds). If an error occurs, the type of `out_event`
  * will be NT_EVENT_INVALID.
  *
- * STATUS CODES:
+ * ERROR CODES:
  * 1) NT_SUCCESS,
  * 2) NT_ERR_UNEXPECTED. */
 
 NT_API unsigned int 
-nt_event_wait(struct nt_event* out_event, unsigned int timeout, nt_status* out_status);
+nt_event_wait(struct nt_event* out_event, unsigned int timeout, int* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
  * `nt_event_wait()`. If the calling thread is the main thread, next call
@@ -166,12 +162,11 @@ nt_event_wait(struct nt_event* out_event, unsigned int timeout, nt_status* out_s
  *
  * Thread-safe.
  
- * STATUS CODES:
- * 1) NT_SUCCESS,
- * 2) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
- * 3) NT_ERR_UNEXPECTED. */
+ * ERROR CODES:
+ * 1) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
+ * 2) NT_ERR_UNEXPECTED. */
 
-NT_API void nt_event_push(struct nt_event event, nt_status* out_status);
+NT_API void nt_event_push(struct nt_event event, int* out_status);
 
 #ifdef __cplusplus
 }

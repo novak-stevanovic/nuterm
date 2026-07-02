@@ -154,11 +154,11 @@ static void init_default_values()
     init_term = false;
 }
 
-void nt_init(nt_status* out_status)
+void nt_init(int* out_status)
 {
     init_default_values();
 
-    nt_status _status;
+    int _status;
     int status;
 
     status = tcgetattr(STDIN_FILENO, &init_term_opts);
@@ -259,8 +259,8 @@ void nt_init(nt_status* out_status)
     _nt_term_init(&_status);
     switch(_status)
     {
-        case NT_SUCCESS:
-            NT_SET_OUT(out_status, NT_SUCCESS);
+        case 0:
+            NT_SET_OUT(out_status, 0);
             init_term = true;
             return;
         case NT_ERR_TERM_NOT_SUPP:
@@ -302,7 +302,7 @@ void nt_deinit()
     }
     if(init_term)
     {
-        nt_status _status;
+        int _status;
         nt_write_str("", 0, NT_GFX_DEFAULT, &_status);
 
         _nt_term_deinit();
@@ -335,7 +335,7 @@ void nt_deinit()
 static void execute_used_term_func(
         enum nt_esc_func func,
         bool use_va,
-        nt_status* out_status,
+        int* out_status,
         ...)
 {
     int status;
@@ -372,12 +372,12 @@ static void execute_used_term_func(
 
     write_to_stdout(_func, strlen(_func));
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
 }
 
 /* -------------------------------------------------------------------------- */
 
-void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status)
+void nt_buffer_enable(char* buff, size_t cap, int* out_status)
 {
     if((buff == NULL) || (cap == 0))
     {
@@ -395,7 +395,7 @@ void nt_buffer_enable(char* buff, size_t cap, nt_status* out_status)
     stdout_buff_cap = cap;
     stdout_buff_pos = 0;
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
 }
 
 char* nt_buffer_disable(nt_buffact buffact)
@@ -425,55 +425,55 @@ void nt_buffer_flush()
 
 /* ----------------------------------------------------- */
 
-void nt_cursor_hide(nt_status* out_status)
+void nt_cursor_hide(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_CURSOR_HIDE, false, out_status);
 }
 
-void nt_cursor_show(nt_status* out_status)
+void nt_cursor_show(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_CURSOR_SHOW, false, out_status);
 }
 
-void nt_cursor_move(size_t x, size_t y, nt_status* out_status)
+void nt_cursor_move(size_t x, size_t y, int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_CURSOR_MOVE, true, out_status, y + 1, x + 1);
 }
 
-void nt_erase_screen(nt_status* out_status)
+void nt_erase_screen(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, false, out_status);
 }
 
-void nt_erase_line(nt_status* out_status)
+void nt_erase_line(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, false, out_status);
 }
 
-void nt_erase_scrollback(nt_status* out_status)
+void nt_erase_scrollback(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
     execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, false, out_status);
 }
 
-void nt_alt_screen_enable(nt_status* out_status)
+void nt_alt_screen_enable(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_ENTER, false, out_status);
 }
 
-void nt_alt_screen_disable(nt_status* out_status)
+void nt_alt_screen_disable(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_ALT_BUFF_EXIT, false, out_status);
 }
 
-void nt_mouse_mode_enable(nt_status* out_status)
+void nt_mouse_mode_enable(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_MOUSE_ENABLE, false, out_status);
 }
 
-void nt_mouse_mode_disable(nt_status* out_status)
+void nt_mouse_mode_disable(int* out_status)
 {
     execute_used_term_func(NT_ESC_FUNC_MOUSE_DISABLE, false, out_status);
 }
@@ -508,9 +508,9 @@ void nt_get_term_size(size_t* out_width, size_t* out_height)
  * 2) If the terminal supports RGB, then the library holds the terminal's
  * esc sequence to set the RGB color for bg/fg. Same with 256 colors and
  * 8 colors */
-static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
+static void set_gfx(struct nt_gfx gfx, int* out_status)
 {
-    nt_status _status;
+    int _status;
     nt_term_color_count colors = _nt_term_get_color_count();
 
     /* Set foreground --------------------------------------------------- */
@@ -545,7 +545,7 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         }
     }
 
-    if(_status != NT_SUCCESS)
+    if(_status != 0)
     {
         NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
         return;
@@ -583,7 +583,7 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         }
     }
 
-    if(_status != NT_SUCCESS)
+    if(_status != 0)
     {
         NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
         return;
@@ -612,7 +612,7 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         if(style & (NT_STYLE_VAL_BOLD << i))
         {
             execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
-            if((_status != NT_SUCCESS) && (_status != NT_ERR_FUNC_NOT_SUPP))
+            if((_status != 0) && (_status != NT_ERR_FUNC_NOT_SUPP))
             {
                 NT_SET_OUT(out_status, _status);
                 return;
@@ -620,24 +620,24 @@ static void set_gfx(struct nt_gfx gfx, nt_status* out_status)
         }
     }
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return;
 }
 
 void
-nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_status)
+nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status)
 {
-    nt_status _status;
+    int _status;
 
     execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
-    if(_status != NT_SUCCESS)
+    if(_status != 0)
     {
         NT_SET_OUT(out_status, _status);
         return;
     }
 
     set_gfx(gfx, &_status);
-    if(_status != NT_SUCCESS)
+    if(_status != 0)
     {
         NT_SET_OUT(out_status, _status);
         return;
@@ -661,7 +661,7 @@ nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_stat
                 write_to_stdout(it_begin, it_end - it_begin);
 
                 execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
-                if(_status != NT_SUCCESS)
+                if(_status != 0)
                 {
                     NT_SET_OUT(out_status, _status);
                     return;
@@ -670,7 +670,7 @@ nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_stat
                 write_to_stdout("\n", 1);
 
                 set_gfx(gfx, &_status);
-                if(_status != NT_SUCCESS)
+                if(_status != 0)
                 {
                     NT_SET_OUT(out_status, _status);
                     return;
@@ -690,7 +690,7 @@ nt_write_str(const char* str, size_t len, struct nt_gfx gfx, nt_status* out_stat
         }
     }
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -704,11 +704,11 @@ struct nt_event_header
 };
 
 /* Called by nt_event_wait() internally. These functions only set `out_status` to
- * NT_ERR_UNEXPECTED or NT_SUCCESS. */
-static struct nt_event process_stdin(nt_status* out_status, bool* out_ignore);
-static struct nt_event process_resize(nt_status* out_status, bool* out_ignore);
-static struct nt_event process_signal(nt_status* out_status, bool* out_ignore);
-static struct nt_event process_custom(nt_status* out_status, bool* out_ignore);
+ * NT_ERR_UNEXPECTED or 0. */
+static struct nt_event process_stdin(int* out_status, bool* out_ignore);
+static struct nt_event process_resize(int* out_status, bool* out_ignore);
+static struct nt_event process_signal(int* out_status, bool* out_ignore);
+static struct nt_event process_custom(int* out_status, bool* out_ignore);
 
 /* -------------------------------------------------------------------------- */
 
@@ -717,12 +717,12 @@ static const struct nt_event NT_EVENT_EMPTY = {0};
 unsigned int nt_event_wait(
         struct nt_event* out_event,
         unsigned int timeout,
-        nt_status* out_status)
+        int* out_status)
 {
     struct timespec _time1, _time2;
     int poll_status;
     unsigned int elapsed;
-    nt_status _status;
+    int _status;
 
     struct nt_event event = NT_EVENT_EMPTY;
     bool _ignore = false;
@@ -742,7 +742,7 @@ unsigned int nt_event_wait(
         if(poll_status == 0)
         {
             NT_SET_OUT(out_event, nt_event_new(NT_EVENT_TIMEOUT, NULL, 0));
-            NT_SET_OUT(out_status, NT_SUCCESS);
+            NT_SET_OUT(out_status, 0);
             return elapsed;
         }
 
@@ -770,9 +770,9 @@ unsigned int nt_event_wait(
         }
         else return elapsed;
 
-        if(_status != NT_SUCCESS)
+        if(_status != 0)
             return elapsed;
-        else // _status = NT_SUCCESS
+        else // _status = 0
         {
             if(_ignore) continue;
             else break;
@@ -780,11 +780,11 @@ unsigned int nt_event_wait(
     }
 
     NT_SET_OUT(out_event, event);
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return elapsed;
 }
 
-void nt_event_push(struct nt_event event, nt_status* out_status)
+void nt_event_push(struct nt_event event, int* out_status)
 {
     if(!nt_event_is_valid(event))
     {
@@ -819,12 +819,12 @@ void nt_event_push(struct nt_event event, nt_status* out_status)
         return;
     }
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
 }
 
 /* ------------------------------------------------------ */
 
-static struct nt_event process_resize(nt_status* out_status, bool* out_ignore)
+static struct nt_event process_resize(int* out_status, bool* out_ignore)
 {
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
@@ -842,7 +842,7 @@ static struct nt_event process_resize(nt_status* out_status, bool* out_ignore)
         if(poll_status == 0) break;
     }
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     struct nt_resize_event rsz;
     nt_get_term_size(&rsz.new_x, &rsz.new_y);
     return nt_event_new(NT_EVENT_RESIZE, &rsz, sizeof(rsz));
@@ -850,7 +850,7 @@ static struct nt_event process_resize(nt_status* out_status, bool* out_ignore)
 
 /* ------------------------------------------------------ */
 
-static struct nt_event process_signal(nt_status* out_status, bool* out_ignore)
+static struct nt_event process_signal(int* out_status, bool* out_ignore)
 {
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
@@ -861,13 +861,13 @@ static struct nt_event process_signal(nt_status* out_status, bool* out_ignore)
     read_status = read(signal_pipe[0], &signum, sizeof(unsigned int));
     if(read_status < 0) return NT_EVENT_EMPTY;
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return nt_event_new(NT_EVENT_SIGNAL, &signum, sizeof(signum));
 }
 
 /* ------------------------------------------------------ */
 
-static struct nt_event process_custom(nt_status* out_status, bool* out_ignore)
+static struct nt_event process_custom(int* out_status, bool* out_ignore)
 {
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
@@ -889,17 +889,17 @@ static struct nt_event process_custom(nt_status* out_status, bool* out_ignore)
 
     uint32_t type = (1 << header.type);
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return nt_event_new(type, buff, header.data_size);
 }
 
 /* ------------------------------------------------------ */
 
 static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
-        bool alt, nt_status* out_status, bool* out_ignore);
+        bool alt, int* out_status, bool* out_ignore);
 
 static struct nt_event process_stdin_esc(uint8_t* buff, size_t read_count,
-        nt_status* out_status, bool* out_ignore);
+        int* out_status, bool* out_ignore);
 
 enum process_stdin_state
 {
@@ -911,7 +911,7 @@ enum process_stdin_state
     PROCESS_STDIN_ESC_SEQ_PROCESS // process esc sequence
 };
 
-static struct nt_event process_stdin(nt_status* out_status, bool* out_ignore)
+static struct nt_event process_stdin(int* out_status, bool* out_ignore)
 {
     uint8_t buff[64];
     int read_status, poll_status;
@@ -946,7 +946,7 @@ static struct nt_event process_stdin(nt_status* out_status, bool* out_ignore)
                         .type = NT_KEY_EVENT_UTF32,
                         .utf32 = { .cp = 27, .alt = false }
                     };
-                    NT_SET_OUT(out_status, NT_SUCCESS);
+                    NT_SET_OUT(out_status, 0);
                     return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
                 }
 
@@ -968,7 +968,7 @@ static struct nt_event process_stdin(nt_status* out_status, bool* out_ignore)
                             .type = NT_KEY_EVENT_UTF32,
                             .utf32 = { .cp = buff[1], .alt = true }
                         };
-                        NT_SET_OUT(out_status, NT_SUCCESS);
+                        NT_SET_OUT(out_status, 0);
                         return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
                     }
 
@@ -1013,7 +1013,7 @@ static struct nt_event process_stdin(nt_status* out_status, bool* out_ignore)
 }
 
 static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
-        bool alt, nt_status* out_status, bool* out_ignore)
+        bool alt, int* out_status, bool* out_ignore)
 {
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
     NT_SET_OUT(out_ignore, false);
@@ -1039,7 +1039,7 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
         .utf32 = { .cp = utf32, .alt = alt }
     };
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return nt_event_new(NT_EVENT_KEY, &key_event, sizeof(key_event));
 }
 
@@ -1058,7 +1058,7 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
         size_t read_count, struct nt_mouse_event* out_event);
 
 static struct nt_event process_stdin_esc(uint8_t* buff,
-        size_t read_count, nt_status* out_status, bool* out_ignore)
+        size_t read_count, int* out_status, bool* out_ignore)
 {
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
     NT_SET_OUT(out_ignore, false);
@@ -1070,13 +1070,13 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
             read_count, &_mouse_event);
     if(mouse_rv == MOUSE_EVENT_SUPPORTED)
     {
-        NT_SET_OUT(out_status, NT_SUCCESS);
+        NT_SET_OUT(out_status, 0);
         return nt_event_new(NT_EVENT_MOUSE, &_mouse_event, sizeof(_mouse_event));
     }
     else if(mouse_rv == MOUSE_EVENT_UNSUPPORTED)
     {
         NT_SET_OUT(out_ignore, true);
-        NT_SET_OUT(out_status, NT_SUCCESS);
+        NT_SET_OUT(out_status, 0);
         return NT_EVENT_EMPTY;
     }
 
@@ -1092,7 +1092,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
                 .esc = { .val = i }
             };
 
-            NT_SET_OUT(out_status, NT_SUCCESS);
+            NT_SET_OUT(out_status, 0);
             return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
         }
     }
@@ -1102,7 +1102,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
         .esc = { .val = NT_ESC_KEY_OTHER }
     };
 
-    NT_SET_OUT(out_status, NT_SUCCESS);
+    NT_SET_OUT(out_status, 0);
     return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
 }
 

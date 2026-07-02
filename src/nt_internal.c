@@ -246,7 +246,7 @@ static struct nt_term_info terms[] = {
     }
 };
 
-void _nt_term_init(nt_status* out_status)
+void _nt_term_init(int* out_status)
 {
     char* env_term = getenv("TERM");
     char* env_colorterm = getenv("COLORTERM");
@@ -284,7 +284,7 @@ void _nt_term_init(nt_status* out_status)
             _color = NT_TERM_COLOR_C8;
     }
 
-    nt_status ret = found ? NT_SUCCESS : NT_ERR_TERM_NOT_SUPP;
+    int ret = found ? 0 : NT_ERR_TERM_NOT_SUPP;
     NT_SET_OUT(out_status, ret);
 }
 

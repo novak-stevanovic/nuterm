@@ -22,7 +22,7 @@ void loop_basic()
 
 void loop_lib()
 {
-    nt_status _status;
+    int _status;
     unsigned int elapsed;
     struct nt_event event;
     bool loop = true;
@@ -31,7 +31,7 @@ void loop_lib()
         elapsed = nt_event_wait(&event, 10000, &_status);
         // if(ENABLE_PRINT) printf("(e:%d)", elapsed);
 
-        assert(_status == NT_SUCCESS);
+        assert(_status == 0);
         if(event.type == NT_EVENT_KEY)
         {
             if(ENABLE_PRINT) printf("K(");
@@ -113,7 +113,7 @@ void loop_lib_byte()
 
 void* test_thread_fn(void* _)
 {
-    nt_status _status;
+    int _status;
     uint32_t type = (NT_EVENT_CUSTOM_BASE << 1);
     long int data = (long int)_;
     struct nt_event event;
@@ -123,7 +123,7 @@ void* test_thread_fn(void* _)
         event = nt_event_new(type, &data, sizeof(long int));
         assert(nt_event_is_valid(event));
         nt_event_push(event, &_status);
-        assert(_status == NT_SUCCESS);
+        assert(_status == 0);
     }
 
     return NULL;
@@ -131,7 +131,7 @@ void* test_thread_fn(void* _)
 
 int main(int argc, char *argv[])
 {
-    nt_status _status;
+    int _status;
     nt_init(&_status);
 
     // pthread_t test_threads[1];
