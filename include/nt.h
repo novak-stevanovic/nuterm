@@ -5,14 +5,14 @@
 #ifndef NT_H
 #define NT_H
 
-#include "nt_shared.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
 
+#include "nt_shared.h"
 #include "nt_event.h"
 #include "nt_gfx.h"
+#include "nt_error.h"
 
 #ifdef __cplusplus
 extern "C" {
