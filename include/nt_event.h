@@ -90,8 +90,9 @@ enum nt_esc_key
 
 enum nt_key_event_type
 { 
+    NT_KEY_EVENT_UNBOUND,
     NT_KEY_EVENT_UTF32,
-    NT_KEY_EVENT_ESC
+    NT_KEY_EVENT_ESC,
 };
 
 struct nt_key_event
@@ -114,6 +115,9 @@ struct nt_key_event
 
 /* Providing invalid `codepoint` is UB */
 NT_API struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
+
+NT_API bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2);
+
 /* Checks if provided `key` matches description */
 NT_API bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt);
 /* Alt insensitive */
@@ -130,6 +134,7 @@ NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_
 
 enum nt_mouse_event_type
 {
+    NT_MOUSE_EVENT_UNBOUND,
     NT_MOUSE_EVENT_CLICK_LEFT,
     NT_MOUSE_EVENT_CLICK_RIGHT,
     NT_MOUSE_EVENT_CLICK_MIDDLE,
@@ -142,6 +147,9 @@ struct nt_mouse_event
     enum nt_mouse_event_type type;
     size_t x, y; // Indexing starts at 0
 };
+
+NT_API bool
+nt_mouse_event_are_eql(struct nt_mouse_event mouse1, struct nt_mouse_event mouse2);
 
 /* -------------------------------------------------------------------------- */
 /* NT_RESIZE_EVENT */

@@ -13,6 +13,22 @@ struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt)
     };
 }
 
+bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2)
+{
+    if((key1.type == NT_KEY_EVENT_UTF32) && (key2.type == NT_KEY_EVENT_UTF32))
+    {
+        return ((key1.utf32.cp == key2.utf32.cp) && (key1.utf32.alt == key2.utf32.alt));
+    }
+    else if((key1.type == NT_KEY_EVENT_ESC) && (key2.type == NT_KEY_EVENT_ESC))
+    {
+        return (key1.esc.val == key2.esc.val);
+    }
+    else if((key1.type == NT_KEY_EVENT_UNBOUND) && (key2.type == NT_KEY_EVENT_UNBOUND))
+        return true;
+    else
+        return false;
+}
+
 bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt)
 {
     return ((key.type == NT_KEY_EVENT_UTF32) && (key.utf32.cp == codepoint) &&
@@ -38,6 +54,13 @@ struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key)
 bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key)
 {
     return ((key.type == NT_KEY_EVENT_ESC) && (key.esc.val == esc_key));
+}
+
+bool nt_mouse_event_are_eql(struct nt_mouse_event mouse1, struct nt_mouse_event mouse2)
+{
+    if((mouse1.type == NT_MOUSE_EVENT_UNBOUND) && (mouse2.type == NT_MOUSE_EVENT_UNBOUND))
+        return true;
+    return ((mouse1.type == mouse2.type) && (mouse1.x == mouse2.x) && (mouse1.y == mouse2.y));
 }
 
 struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size)
