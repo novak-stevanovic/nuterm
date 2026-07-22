@@ -63,6 +63,56 @@ bool nt_mouse_event_are_eql(struct nt_mouse_event mouse1, struct nt_mouse_event 
     return ((mouse1.type == mouse2.type) && (mouse1.x == mouse2.x) && (mouse1.y == mouse2.y));
 }
 
+struct nt_mouse_event
+nt_mouse_event_new_left(size_t x, size_t y)
+{
+    return (struct nt_mouse_event) {
+        .type = NT_MOUSE_EVENT_CLICK_LEFT,
+        .x = x,
+        .y = y
+    };
+}
+
+struct nt_mouse_event
+nt_mouse_event_new_right(size_t x, size_t y)
+{
+    return (struct nt_mouse_event) {
+        .type = NT_MOUSE_EVENT_CLICK_RIGHT,
+        .x = x,
+        .y = y
+    };
+}
+
+struct nt_mouse_event
+nt_mouse_event_new_middle(size_t x, size_t y)
+{
+    return (struct nt_mouse_event) {
+        .type = NT_MOUSE_EVENT_CLICK_MIDDLE,
+        .x = x,
+        .y = y
+    };
+}
+
+struct nt_mouse_event
+nt_mouse_event_new_scrollup(size_t x, size_t y)
+{
+    return (struct nt_mouse_event) {
+        .type = NT_MOUSE_EVENT_SCROLL_UP,
+        .x = x,
+        .y = y
+    };
+}
+
+struct nt_mouse_event
+nt_mouse_event_new_scrolldwn(size_t x, size_t y)
+{
+    return (struct nt_mouse_event) {
+        .type = NT_MOUSE_EVENT_SCROLL_DOWN,
+        .x = x,
+        .y = y
+    };
+}
+
 struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size)
 {
     // Have to check for data size here as well in order not to overflow the data buff

@@ -151,6 +151,21 @@ struct nt_mouse_event
 NT_API bool
 nt_mouse_event_are_eql(struct nt_mouse_event mouse1, struct nt_mouse_event mouse2);
 
+NT_API struct nt_mouse_event
+nt_mouse_event_new_left(size_t x, size_t y);
+
+NT_API struct nt_mouse_event
+nt_mouse_event_new_right(size_t x, size_t y);
+
+NT_API struct nt_mouse_event
+nt_mouse_event_new_middle(size_t x, size_t y);
+
+NT_API struct nt_mouse_event
+nt_mouse_event_new_scrollup(size_t x, size_t y);
+
+NT_API struct nt_mouse_event
+nt_mouse_event_new_scrolldwn(size_t x, size_t y);
+
 /* -------------------------------------------------------------------------- */
 /* NT_RESIZE_EVENT */
 /* -------------------------------------------------------------------------- */
