@@ -515,7 +515,7 @@ static void set_gfx(struct nt_gfx gfx, int* out_status)
 
     /* Set foreground --------------------------------------------------- */
 
-    if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.fg))
+    if(nt_color_are_eql(NT_COLOR_DEFAULT, gfx.fg))
     {
         execute_used_term_func(NT_ESC_FUNC_FG_SET_DEFAULT, false, &_status);
     }
@@ -553,7 +553,7 @@ static void set_gfx(struct nt_gfx gfx, int* out_status)
 
     /* Set background --------------------------------------------------- */
 
-    if(nt_color_are_equal(NT_COLOR_DEFAULT, gfx.bg))
+    if(nt_color_are_eql(NT_COLOR_DEFAULT, gfx.bg))
     {
         execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, &_status);
     }
