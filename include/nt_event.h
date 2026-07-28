@@ -90,9 +90,8 @@ enum nt_esc_key
 
 enum nt_key_event_type
 { 
-    NT_KEY_EVENT_UNBOUND,
     NT_KEY_EVENT_UTF32,
-    NT_KEY_EVENT_ESC,
+    NT_KEY_EVENT_ESC
 };
 
 struct nt_key_event
@@ -113,19 +112,15 @@ struct nt_key_event
     };
 };
 
-/* Providing invalid `codepoint` is UB */
-NT_API struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
-
 NT_API bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2);
 
-/* Checks if provided `key` matches description */
-NT_API bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint, bool alt);
-/* Alt insensitive */
-NT_API bool nt_key_event_utf32_check_(struct nt_key_event key, uint32_t codepoint);
-
-/* Providing invalid `esc_key` is UB */
+// Helper functions
+NT_API struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
 NT_API struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key);
-/* Checks if provided `key` matches description */
+
+NT_API bool nt_key_event_utf32_check_alt(struct nt_key_event key, uint32_t codepoint, bool alt);
+NT_API bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint);
+
 NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key);
 
 /* -------------------------------------------------------------------------- */
@@ -134,7 +129,6 @@ NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_
 
 enum nt_mouse_event_type
 {
-    NT_MOUSE_EVENT_UNBOUND,
     NT_MOUSE_EVENT_CLICK_LEFT,
     NT_MOUSE_EVENT_CLICK_RIGHT,
     NT_MOUSE_EVENT_CLICK_MIDDLE,
@@ -147,24 +141,6 @@ struct nt_mouse_event
     enum nt_mouse_event_type type;
     size_t x, y; // Indexing starts at 0
 };
-
-NT_API bool
-nt_mouse_event_are_eql(struct nt_mouse_event mouse1, struct nt_mouse_event mouse2);
-
-NT_API struct nt_mouse_event
-nt_mouse_event_new_left(size_t x, size_t y);
-
-NT_API struct nt_mouse_event
-nt_mouse_event_new_right(size_t x, size_t y);
-
-NT_API struct nt_mouse_event
-nt_mouse_event_new_middle(size_t x, size_t y);
-
-NT_API struct nt_mouse_event
-nt_mouse_event_new_scrollup(size_t x, size_t y);
-
-NT_API struct nt_mouse_event
-nt_mouse_event_new_scrolldwn(size_t x, size_t y);
 
 /* -------------------------------------------------------------------------- */
 /* NT_RESIZE_EVENT */
