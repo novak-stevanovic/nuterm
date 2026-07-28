@@ -88,15 +88,15 @@ enum nt_esc_key
     NT_ESC_KEY_OTHER // unknown
 };
 
-enum nt_key_event_type
+enum nt_key_type
 { 
-    NT_KEY_EVENT_UTF32,
-    NT_KEY_EVENT_ESC
+    NT_KEY_UTF32,
+    NT_KEY_ESC
 };
 
 struct nt_key_event
 {
-    enum nt_key_event_type type;
+    enum nt_key_type type;
     union
     {
         struct
@@ -127,18 +127,18 @@ NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_
 /* NT_MOUSE_EVENT */
 /* -------------------------------------------------------------------------- */
 
-enum nt_mouse_event_type
+enum nt_mouse_type
 {
-    NT_MOUSE_EVENT_CLICK_LEFT,
-    NT_MOUSE_EVENT_CLICK_RIGHT,
-    NT_MOUSE_EVENT_CLICK_MIDDLE,
-    NT_MOUSE_EVENT_SCROLL_UP,
-    NT_MOUSE_EVENT_SCROLL_DOWN
+    NT_MOUSE_CLICK_LEFT,
+    NT_MOUSE_CLICK_RIGHT,
+    NT_MOUSE_CLICK_MIDDLE,
+    NT_MOUSE_SCROLL_UP,
+    NT_MOUSE_SCROLL_DOWN
 };
 
 struct nt_mouse_event
 {
-    enum nt_mouse_event_type type;
+    enum nt_mouse_type type;
     size_t x, y; // Indexing starts at 0
 };
 

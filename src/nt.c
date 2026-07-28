@@ -943,7 +943,7 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                 if(poll_status == 0) // just ESC
                 {
                     struct nt_key_event key = {
-                        .type = NT_KEY_EVENT_UTF32,
+                        .type = NT_KEY_UTF32,
                         .utf32 = { .cp = 27, .alt = false }
                     };
                     NT_SET_OUT(out_status, 0);
@@ -965,7 +965,7 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                     if(poll_status == 0) // ALT + BUFF[read_count]
                     {
                         struct nt_key_event key = {
-                            .type = NT_KEY_EVENT_UTF32,
+                            .type = NT_KEY_UTF32,
                             .utf32 = { .cp = buff[1], .alt = true }
                         };
                         NT_SET_OUT(out_status, 0);
@@ -1035,7 +1035,7 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
     if(_status != UC_SUCCESS) return NT_EVENT_EMPTY;
 
     struct nt_key_event key_event = {
-        .type = NT_KEY_EVENT_UTF32,
+        .type = NT_KEY_UTF32,
         .utf32 = { .cp = utf32, .alt = alt }
     };
 
@@ -1088,7 +1088,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
         if(strcmp((char*)buff, term.esc_key_seqs[i]) == 0)
         {
             key = (struct nt_key_event) {
-                .type = NT_KEY_EVENT_ESC,
+                .type = NT_KEY_ESC,
                 .esc = { .val = i }
             };
 
@@ -1098,7 +1098,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
     }
 
     key = (struct nt_key_event) {
-        .type = NT_KEY_EVENT_ESC,
+        .type = NT_KEY_ESC,
         .esc = { .val = NT_ESC_KEY_OTHER }
     };
 
@@ -1171,15 +1171,15 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
     event.x = (cx > 0) ? (cx - 1) : 0;
     event.y = (cy > 0) ? (cy - 1) : 0;
     if(cb == 64)
-        event.type = NT_MOUSE_EVENT_SCROLL_UP;
+        event.type = NT_MOUSE_SCROLL_UP;
     else if(cb == 65)
-        event.type = NT_MOUSE_EVENT_SCROLL_DOWN;
+        event.type = NT_MOUSE_SCROLL_DOWN;
     else if((cb & 0b11) == 0)
-        event.type = NT_MOUSE_EVENT_CLICK_LEFT;
+        event.type = NT_MOUSE_CLICK_LEFT;
     else if((cb & 0b11) == 1)
-        event.type = NT_MOUSE_EVENT_CLICK_MIDDLE;
+        event.type = NT_MOUSE_CLICK_MIDDLE;
     else if((cb & 0b11) == 2)
-        event.type = NT_MOUSE_EVENT_CLICK_RIGHT;
+        event.type = NT_MOUSE_CLICK_RIGHT;
     else return MOUSE_EVENT_UNSUPPORTED;
     
     NT_SET_OUT(out_event, event);

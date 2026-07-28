@@ -38,7 +38,7 @@ void loop_lib()
 
             struct nt_key_event key = *(struct nt_key_event*)event.data;
 
-            if(key.type == NT_KEY_EVENT_UTF32)
+            if(key.type == NT_KEY_UTF32)
             {
                 if(key.utf32.alt == true)
                     if(ENABLE_PRINT) printf("a+");

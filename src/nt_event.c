@@ -5,9 +5,9 @@
 
 bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2)
 {
-    if((key1.type == NT_KEY_EVENT_UTF32) && (key2.type == NT_KEY_EVENT_UTF32))
+    if((key1.type == NT_KEY_UTF32) && (key2.type == NT_KEY_UTF32))
         return ((key1.utf32.cp == key2.utf32.cp) && (key1.utf32.alt == key2.utf32.alt));
-    else if((key1.type == NT_KEY_EVENT_ESC) && (key2.type == NT_KEY_EVENT_ESC))
+    else if((key1.type == NT_KEY_ESC) && (key2.type == NT_KEY_ESC))
         return (key1.esc.val == key2.esc.val);
     else
         return false;
@@ -15,18 +15,18 @@ bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2)
 
 bool nt_key_event_utf32_check_alt(struct nt_key_event key, uint32_t codepoint, bool alt)
 {
-    return ((key.type == NT_KEY_EVENT_UTF32) && (key.utf32.cp == codepoint) &&
+    return ((key.type == NT_KEY_UTF32) && (key.utf32.cp == codepoint) &&
             (key.utf32.alt == alt));
 }
 
 bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint)
 {
-    return ((key.type == NT_KEY_EVENT_UTF32) && (key.utf32.cp == codepoint));
+    return ((key.type == NT_KEY_UTF32) && (key.utf32.cp == codepoint));
 }
 
 bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key)
 {
-    return ((key.type == NT_KEY_EVENT_ESC) && (key.esc.val == esc_key));
+    return ((key.type == NT_KEY_ESC) && (key.esc.val == esc_key));
 }
 
 struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size)
