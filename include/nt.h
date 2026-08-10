@@ -166,7 +166,7 @@ nt_event_wait(struct nt_event* out_event, unsigned int timeout, int* out_status)
  * 1) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
  * 2) NT_ERR_UNEXPECTED. */
 
-NT_API void nt_event_push(struct nt_event event, int* out_status);
+NT_API void nt_event_push(const struct nt_event* event, int* out_status);
 
 #ifdef __cplusplus
 }

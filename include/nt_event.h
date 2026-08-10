@@ -13,6 +13,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 /* -------------------------------------------------------------------------- */
 /* NT_EVENT */
@@ -51,10 +52,17 @@ struct nt_event
     uint8_t data_size;
 };
 
-// Assumes correct arguments. Returns invalid event on fail.
-NT_API struct nt_event nt_event_new_custom(uint32_t type, void* data, uint8_t data_size);
+#define NT_EVENT_FILL_DATA(event, out_ptr) \
+    memcpy((out_ptr), event.data, sizeof(*(out_ptr)))
 
-NT_API bool nt_event_is_valid(struct nt_event event);
+// Returns 0 on success, error code on failure
+NT_API int nt_event_new_custom(
+        uint32_t type,
+        void* data,
+        uint8_t data_size,
+        struct nt_event* out_event);
+
+NT_API bool nt_event_is_valid(const struct nt_event* event);
 
 /* -------------------------------------------------------------------------- */
 /* NT_KEY_EVENT */

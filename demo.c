@@ -36,7 +36,8 @@ void loop_lib()
         {
             if(ENABLE_PRINT) printf("K(");
 
-            struct nt_key_event key = *(struct nt_key_event*)event.data;
+            struct nt_key_event key;
+            NT_EVENT_FILL_DATA(event, &key);
 
             if(key.type == NT_KEY_UTF32)
             {
@@ -58,8 +59,9 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_MOUSE)
         {
-            struct nt_mouse_event mouse_event = *(struct nt_mouse_event*)event.data;
-            if(ENABLE_PRINT) printf("M(%d, %ld, %ld))", mouse_event.type,
+            struct nt_mouse_event mouse_event;
+            NT_EVENT_FILL_DATA(event, &mouse_event);
+            if(ENABLE_PRINT) printf("M(%d, %zu, %zu))", mouse_event.type,
                     mouse_event.x, mouse_event.y);
 
             if(ENABLE_PRINT) printf(" | ");
@@ -68,7 +70,8 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_SIGNAL)
         {
-            uint8_t signum = *(uint8_t*)event.data;
+            unsigned int signum;
+            NT_EVENT_FILL_DATA(event, &signum);
 
             if(ENABLE_PRINT) printf("S(%d)", signum);
 
@@ -88,7 +91,9 @@ void loop_lib()
         }
         else // other
         {
-            if(ENABLE_PRINT) printf("C(%d, %ld) | ", event.type, *(long int*)event.data);
+            long int data;
+            NT_EVENT_FILL_DATA(event, &data);
+            if(ENABLE_PRINT) printf("C(%d, %ld) | ", event.type, data);
             fflush(stdout);
         }
     }
@@ -120,9 +125,10 @@ void* test_thread_fn(void* _)
     while(true)
     {
         sleep(5);
-        event = nt_event_new_custom(type, &data, sizeof(long int));
-        assert(nt_event_is_valid(event));
-        nt_event_push(event, &_status);
+        _status = nt_event_new_custom(type, &data, sizeof(long int), &event);
+        assert(_status == 0);
+        assert(nt_event_is_valid(&event));
+        nt_event_push(&event, &_status);
         assert(_status == 0);
     }
 
