@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
         
     nt_cursor_move(5, 5, NULL);
     const char* str = "Novak";
-    nt_write_str(str, strlen(str), NT_GFX_DEFAULT, NULL);
+    nt_write_str_unsafe(str, NT_GFX_DEFAULT, NULL);
 
     while(getchar() != 'q');
 

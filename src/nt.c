@@ -624,8 +624,7 @@ static void set_gfx(struct nt_gfx gfx, int* out_status)
     return;
 }
 
-void
-nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status)
+void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status)
 {
     int _status;
 
@@ -691,6 +690,12 @@ nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status)
     }
 
     NT_SET_OUT(out_status, 0);
+}
+
+void nt_write_str_unsafe(const char* str, struct nt_gfx gfx, int* out_status)
+{
+    size_t len = (str ? strlen(str) : 0);
+    nt_write_str(str, len, gfx, out_status);
 }
 
 /* -------------------------------------------------------------------------- */

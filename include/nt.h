@@ -82,9 +82,6 @@ NT_API void nt_buffer_flush();
 /* CORE */
 /* ------------------------------------------------------ */
 
-/* Functions below may be used for moving the cursor, or setting the gfx
- * of a program without actually writing anything to the screen. */
-
 /* Prints `str` of size `len` to screen. The text printed will have
  * graphical attributes described by struct `gfx` and the text will be printed
  * at current cursor position.
@@ -102,6 +99,12 @@ NT_API void nt_buffer_flush();
 
 NT_API void 
 nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status);
+
+NT_API void
+nt_write_str_unsafe(const char* str, struct nt_gfx gfx, int* out_status);
+
+/* Functions below may be used for moving the cursor, or setting the gfx
+ * of a program without actually writing anything to the screen. */
 
 /* The functions below share the same status codes:
  *
