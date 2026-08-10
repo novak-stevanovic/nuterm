@@ -70,8 +70,8 @@ static inline bool
 nt_color_are_eql(struct nt_color color1, struct nt_color color2)
 {
     return ((color1.code8 == color2.code8) &&
-        (color1.code256 == color2.code256) &&
-        nt_rgb_are_eql(color1.rgb, color2.rgb));
+            (color1.code256 == color2.code256) &&
+            nt_rgb_are_eql(color1.rgb, color2.rgb));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -95,15 +95,14 @@ nt_style_are_eql(struct nt_style style1, struct nt_style style2)
             (style1.value_rgb == style2.value_rgb));
 }
 
-#define NT_STYLE_VAL_DEFAULT        0
-#define NT_STYLE_VAL_BOLD           (1 << 0)  // 00000001
-#define NT_STYLE_VAL_FAINT          (1 << 1)  // 00000010
-#define NT_STYLE_VAL_ITALIC         (1 << 2)  // 00000100
-#define NT_STYLE_VAL_UNDERLINE      (1 << 3)  // 00001000
-#define NT_STYLE_VAL_BLINK          (1 << 4)  // 00010000
-#define NT_STYLE_VAL_REVERSE        (1 << 5)  // 00100000
-#define NT_STYLE_VAL_HIDDEN         (1 << 6)  // 01000000
-#define NT_STYLE_VAL_STRIKETHROUGH  (1 << 7)  // 10000000
+#define NT_STYLE_BOLD           (1u << 0)  // 00000001
+#define NT_STYLE_FAINT          (1u << 1)  // 00000010
+#define NT_STYLE_ITALIC         (1u << 2)  // 00000100
+#define NT_STYLE_UNDERLINE      (1u << 3)  // 00001000
+#define NT_STYLE_BLINK          (1u << 4)  // 00010000
+#define NT_STYLE_REVERSE        (1u << 5)  // 00100000
+#define NT_STYLE_HIDDEN         (1u << 6)  // 01000000
+#define NT_STYLE_STRIKETHROUGH  (1u << 7)  // 10000000
 
 /* -------------------------------------------------------------------------- */
 /* GFX */
@@ -123,6 +122,16 @@ nt_gfx_are_eql(struct nt_gfx gfx1, struct nt_gfx gfx2)
     return (nt_color_are_eql(gfx1.fg, gfx2.fg) &&
         nt_color_are_eql(gfx1.bg, gfx2.bg) &&
         nt_style_are_eql(gfx1.style, gfx2.style));
+}
+
+static inline struct nt_gfx
+nt_gfx_style_reverse(struct nt_gfx gfx)
+{
+    gfx.style.value_c8 |= NT_STYLE_REVERSE;
+    gfx.style.value_c256 |= NT_STYLE_REVERSE;
+    gfx.style.value_rgb |= NT_STYLE_REVERSE;
+
+    return gfx;
 }
 
 #ifdef __cplusplus

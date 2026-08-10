@@ -609,7 +609,7 @@ static void set_gfx(struct nt_gfx gfx, int* out_status)
     size_t count = 8;
     for(i = 0; i < count; i++)
     {
-        if(style & (NT_STYLE_VAL_BOLD << i))
+        if(style & (NT_STYLE_BOLD << i))
         {
             execute_used_term_func(NT_ESC_FUNC_STYLE_SET_BOLD + i, true, &_status);
             if((_status != 0) && (_status != NT_ERR_FUNC_NOT_SUPP))
@@ -1112,8 +1112,8 @@ static enum process_mouse_result process_stdin_esc_mouse(uint8_t* buff,
         size_t read_count, struct nt_mouse_event* out_event)
 {
     struct nt_mouse_event event = {0};
-
     NT_SET_OUT(out_event, event);
+
     if(read_count < 9) return NOT_MOUSE_EVENT;
 
     if((buff[0] != 0x1b) || (buff[1] != '[') || (buff[2] != '<'))
