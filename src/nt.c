@@ -1044,7 +1044,7 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
     size_t utf32_width;
     int _status;
     uc_utf8_to_utf32(utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width, &_status);
-    if(_status != UC_SUCCESS) return NT_EVENT_EMPTY;
+    if(_status != 0) return NT_EVENT_EMPTY;
 
     struct nt_key_event key_event = nt_key_event_utf32_new(utf32, alt);
     return event_new(NT_EVENT_KEY, &key_event, sizeof(key_event), out_status);
