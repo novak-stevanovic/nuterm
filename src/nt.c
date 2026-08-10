@@ -741,7 +741,7 @@ unsigned int nt_event_wait(
         if(poll_status == -1) return elapsed;
         if(poll_status == 0)
         {
-            NT_SET_OUT(out_event, nt_event_new(NT_EVENT_TIMEOUT, NULL, 0));
+            NT_SET_OUT(out_event, nt_event_new_custom(NT_EVENT_TIMEOUT, NULL, 0));
             NT_SET_OUT(out_status, 0);
             return elapsed;
         }
@@ -845,7 +845,7 @@ static struct nt_event process_resize(int* out_status, bool* out_ignore)
     NT_SET_OUT(out_status, 0);
     struct nt_resize_event rsz;
     nt_get_term_size(&rsz.new_x, &rsz.new_y);
-    return nt_event_new(NT_EVENT_RESIZE, &rsz, sizeof(rsz));
+    return nt_event_new_custom(NT_EVENT_RESIZE, &rsz, sizeof(rsz));
 }
 
 /* ------------------------------------------------------ */
@@ -862,7 +862,7 @@ static struct nt_event process_signal(int* out_status, bool* out_ignore)
     if(read_status < 0) return NT_EVENT_EMPTY;
 
     NT_SET_OUT(out_status, 0);
-    return nt_event_new(NT_EVENT_SIGNAL, &signum, sizeof(signum));
+    return nt_event_new_custom(NT_EVENT_SIGNAL, &signum, sizeof(signum));
 }
 
 /* ------------------------------------------------------ */
@@ -890,7 +890,7 @@ static struct nt_event process_custom(int* out_status, bool* out_ignore)
     uint32_t type = (1 << header.type);
 
     NT_SET_OUT(out_status, 0);
-    return nt_event_new(type, buff, header.data_size);
+    return nt_event_new_custom(type, buff, header.data_size);
 }
 
 /* ------------------------------------------------------ */
@@ -947,7 +947,7 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                         .utf32 = { .cp = 27, .alt = false }
                     };
                     NT_SET_OUT(out_status, 0);
-                    return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
+                    return nt_event_new_custom(NT_EVENT_KEY, &key, sizeof(key));
                 }
 
                 read_status = read(STDIN_FILENO, buff + 1, 1);
@@ -969,7 +969,7 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                             .utf32 = { .cp = buff[1], .alt = true }
                         };
                         NT_SET_OUT(out_status, 0);
-                        return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
+                        return nt_event_new_custom(NT_EVENT_KEY, &key, sizeof(key));
                     }
 
                     state = PROCESS_STDIN_ESC_SEQ_READ;
@@ -1040,7 +1040,7 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
     };
 
     NT_SET_OUT(out_status, 0);
-    return nt_event_new(NT_EVENT_KEY, &key_event, sizeof(key_event));
+    return nt_event_new_custom(NT_EVENT_KEY, &key_event, sizeof(key_event));
 }
 
 enum process_mouse_result
@@ -1071,7 +1071,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
     if(mouse_rv == MOUSE_EVENT_SUPPORTED)
     {
         NT_SET_OUT(out_status, 0);
-        return nt_event_new(NT_EVENT_MOUSE, &_mouse_event, sizeof(_mouse_event));
+        return nt_event_new_custom(NT_EVENT_MOUSE, &_mouse_event, sizeof(_mouse_event));
     }
     else if(mouse_rv == MOUSE_EVENT_UNSUPPORTED)
     {
@@ -1093,7 +1093,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
             };
 
             NT_SET_OUT(out_status, 0);
-            return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
+            return nt_event_new_custom(NT_EVENT_KEY, &key, sizeof(key));
         }
     }
 
@@ -1103,7 +1103,7 @@ static struct nt_event process_stdin_esc(uint8_t* buff,
     };
 
     NT_SET_OUT(out_status, 0);
-    return nt_event_new(NT_EVENT_KEY, &key, sizeof(key));
+    return nt_event_new_custom(NT_EVENT_KEY, &key, sizeof(key));
 }
 
 // ESC [ < Cb ; Cx ; Cy M

@@ -120,7 +120,7 @@ void* test_thread_fn(void* _)
     while(true)
     {
         sleep(5);
-        event = nt_event_new(type, &data, sizeof(long int));
+        event = nt_event_new_custom(type, &data, sizeof(long int));
         assert(nt_event_is_valid(event));
         nt_event_push(event, &_status);
         assert(_status == 0);

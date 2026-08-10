@@ -29,7 +29,7 @@ bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key)
     return ((key.type == NT_KEY_ESC) && (key.esc.val == esc_key));
 }
 
-struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size)
+struct nt_event nt_event_new_custom(uint32_t type, void* data, uint8_t data_size)
 {
     // Have to check for data size here as well in order not to overflow the data buff
     if(((data_size > 0) && (data == NULL)) || (data_size > NT_EVENT_DATA_MAX_SIZE))

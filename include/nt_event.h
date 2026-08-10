@@ -19,15 +19,15 @@ extern "C" {
 /* -------------------------------------------------------------------------- */
 
 #define NT_EVENT_INVALID 0
-#define NT_EVENT_KEY (1 << 0)
-#define NT_EVENT_MOUSE (1 << 1)
-#define NT_EVENT_SIGNAL (1 << 2)
-#define NT_EVENT_RESIZE (1 << 3)
-#define NT_EVENT_TIMEOUT (1 << 4)
+#define NT_EVENT_KEY (1u << 0)
+#define NT_EVENT_MOUSE (1u << 1)
+#define NT_EVENT_SIGNAL (1u << 2)
+#define NT_EVENT_RESIZE (1u << 3)
+#define NT_EVENT_TIMEOUT (1u << 4)
 
 // Range [0, 16) is reserved for library events. Range [16, 32) is for
 // user-defined events.
-#define NT_EVENT_CUSTOM_BASE (1 << 15)
+#define NT_EVENT_CUSTOM_BASE (1u << 15)
 
 /* Event payload(data field) for built-in events:
  * 1) NT_EVENT_KEY:     struct nt_key_event
@@ -38,7 +38,7 @@ extern "C" {
 
 /* -------------------------------------------------------------------------- */
 
-#define NT_EVENT_DATA_MAX_SIZE 96
+#define NT_EVENT_DATA_MAX_SIZE 64
 
 struct nt_event
 {
@@ -52,7 +52,7 @@ struct nt_event
 };
 
 // Assumes correct arguments. Returns invalid event on fail.
-NT_API struct nt_event nt_event_new(uint32_t type, void* data, uint8_t data_size);
+NT_API struct nt_event nt_event_new_custom(uint32_t type, void* data, uint8_t data_size);
 
 NT_API bool nt_event_is_valid(struct nt_event event);
 
@@ -62,7 +62,7 @@ NT_API bool nt_event_is_valid(struct nt_event event);
 
 enum nt_esc_key
 {
-    NT_ESC_KEY_F1,
+    NT_ESC_KEY_F1 = 0,
     NT_ESC_KEY_F2,
     NT_ESC_KEY_F3,
     NT_ESC_KEY_F4,
@@ -129,7 +129,7 @@ NT_API bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_
 
 enum nt_mouse_type
 {
-    NT_MOUSE_CLICK_LEFT,
+    NT_MOUSE_CLICK_LEFT = 0,
     NT_MOUSE_CLICK_RIGHT,
     NT_MOUSE_CLICK_MIDDLE,
     NT_MOUSE_SCROLL_UP,
