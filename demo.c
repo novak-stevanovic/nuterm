@@ -159,14 +159,14 @@ int main(int argc, char *argv[])
     // size_t i;
     // for(i = 0; i < 10; i++)
     // {
-    //     nt_buffer_flush();
+    //     nt_buffer_flush(NULL);
     //     nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
     //     assert(_status == NT_SUCCESS);
     // }
     // nt_mouse_mode_enable(&_status);
     //loop_lib();
     // nt_mouse_mode_disable(&_status);
-    // nt_buffer_disable(NT_BUFF_FLUSH);
+    // nt_buffer_disable(NT_BUFF_FLUSH, NULL);
 
     nt_alt_screen_enable(NULL);
         

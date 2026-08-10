@@ -5,6 +5,7 @@
 #include "nt.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -50,36 +51,134 @@ static bool init_get_term_opts, init_set_term_opts,
             init_sigmask_set, init_sigthread_create,
             init_sigthread_lock, init_term;
 
-static void inline write_to_stdout(const char* str, size_t str_len)
+static void clear_pending_sigpipe(void)
 {
-    if(str_len == 0) return;
-
-    if(stdout_buff == NULL) // not buffered
-    {
-        write(STDOUT_FILENO, str, str_len);
+    sigset_t pending;
+    if(sigpending(&pending) != 0)
         return;
+    if(!sigismember(&pending, SIGPIPE))
+        return;
+
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGPIPE);
+
+    int signal;
+    sigwait(&set, &signal);
+}
+
+static int write_all(int fd, const void* data, size_t size)
+{
+    const uint8_t* it = data;
+
+    while(size > 0)
+    {
+        ssize_t written = write(fd, it, size);
+        if(written < 0)
+        {
+            if(errno == EINTR)
+                continue;
+            if(errno == EPIPE)
+                clear_pending_sigpipe();
+
+            return NT_ERR_UNEXPECTED;
+        }
+        if(written == 0)
+            return NT_ERR_UNEXPECTED;
+
+        it += written;
+        size -= (size_t)written;
     }
+
+    return 0;
+}
+
+/* Pipe event writes must stay a single atomic write. */
+static int write_pipe_event(int fd, const void* data, size_t size)
+{
+    ssize_t written;
+    do
+    {
+        written = write(fd, data, size);
+    }
+    while((written < 0) && (errno == EINTR));
+
+    if(written < 0)
+    {
+        if(errno == EPIPE)
+            clear_pending_sigpipe();
+        return NT_ERR_UNEXPECTED;
+    }
+    if((size_t)written != size)
+        return NT_ERR_UNEXPECTED;
+
+    return 0;
+}
+
+static int read_exact(int fd, void* data, size_t size)
+{
+    uint8_t* it = data;
+
+    while(size > 0)
+    {
+        ssize_t read_count = read(fd, it, size);
+        if(read_count < 0)
+        {
+            if(errno == EINTR)
+                continue;
+
+            return NT_ERR_UNEXPECTED;
+        }
+        if(read_count == 0)
+            return NT_ERR_UNEXPECTED;
+
+        it += read_count;
+        size -= (size_t)read_count;
+    }
+
+    return 0;
+}
+
+static int poll_retry(struct pollfd* fds, nfds_t count, int timeout)
+{
+    int status;
+    do
+    {
+        status = poll(fds, count, timeout);
+    }
+    while((status < 0) && (errno == EINTR));
+
+    return status;
+}
+
+static int inline write_to_stdout(const char* str, size_t str_len)
+{
+    if(str_len == 0)
+        return 0;
+
+    if(stdout_buff == NULL)
+        return write_all(STDOUT_FILENO, str, str_len);
 
     if(stdout_buff_pos + str_len <= stdout_buff_cap)
     {
         memcpy(stdout_buff + stdout_buff_pos, str, str_len);
         stdout_buff_pos += str_len;
+        return 0;
     }
-    else
-    {
-        write(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
-        stdout_buff_pos = 0;
 
-        if(str_len <= stdout_buff_cap)
-        {
-            memcpy(stdout_buff, str, str_len);
-            stdout_buff_pos = str_len;
-        }
-        else
-        {
-            write(STDOUT_FILENO, str, str_len);
-        }
+    int status = write_all(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
+    stdout_buff_pos = 0;
+    if(status)
+        return status;
+
+    if(str_len <= stdout_buff_cap)
+    {
+        memcpy(stdout_buff, str, str_len);
+        stdout_buff_pos = str_len;
+        return 0;
     }
+
+    return write_all(STDOUT_FILENO, str, str_len);
 }
 
 static void* sigthread_fn(void* data)
@@ -98,14 +197,42 @@ static void* sigthread_fn(void* data)
         }
         else pthread_mutex_unlock(&sigthread_lock);
 
-        sigwait(&set, &signal);
+        if(sigwait(&set, &signal) != 0)
+        {
+            close(resize_pipe[1]);
+            resize_pipe[1] = -1;
+            close(signal_pipe[1]);
+            signal_pipe[1] = -1;
+            break;
+        }
 
         usignal = (unsigned int)signal;
         if(signal == SIGWINCH)
         {
-            write(resize_pipe[1], &usignal, sizeof(unsigned int));
+            if(write_pipe_event(
+                    resize_pipe[1],
+                    &usignal,
+                    sizeof(unsigned int)))
+            {
+                close(resize_pipe[1]);
+                resize_pipe[1] = -1;
+                close(signal_pipe[1]);
+                signal_pipe[1] = -1;
+                break;
+            }
         }
-        write(signal_pipe[1], &usignal, sizeof(unsigned int));
+
+        if(write_pipe_event(
+                signal_pipe[1],
+                &usignal,
+                sizeof(unsigned int)))
+        {
+            close(resize_pipe[1]);
+            resize_pipe[1] = -1;
+            close(signal_pipe[1]);
+            signal_pipe[1] = -1;
+            break;
+        }
     }
 
     return NULL;
@@ -270,9 +397,11 @@ void nt_init(int* out_status)
         case NT_ERR_INIT_TERM_ENV:
             NT_SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
             nt_deinit();
+            return;
         default:
             NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
             nt_deinit();
+            return;
     }
 }
 
@@ -350,27 +479,30 @@ static void execute_used_term_func(
     }
 
     const char* _func;
+    char buff[100];
     if(use_va)
     {
-        char buff[100];
-
         va_list list;
         va_start(list, out_status);
 
-        status = vsprintf(buff, esc_func, list);
-        if(status < 0)
+        status = vsnprintf(buff, sizeof(buff), esc_func, list);
+        va_end(list);
+        if((status < 0) || ((size_t)status >= sizeof(buff)))
         {
             NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
             return;
         }
 
-        va_end(list);
-
         _func = buff;
     }
     else _func = esc_func;
 
-    write_to_stdout(_func, strlen(_func));
+    status = write_to_stdout(_func, strlen(_func));
+    if(status)
+    {
+        NT_SET_OUT(out_status, status);
+        return;
+    }
 
     NT_SET_OUT(out_status, 0);
 }
@@ -398,29 +530,36 @@ void nt_buffer_enable(char* buff, size_t cap, int* out_status)
     NT_SET_OUT(out_status, 0);
 }
 
-char* nt_buffer_disable(nt_buffact buffact)
+char* nt_buffer_disable(nt_buffact buffact, int* out_status)
 {
-    void* old = stdout_buff;
+    char* old = stdout_buff;
+    int status = 0;
+
     if(stdout_buff != NULL)
     {
         if((buffact == NT_BUFF_FLUSH) && (stdout_buff_pos > 0))
-            write(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
+            status = write_all(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
 
         stdout_buff = NULL;
         stdout_buff_pos = 0;
         stdout_buff_cap = 0;
     }
 
+    NT_SET_OUT(out_status, status);
     return old;
 }
 
-void nt_buffer_flush()
+void nt_buffer_flush(int* out_status)
 {
+    int status = 0;
+
     if((stdout_buff != NULL) && (stdout_buff_pos > 0))
     {
-        write(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
+        status = write_all(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
         stdout_buff_pos = 0;
     }
+
+    NT_SET_OUT(out_status, status);
 }
 
 /* ----------------------------------------------------- */
@@ -442,19 +581,40 @@ void nt_cursor_move(size_t x, size_t y, int* out_status)
 
 void nt_erase_screen(int* out_status)
 {
-    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    int status;
+    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, &status);
+    if(status)
+    {
+        NT_SET_OUT(out_status, status);
+        return;
+    }
+
     execute_used_term_func(NT_ESC_FUNC_ERASE_SCREEN, false, out_status);
 }
 
 void nt_erase_line(int* out_status)
 {
-    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    int status;
+    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, &status);
+    if(status)
+    {
+        NT_SET_OUT(out_status, status);
+        return;
+    }
+
     execute_used_term_func(NT_ESC_FUNC_ERASE_LINE, false, out_status);
 }
 
 void nt_erase_scrollback(int* out_status)
 {
-    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, NULL);
+    int status;
+    execute_used_term_func(NT_ESC_FUNC_BG_SET_DEFAULT, false, &status);
+    if(status)
+    {
+        NT_SET_OUT(out_status, status);
+        return;
+    }
+
     execute_used_term_func(NT_ESC_FUNC_ERASE_SCROLLBACK, false, out_status);
 }
 
@@ -486,8 +646,7 @@ void nt_get_term_size(size_t* out_width, size_t* out_height)
     if(status == -1)
     {
         ret_width = 0;
-        ret_height =  0;
-        return;
+        ret_height = 0;
     }
     else
     {
@@ -657,7 +816,12 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_statu
             
             if(it_end != NULL)
             {
-                write_to_stdout(it_begin, it_end - it_begin);
+                _status = write_to_stdout(it_begin, it_end - it_begin);
+                if(_status)
+                {
+                    NT_SET_OUT(out_status, _status);
+                    return;
+                }
 
                 execute_used_term_func(NT_ESC_FUNC_GFX_RESET, false, &_status);
                 if(_status != 0)
@@ -666,7 +830,12 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_statu
                     return;
                 }
 
-                write_to_stdout("\n", 1);
+                _status = write_to_stdout("\n", 1);
+                if(_status)
+                {
+                    NT_SET_OUT(out_status, _status);
+                    return;
+                }
 
                 set_gfx(gfx, &_status);
                 if(_status != 0)
@@ -682,7 +851,12 @@ void nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_statu
             }
             else
             {
-                write_to_stdout(it_begin, (str + len) - it_begin);
+                _status = write_to_stdout(it_begin, (str + len) - it_begin);
+                if(_status)
+                {
+                    NT_SET_OUT(out_status, _status);
+                    return;
+                }
                 break;
             }
 
@@ -758,10 +932,10 @@ unsigned int nt_event_wait(
     while(true)
     {
         clock_gettime(CLOCK_REALTIME, &_time1);
-        poll_status = poll(poll_fds, POLL_FD_COUNT, timeout);
+        poll_status = poll_retry(poll_fds, POLL_FD_COUNT, (int)timeout);
         clock_gettime(CLOCK_REALTIME, &_time2);
         elapsed = ((_time2.tv_sec - _time1.tv_sec) * 1e3) +
-            ((_time2.tv_nsec - _time1.tv_nsec) / 1e6);
+                  ((_time2.tv_nsec - _time1.tv_nsec) / 1e6);
         elapsed = (elapsed <= timeout) ? elapsed : timeout;
         if(poll_status == -1) return elapsed;
         if(poll_status == 0)
@@ -809,6 +983,26 @@ unsigned int nt_event_wait(
     return elapsed;
 }
 
+void nt_event_queue_drain(int* out_status)
+{
+    NT_SET_OUT(out_status, 0);
+
+    struct nt_event event = {0};
+    int status;
+    while(true)
+    {
+        nt_event_wait(&event, 0, &status);
+        if(status)
+        {
+            NT_SET_OUT(out_status, status);
+            return;
+        }
+
+        if(event.type == NT_EVENT_TIMEOUT)
+            return;
+    }
+}
+
 void nt_event_push(const struct nt_event* event, int* out_status)
 {
     if(!event || !nt_event_is_valid(event))
@@ -833,14 +1027,12 @@ void nt_event_push(const struct nt_event* event, int* out_status)
     // If there's data, write it to buffer
     if(event->data_size > 0) memcpy(buff + 2, event->data, event->data_size);
 
-    // Write to the pipe
-    int write_status = write(
-            custom_event_pipe[1],
-            buff,
-            sizeof(struct nt_event_header) + event->data_size);
-    if(write_status == -1)
+    // Write to the pipe. The whole event must stay one atomic write.
+    size_t write_size = sizeof(struct nt_event_header) + event->data_size;
+    int write_status = write_pipe_event(custom_event_pipe[1], buff, write_size);
+    if(write_status)
     {
-        NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
+        NT_SET_OUT(out_status, write_status);
         return;
     }
 
@@ -854,17 +1046,21 @@ static struct nt_event process_resize(int* out_status, bool* out_ignore)
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
 
-    int poll_status, read_status;
+    int poll_status;
     char c;
     while(true)
     {
-        // Already polled, so read first
-        read_status = read(resize_pipe[0], &c, 1);
-        if(read_status < 0) return NT_EVENT_EMPTY;
+        // Already polled, so read first.
+        if(read_exact(resize_pipe[0], &c, 1))
+            return NT_EVENT_EMPTY;
 
-        poll_status = poll(poll_fds + RESIZE_POLL_FD, 1, 0);
-        if(poll_status < 0) return NT_EVENT_EMPTY;
-        if(poll_status == 0) break;
+        poll_status = poll_retry(poll_fds + RESIZE_POLL_FD, 1, 0);
+        if(poll_status < 0)
+            return NT_EVENT_EMPTY;
+        if(poll_status == 0)
+            break;
+        if(!(poll_fds[RESIZE_POLL_FD].revents & POLLIN))
+            return NT_EVENT_EMPTY;
     }
 
     struct nt_resize_event rsz;
@@ -880,11 +1076,9 @@ static struct nt_event process_signal(int* out_status, bool* out_ignore)
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
 
-    int read_status;
-
     unsigned int signum = 0;
-    read_status = read(signal_pipe[0], &signum, sizeof(unsigned int));
-    if(read_status < 0) return NT_EVENT_EMPTY;
+    if(read_exact(signal_pipe[0], &signum, sizeof(signum)))
+        return NT_EVENT_EMPTY;
 
     return event_new(NT_EVENT_SIGNAL, &signum, sizeof(signum), out_status);
 }
@@ -896,19 +1090,19 @@ static struct nt_event process_custom(int* out_status, bool* out_ignore)
     NT_SET_OUT(out_ignore, false);
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
 
-    int read_status;
-
-    // Read header to determine type and data_size
+    // Read header to determine type and data_size.
     struct nt_event_header header = {0};
-    read_status = read(custom_event_pipe[0], &header, sizeof(header));
-    if(read_status < 0) return NT_EVENT_EMPTY;
-   
+    if(read_exact(custom_event_pipe[0], &header, sizeof(header)))
+        return NT_EVENT_EMPTY;
+
+    if((header.type >= 32) || (header.data_size > NT_EVENT_DATA_MAX_SIZE))
+        return NT_EVENT_EMPTY;
+
     uint8_t buff[NT_EVENT_DATA_MAX_SIZE] = {0};
-    // If event has data, read it
-    if(header.data_size > 0)
+    if((header.data_size > 0) &&
+       read_exact(custom_event_pipe[0], buff, header.data_size))
     {
-        read_status = read(custom_event_pipe[0], buff, header.data_size);
-        if(read_status < 0) return NT_EVENT_EMPTY;
+        return NT_EVENT_EMPTY;
     }
 
     uint32_t type = (1u << header.type);
@@ -937,9 +1131,10 @@ enum process_stdin_state
 static struct nt_event process_stdin(int* out_status, bool* out_ignore)
 {
     uint8_t buff[64];
-    int read_status, poll_status;
+    int poll_status;
 
     NT_SET_OUT(out_status, NT_ERR_UNEXPECTED);
+    NT_SET_OUT(out_ignore, false);
 
     enum process_stdin_state state = PROCESS_STDIN_BEGIN;
 
@@ -950,8 +1145,8 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
         switch(state)
         {
             case PROCESS_STDIN_BEGIN:
-                read_status = read(STDIN_FILENO, buff, 1);
-                if(read_status < 0) return NT_EVENT_EMPTY;
+                if(read_exact(STDIN_FILENO, buff, 1))
+                    return NT_EVENT_EMPTY;
 
                 if(buff[0] == 0x1b)
                     state = PROCESS_STDIN_ESC_BEGIN;
@@ -960,8 +1155,9 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                 break;
 
             case PROCESS_STDIN_ESC_BEGIN:
-                poll_status = poll(poll_fds + STDIN_POLL_FD, 1, 0);
-                if(poll_status < 0) return NT_EVENT_EMPTY;
+                poll_status = poll_retry(poll_fds + STDIN_POLL_FD, 1, 0);
+                if(poll_status < 0)
+                    return NT_EVENT_EMPTY;
 
                 if(poll_status == 0) // just ESC
                 {
@@ -969,8 +1165,11 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                     return event_new(NT_EVENT_KEY, &key, sizeof(key), out_status);
                 }
 
-                read_status = read(STDIN_FILENO, buff + 1, 1);
-                if(read_status < 0) return NT_EVENT_EMPTY;
+                if(!(poll_fds[STDIN_POLL_FD].revents & POLLIN))
+                    return NT_EVENT_EMPTY;
+
+                if(read_exact(STDIN_FILENO, buff + 1, 1))
+                    return NT_EVENT_EMPTY;
 
                 state = PROCESS_STDIN_ESC_SEQ_OR_ALT;
                 break;
@@ -978,7 +1177,7 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
             case PROCESS_STDIN_ESC_SEQ_OR_ALT:
                 if((buff[1] == '[') || (buff[1] == 'O')) // TODO
                 {
-                    poll_status = poll(poll_fds + STDIN_POLL_FD, 1, 0);
+                    poll_status = poll_retry(poll_fds + STDIN_POLL_FD, 1, 0);
                     if(poll_status < 0) return NT_EVENT_EMPTY;
 
                     if(poll_status == 0) // ALT + BUFF[read_count]
@@ -988,6 +1187,8 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                         return event_new(NT_EVENT_KEY, &key, sizeof(key),
                                 out_status);
                     }
+                    if(!(poll_fds[STDIN_POLL_FD].revents & POLLIN))
+                        return NT_EVENT_EMPTY;
 
                     state = PROCESS_STDIN_ESC_SEQ_READ;
                     esc_seq_read_count = 2;
@@ -1004,8 +1205,11 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                 break;
 
             case PROCESS_STDIN_ESC_SEQ_READ:
-                read_status = read(STDIN_FILENO, buff + esc_seq_read_count, 1);
-                if(read_status < 0) return NT_EVENT_EMPTY;
+                if(esc_seq_read_count >= (sizeof(buff) - 1))
+                    return NT_EVENT_EMPTY;
+
+                if(read_exact(STDIN_FILENO, buff + esc_seq_read_count, 1))
+                    return NT_EVENT_EMPTY;
 
                 esc_seq_read_count++;
 
@@ -1015,8 +1219,12 @@ static struct nt_event process_stdin(int* out_status, bool* out_ignore)
                     break;
                 }
 
-                poll_status = poll(poll_fds + STDIN_POLL_FD, 1, 0);
-                if(poll_status <= 0) return NT_EVENT_EMPTY;
+                poll_status = poll_retry(poll_fds + STDIN_POLL_FD, 1, 0);
+                if((poll_status <= 0) ||
+                   !(poll_fds[STDIN_POLL_FD].revents & POLLIN))
+                {
+                    return NT_EVENT_EMPTY;
+                }
 
                 break;
 
@@ -1039,11 +1247,11 @@ static struct nt_event process_stdin_utf32(uint8_t* utf8_sbyte,
     utf32_len = uc_utf8_unit_len(utf8_sbyte[0]);
     if(utf32_len == SIZE_MAX) return NT_EVENT_EMPTY;
 
-    // read()
-    int read_status = read(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1);
-    if(read_status < 0) return NT_EVENT_EMPTY;
-    
-    if(read_status != (utf32_len - 1)) return NT_EVENT_EMPTY;
+    if((utf32_len > 1) &&
+       read_exact(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1))
+    {
+        return NT_EVENT_EMPTY;
+    }
 
     uint32_t utf32;
     size_t utf32_width;

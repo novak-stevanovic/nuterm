@@ -70,13 +70,19 @@ NT_API void nt_buffer_enable(char* buff, size_t cap, int* out_status);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
- * Returns used buffer. */
+ * Returns used buffer.
+ *
+ * ERROR CODES:
+ * 1) NT_ERR_UNEXPECTED - flushing to stdout failed. */
 
-NT_API char* nt_buffer_disable(nt_buffact buffact);
+NT_API char* nt_buffer_disable(nt_buffact buffact, int* out_status);
 
-/* Flushes the buffer to stdout if buffering is currently enabled. */
+/* Flushes the buffer to stdout if buffering is currently enabled.
+ *
+ * ERROR CODES:
+ * 1) NT_ERR_UNEXPECTED - writing to stdout failed. */
 
-NT_API void nt_buffer_flush();
+NT_API void nt_buffer_flush(int* out_status);
 
 /* ------------------------------------------------------ */
 /* CORE */
@@ -138,7 +144,7 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 /* EVENT */
 /* -------------------------------------------------------------------------- */
 
-#define NT_EVENT_WAIT_FOREVER -1
+#define NT_EVENT_WAIT_FOREVER ((unsigned int)-1)
 
 /* Waits for an event. The thread is blocked until the event occurs. Meant to be
  * used for main loop in TGUI applications. Should be called from the main thread.
@@ -151,10 +157,15 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
  *
  * ERROR CODES:
  * 1) NT_SUCCESS,
- * 2) NT_ERR_UNEXPECTED. */
+ * 2) NT_ERR_UNEXPECTED - a hard event I/O failure occurred. After this error,
+ * the event subsystem should not be assumed to be usable. */
 
 NT_API unsigned int 
 nt_event_wait(struct nt_event* out_event, unsigned int timeout, int* out_status);
+
+/* Removes queued events until the queue is empty. Stops and reports an error if
+ * nt_event_wait() encounters a hard event I/O failure. */
+NT_API void nt_event_queue_drain(int* out_status);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
  * `nt_event_wait()`. If the calling thread is the main thread, next call
