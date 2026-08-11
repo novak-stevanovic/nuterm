@@ -540,6 +540,7 @@ char* nt_buffer_disable(nt_buffact buffact, int* out_status)
         if((buffact == NT_BUFF_FLUSH) && (stdout_buff_pos > 0))
             status = write_all(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
 
+        /* Disable buffering regardless of the flush result. */
         stdout_buff = NULL;
         stdout_buff_pos = 0;
         stdout_buff_cap = 0;
@@ -556,6 +557,9 @@ void nt_buffer_flush(int* out_status)
     if((stdout_buff != NULL) && (stdout_buff_pos > 0))
     {
         status = write_all(STDOUT_FILENO, stdout_buff, stdout_buff_pos);
+
+        /* A failed write may be partial, so the attempted contents cannot
+         * be safely retried as a whole. */
         stdout_buff_pos = 0;
     }
 

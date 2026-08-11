@@ -70,17 +70,20 @@ NT_API void nt_buffer_enable(char* buff, size_t cap, int* out_status);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
- * Returns used buffer.
+ * Buffering is disabled even if flushing fails. Returns used buffer.
  *
  * ERROR CODES:
- * 1) NT_ERR_UNEXPECTED - flushing to stdout failed. */
+ * 1) NT_ERR_UNEXPECTED - flushing to stdout failed. Subsequent output
+ * operations may still be attempted. */
 
 NT_API char* nt_buffer_disable(nt_buffact buffact, int* out_status);
 
-/* Flushes the buffer to stdout if buffering is currently enabled.
+/* Flushes the buffer to stdout if buffering is currently enabled. Buffered
+ * contents are discarded after the flush attempt, even if writing fails.
  *
  * ERROR CODES:
- * 1) NT_ERR_UNEXPECTED - writing to stdout failed. */
+ * 1) NT_ERR_UNEXPECTED - writing to stdout failed. Subsequent output
+ * operations may still be attempted. */
 
 NT_API void nt_buffer_flush(int* out_status);
 
@@ -101,7 +104,8 @@ NT_API void nt_buffer_flush(int* out_status);
  * ERROR CODES:
  * 1) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
  * by the terminal - resetting gfx, setting color.
- * 2) NT_ERR_UNEXPECTED. */
+ * 2) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
+ * operations may still be attempted. */
 
 NT_API void 
 nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status);
@@ -117,7 +121,8 @@ nt_write_str_unsafe(const char* str, struct nt_gfx gfx, int* out_status);
  * 1) NT_SUCCESS,
  * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
  * function(not very reliable),
- * 3) NT_ERR_UNEXPECTED.
+ * 3) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
+ * operations may still be attempted.
  *
  * With buffering enabled, output is buffered. */
 
