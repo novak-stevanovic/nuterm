@@ -84,7 +84,6 @@ nt_term_color_count nt__term_get_color_count(void);
 
 void nt__term_deinit(void);
 
-
 #ifdef __cplusplus
 }
 #endif

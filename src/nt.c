@@ -411,7 +411,7 @@ void nt_deinit(void)
     }
     if(init_term)
     {
-        (void)nt_write_str("", 0, NT_GFX_DEFAULT);
+        nt_write_str("", 0, NT_GFX_DEFAULT);
 
         nt__term_deinit();
         init_term = false;
@@ -641,17 +641,25 @@ static int nt__set_gfx(struct nt_gfx gfx)
 
         if(colors == NT_TERM_COLOR_TC)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_FG_SET_RGB, true,
-                    gfx.fg.rgb.r, gfx.fg.rgb.g, gfx.fg.rgb.b);
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_FG_SET_RGB,
+                    true,
+                    gfx.fg.rgb.r,
+                    gfx.fg.rgb.g,
+                    gfx.fg.rgb.b);
         }
         else if(colors == NT_TERM_COLOR_C256)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_FG_SET_C256, true,
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_FG_SET_C256,
+                    true,
                     gfx.fg.code256);
         }
         else if(colors == NT_TERM_COLOR_C8)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_FG_SET_C8, true,
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_FG_SET_C8,
+                    true,
                     gfx.fg.code8);
         }
         else
@@ -675,17 +683,25 @@ static int nt__set_gfx(struct nt_gfx gfx)
 
         if(colors == NT_TERM_COLOR_TC)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_BG_SET_RGB, true,
-                    gfx.bg.rgb.r, gfx.bg.rgb.g, gfx.bg.rgb.b);
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_RGB,
+                    true,
+                    gfx.bg.rgb.r,
+                    gfx.bg.rgb.g,
+                    gfx.bg.rgb.b);
         }
         else if(colors == NT_TERM_COLOR_C256)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_BG_SET_C256, true,
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_C256,
+                    true,
                     gfx.bg.code256);
         }
         else if(colors == NT_TERM_COLOR_C8)
         {
-            status = nt__execute_used_term_func(NT_ESC_FUNC_BG_SET_C8, true,
+            status = nt__execute_used_term_func(
+                    NT_ESC_FUNC_BG_SET_C8,
+                    true,
                     gfx.bg.code8);
         }
         else
@@ -701,14 +717,20 @@ static int nt__set_gfx(struct nt_gfx gfx)
 
     uint8_t style;
 
-    if(colors == NT_TERM_COLOR_TC)
-        style = gfx.style.value_rgb;
-    else if(colors == NT_TERM_COLOR_C256)
-        style = gfx.style.value_c256;
-    else if(colors == NT_TERM_COLOR_C8)
-        style = gfx.style.value_c8;
-    else
-        return NT_ERR_UNEXPECTED;
+    switch(colors)
+    {
+        case NT_TERM_COLOR_TC:
+            style = gfx.style.value_rgb;
+            break;
+        case NT_TERM_COLOR_C256:
+            style = gfx.style.value_c256;
+            break;
+        case NT_TERM_COLOR_C8:
+            style = gfx.style.value_c8;
+            break;
+        default:
+            return NT_ERR_UNEXPECTED;
+    }
 
     size_t i;
     size_t count = 8;
@@ -717,7 +739,9 @@ static int nt__set_gfx(struct nt_gfx gfx)
         if(style & (NT_STYLE_BOLD << i))
         {
             status = nt__execute_used_term_func(
-                    NT_ESC_FUNC_STYLE_SET_BOLD + i, true);
+                    NT_ESC_FUNC_STYLE_SET_BOLD + i,
+                    true);
+
             if((status != 0) && (status != NT_ERR_FUNC_NOT_SUPP))
                 return status;
         }
@@ -1081,8 +1105,7 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
                 if(poll_status == 0) // just ESC
                 {
                     struct nt_key_event key = nt_key_event_utf32_new(27, false);
-                    return nt__event_new(
-                            NT_EVENT_KEY, &key, sizeof(key), out_event);
+                    return nt__event_new(NT_EVENT_KEY, &key, sizeof(key), out_event);
                 }
 
                 if(!(poll_fds[STDIN_POLL_FD].revents & POLLIN))
@@ -1095,19 +1118,18 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
                 break;
 
             case PROCESS_STDIN_ESC_SEQ_OR_ALT:
-                if((buff[1] == '[') || (buff[1] == 'O')) // TODO
+                /* Key escape sequences used by the supported terminals are
+                 * CSI (ESC [) or SS3 (ESC O). */
+                if((buff[1] == '[') || (buff[1] == 'O'))
                 {
-                    poll_status = nt__poll_retry(
-                            poll_fds + STDIN_POLL_FD, 1, 0);
+                    poll_status = nt__poll_retry(poll_fds + STDIN_POLL_FD, 1, 0);
                     if(poll_status < 0)
                         return NT_ERR_UNEXPECTED;
 
                     if(poll_status == 0) // ALT + BUFF[read_count]
                     {
-                        struct nt_key_event key =
-                            nt_key_event_utf32_new(buff[1], true);
-                        return nt__event_new(
-                                NT_EVENT_KEY, &key, sizeof(key), out_event);
+                        struct nt_key_event key = nt_key_event_utf32_new(buff[1], true);
+                        return nt__event_new(NT_EVENT_KEY, &key, sizeof(key), out_event);
                     }
                     if(!(poll_fds[STDIN_POLL_FD].revents & POLLIN))
                         return NT_ERR_UNEXPECTED;
@@ -1123,15 +1145,13 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
                 break;
 
             case PROCESS_STDIN_UTF32:
-                return nt__process_stdin_utf32(
-                        buff + alt, alt, out_event, out_ignore);
+                return nt__process_stdin_utf32(buff + alt, alt, out_event, out_ignore);
 
             case PROCESS_STDIN_ESC_SEQ_READ:
                 if(esc_seq_read_count >= (sizeof(buff) - 1))
                     return NT_ERR_UNEXPECTED;
 
-                if(nt__read_exact(
-                        STDIN_FILENO, buff + esc_seq_read_count, 1) != 0)
+                if(nt__read_exact(STDIN_FILENO, buff + esc_seq_read_count, 1) != 0)
                 {
                     return NT_ERR_UNEXPECTED;
                 }
@@ -1146,8 +1166,7 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
                 }
 
                 poll_status = nt__poll_retry(poll_fds + STDIN_POLL_FD, 1, 0);
-                if((poll_status <= 0) ||
-                   !(poll_fds[STDIN_POLL_FD].revents & POLLIN))
+                if((poll_status <= 0) || !(poll_fds[STDIN_POLL_FD].revents & POLLIN))
                 {
                     return NT_ERR_UNEXPECTED;
                 }
@@ -1155,8 +1174,7 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
                 break;
 
             case PROCESS_STDIN_ESC_SEQ_PROCESS:
-                return nt__process_stdin_esc(
-                        buff, esc_seq_read_count, out_event, out_ignore);
+                return nt__process_stdin_esc(buff, esc_seq_read_count, out_event, out_ignore);
         }
     }
 
@@ -1177,21 +1195,19 @@ static int nt__process_stdin_utf32(
         return NT_ERR_UNEXPECTED;
 
     if((utf32_len > 1) &&
-       (nt__read_exact(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1) != 0))
+    (nt__read_exact(STDIN_FILENO, utf8_sbyte + 1, utf32_len - 1) != 0))
     {
         return NT_ERR_UNEXPECTED;
     }
 
     uint32_t utf32;
     size_t utf32_width;
-    int status = uc_utf8_to_utf32(
-            utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width);
+    int status = uc_utf8_to_utf32(utf8_sbyte, utf32_len, &utf32, 1, 0, &utf32_width);
     if(status != 0)
         return NT_ERR_UNEXPECTED;
 
     struct nt_key_event key_event = nt_key_event_utf32_new(utf32, alt);
-    return nt__event_new(
-            NT_EVENT_KEY, &key_event, sizeof(key_event), out_event);
+    return nt__event_new(NT_EVENT_KEY, &key_event, sizeof(key_event), out_event);
 }
 
 enum process_mouse_result
@@ -1205,8 +1221,12 @@ enum process_mouse_result
  * If yes, return whether the sequence is supported. If supported, initialize
  * `out_event`.
  * If not, return signals that the sequence is not a mouse event */
-static enum process_mouse_result nt__process_stdin_esc_mouse(uint8_t* buff,
-        size_t read_count, struct nt_mouse_event* out_event);
+
+static enum process_mouse_result 
+nt__process_stdin_esc_mouse(
+        uint8_t* buff,
+        size_t read_count,
+        struct nt_mouse_event* out_event);
 
 static int nt__process_stdin_esc(
         uint8_t* buff,
@@ -1253,8 +1273,11 @@ static int nt__process_stdin_esc(
 
 // ESC [ < Cb ; Cx ; Cy M
 // Refactor sometimes...
-static enum process_mouse_result nt__process_stdin_esc_mouse(uint8_t* buff,
-        size_t read_count, struct nt_mouse_event* out_event)
+static enum process_mouse_result
+nt__process_stdin_esc_mouse(
+        uint8_t* buff,
+        size_t read_count,
+        struct nt_mouse_event* out_event)
 {
     if(!out_event) return NOT_MOUSE_EVENT;
     memset(out_event, 0, sizeof(*out_event));

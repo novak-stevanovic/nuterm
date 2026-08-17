@@ -223,6 +223,54 @@ static char* tmux_esc_func_seqs[] = {
     "\x1b[?1006l\x1b[?1000l",
 };
 
+static char* linux_esc_key_seqs[] = {
+    // F keys
+    "\x1b\x5b\x5b\x41", "\x1b\x5b\x5b\x42", "\x1b\x5b\x5b\x43",
+    "\x1b\x5b\x5b\x44", "\x1b\x5b\x5b\x45", "\x1b\x5b\x31\x37\x7e",
+    "\x1b\x5b\x31\x38\x7e", "\x1b\x5b\x31\x39\x7e",
+    "\x1b\x5b\x32\x30\x7e", "\x1b\x5b\x32\x31\x7e",
+    "\x1b\x5b\x32\x33\x7e", "\x1b\x5b\x32\x34\x7e",
+
+    // Arrow keys
+    "\x1b\x5b\x41", "\x1b\x5b\x43", "\x1b\x5b\x42", "\x1b\x5b\x44",
+
+    // INS, DEL...
+    "\x1b\x5b\x32\x7e", "\x1b\x5b\x33\x7e",
+    "\x1b\x5b\x31\x7e", "\x1b\x5b\x34\x7e",
+    "\x1b\x5b\x35\x7e", "\x1b\x5b\x36\x7e",
+
+    /* Linux's default Shift-Tab mapping is ESC TAB, which is indistinguishable
+     * from Alt+Tab. Use the conventional alternate mapping when available. */
+    "\x1b\x5b\x5a"
+};
+
+static char* linux_esc_func_seqs[] = {
+    // Show/hide/move cursor
+    "\x1b[?25h", "\x1b[?25l", "\x1b[%d;%dH",
+
+    // FG(c8, c256, tc, reset)
+    "\x1b[3%dm", NULL, NULL, "\x1b[39m",
+
+    // BG(c8, c256, tc, reset)
+    "\x1b[4%dm", NULL, NULL, "\x1b[49m",
+
+    // Style funcs
+    "\x1b[1m", "\x1b[2m", NULL, "\x1b[4m",
+    "\x1b[5m", "\x1b[7m", NULL, NULL,
+
+    // Reset GFX
+    "\x1b[m\017",
+
+    // Erase
+    "\x1b[2J", "\x1b[3J", "\x1b[2K",
+
+    // Alt buffer (not available on pre-7.0 Linux consoles)
+    NULL, NULL,
+
+    // Mouse reporting is not exposed as a Linux-console capability here.
+    NULL, NULL,
+};
+
 static struct nt_term_info terms[] = {
     { 
         .esc_key_seqs = xterm_esc_key_seqs,
@@ -243,6 +291,31 @@ static struct nt_term_info terms[] = {
         .esc_key_seqs = tmux_esc_key_seqs,
         .esc_func_seqs = tmux_esc_func_seqs,
         .name = "tmux"
+    },
+    {
+        .esc_key_seqs = tmux_esc_key_seqs,
+        .esc_func_seqs = tmux_esc_func_seqs,
+        .name = "screen"
+    },
+    {
+        .esc_key_seqs = xterm_esc_key_seqs,
+        .esc_func_seqs = xterm_esc_func_seqs,
+        .name = "foot"
+    },
+    {
+        .esc_key_seqs = xterm_esc_key_seqs,
+        .esc_func_seqs = xterm_esc_func_seqs,
+        .name = "wezterm"
+    },
+    {
+        .esc_key_seqs = xterm_esc_key_seqs,
+        .esc_func_seqs = xterm_esc_func_seqs,
+        .name = "st-"
+    },
+    {
+        .esc_key_seqs = linux_esc_key_seqs,
+        .esc_func_seqs = linux_esc_func_seqs,
+        .name = "linux"
     }
 };
 
@@ -257,14 +330,19 @@ int nt__term_init(void)
     }
 
     size_t i;
+    size_t best_match_len = 0;
     bool found = false;
     for(i = 0; i < sizeof(terms) / sizeof(struct nt_term_info); i++)
     {
         if(strstr(env_term, terms[i].name) != NULL)
         {
-            nt__term = terms[i];
-            found = true;
-            break;
+            size_t match_len = strlen(terms[i].name);
+            if(match_len > best_match_len)
+            {
+                nt__term = terms[i];
+                best_match_len = match_len;
+                found = true;
+            }
         }
     }
 
