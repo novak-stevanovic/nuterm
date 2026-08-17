@@ -47,7 +47,7 @@ struct nt_event
     {
         char data[NT_EVENT_DATA_MAX_SIZE];
         max_align_t _align;
-    };
+    } u;
     uint32_t type; // only 1 bit set
     uint8_t data_size;
 };
@@ -117,7 +117,7 @@ struct nt_key_event
         {
             enum nt_esc_key val;
         } esc;
-    };
+    } u;
 };
 
 NT_API bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2);

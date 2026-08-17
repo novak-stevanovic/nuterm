@@ -20,7 +20,7 @@ static inline size_t nt__distance_point3d(struct point3d p1, struct point3d p2)
 }
 
 /* Order is defined by ANSI esc sequence standards. */
-const static struct point3d colors[] = {
+static const struct point3d colors[] = {
     { .x = 0, .y = 0, .z = 0 }, // Black
     { .x = 255, .y = 0, .z = 0 }, // Red
     { .x = 0, .y = 255, .z = 0 }, // Green
@@ -157,15 +157,15 @@ struct nt_style nt_style_new_uniform(uint8_t value)
 /* -------------------------------------------------------------------------- */
 
 const struct nt_gfx NT_GFX_DEFAULT = {
-    .fg = (struct nt_color) {
+    .fg = {
         .code8 = 255,
         .code256 = 255,
         .rgb = { 0, 0, 0 }
     },
-    .bg = (struct nt_color) {
+    .bg = {
         .code8 = 255,
         .code256 = 255,
         .rgb = { 0, 0, 0 }
     },
-    .style = (struct nt_style) {0}
+    .style = {0}
 };

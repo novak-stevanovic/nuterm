@@ -15,15 +15,47 @@ extern "C" {
 #include <string.h>
 
 /* -------------------------------------------------------------------------- */
-/* COLOR */
+/* TYPES */
 /* -------------------------------------------------------------------------- */
 
-enum nt_color_c8;
+enum nt_color_c8
+{
+    NT_COLOR_C8_BLACK = 0,
+    NT_COLOR_C8_RED,
+    NT_COLOR_C8_GREEN,
+    NT_COLOR_C8_YELLOW,
+    NT_COLOR_C8_BLUE,
+    NT_COLOR_C8_MAGENTA,
+    NT_COLOR_C8_CYAN,
+    NT_COLOR_C8_WHITE
+};
 
 struct nt_rgb
 {
     uint8_t r, g, b;
 };
+
+struct nt_color
+{
+    enum nt_color_c8 code8;
+    uint8_t code256;
+    struct nt_rgb rgb;
+};
+
+struct nt_style
+{
+    uint8_t value_c8, value_c256, value_rgb;
+};
+
+struct nt_gfx
+{
+    struct nt_color bg, fg;
+    struct nt_style style;
+};
+
+/* -------------------------------------------------------------------------- */
+/* COLOR */
+/* -------------------------------------------------------------------------- */
 
 /* Clamps the values into range [0, 255] */
 NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b);
@@ -40,25 +72,6 @@ static inline bool nt_rgb_are_eql(struct nt_rgb rgb1, struct nt_rgb rgb2)
 }
 
 /* ------------------------------------------------------ */
-
-enum nt_color_c8
-{
-    NT_COLOR_C8_BLACK = 0,
-    NT_COLOR_C8_RED,
-    NT_COLOR_C8_GREEN,
-    NT_COLOR_C8_YELLOW,
-    NT_COLOR_C8_BLUE,
-    NT_COLOR_C8_MAGENTA,
-    NT_COLOR_C8_CYAN,
-    NT_COLOR_C8_WHITE
-};
-
-struct nt_color
-{
-    enum nt_color_c8 code8;
-    uint8_t code256;
-    struct nt_rgb rgb;
-};
 
 NT_API extern const struct nt_color NT_COLOR_DEFAULT;
 
@@ -77,11 +90,6 @@ nt_color_are_eql(struct nt_color color1, struct nt_color color2)
 /* -------------------------------------------------------------------------- */
 /* STYLE */
 /* -------------------------------------------------------------------------- */
-
-struct nt_style
-{
-    uint8_t value_c8, value_c256, value_rgb;
-};
 
 NT_API extern const struct nt_style NT_STYLE_DEFAULT;
 
@@ -107,12 +115,6 @@ nt_style_are_eql(struct nt_style style1, struct nt_style style2)
 /* -------------------------------------------------------------------------- */
 /* GFX */
 /* -------------------------------------------------------------------------- */
-
-struct nt_gfx
-{
-    struct nt_color bg, fg;
-    struct nt_style style;
-};
 
 NT_API extern const struct nt_gfx NT_GFX_DEFAULT;
 

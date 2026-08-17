@@ -40,7 +40,7 @@ INSTALL_INCLUDE = include/nt.h include/nt_gfx.h include/nt_event.h include/nt_er
 
 OPT_FLAG = -O$(OPT)
 
-DEBUG ?= 0
+DEBUG ?= 1
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
@@ -83,6 +83,12 @@ SRC_CFLAGS_OPTIMIZATION = $(OPT_FLAG)
 SRC_CFLAGS_WARN = -Wall
 SRC_CFLAGS_MAKE = -MMD -MP
 SRC_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
+
+ifeq ($(DEBUG),1)
+    DEBUG_FLAG = -g
+    OPT_FLAG = -O0
+    SRC_CFLAGS_WARN = -Wall -Wpedantic -Wextra
+endif
 
 SO_FLAGS =
 ifeq ($(LIB_TYPE),so)

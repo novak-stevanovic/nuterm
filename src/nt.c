@@ -35,7 +35,7 @@
 
 static pthread_t sigthread;
 static pthread_mutex_t sigthread_lock;
-volatile static bool sigthread_stop;
+static volatile bool sigthread_stop;
 
 static int signal_pipe[2];
 static int resize_pipe[2];
@@ -151,7 +151,7 @@ static int nt__poll_retry(struct pollfd* fds, nfds_t count, int timeout)
     return status;
 }
 
-static int inline nt__write_to_stdout(const char* str, size_t str_len)
+static inline int nt__write_to_stdout(const char* str, size_t str_len)
 {
     if(str_len == 0)
         return 0;
@@ -442,7 +442,7 @@ void nt_deinit(void)
 
 static int nt__execute_used_term_func(
         enum nt_esc_func func,
-        bool use_va,
+        int use_va,
         ...)
 {
     int status;
@@ -970,7 +970,7 @@ int nt_event_push(const struct nt_event* event)
 
     // If there's data, write it to buffer
     if(event->data_size > 0)
-        memcpy(buff + 2, event->data, event->data_size);
+        memcpy(buff + 2, event->u.data, event->data_size);
 
     // Write to the pipe. The whole event must stay one atomic write.
     size_t write_size = sizeof(struct nt_event_header) + event->data_size;
@@ -1340,15 +1340,29 @@ nt__process_stdin_esc_mouse(
     out_event->y = (cy > 0) ? (cy - 1) : 0;
     if(cb == 64)
         out_event->type = NT_MOUSE_SCROLL_UP;
-    else if(cb == 65)
-        out_event->type = NT_MOUSE_SCROLL_DOWN;
-    else if((cb & 0b11) == 0)
-        out_event->type = NT_MOUSE_CLICK_LEFT;
-    else if((cb & 0b11) == 1)
-        out_event->type = NT_MOUSE_CLICK_MIDDLE;
-    else if((cb & 0b11) == 2)
-        out_event->type = NT_MOUSE_CLICK_RIGHT;
-    else return MOUSE_EVENT_UNSUPPORTED;
+    else
+    {
+        if(cb == 65)
+            out_event->type = NT_MOUSE_SCROLL_DOWN;
+        else
+        {
+            int click_res = cb & 0x03; 
+            switch(click_res)
+            {
+                case 0:
+                    out_event->type = NT_MOUSE_CLICK_LEFT;
+                    break;
+                case 1:
+                    out_event->type = NT_MOUSE_CLICK_MIDDLE;
+                    break;
+                case 2:
+                    out_event->type = NT_MOUSE_CLICK_RIGHT;
+                    break;
+                default:
+                    return MOUSE_EVENT_UNSUPPORTED;
+            }
+        }
+    }
 
     return MOUSE_EVENT_SUPPORTED;
 }
