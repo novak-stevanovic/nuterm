@@ -53,7 +53,7 @@ struct nt_event
 };
 
 #define NT_EVENT_FILL_DATA(event, out_ptr) \
-    memcpy((out_ptr), event.data, sizeof(*(out_ptr)))
+    memcpy((out_ptr), event.u.data, sizeof(*(out_ptr)))
 
 // Returns 0 on success, error code on failure
 NT_API int nt_event_new_custom(
@@ -117,7 +117,7 @@ struct nt_key_event
         {
             enum nt_esc_key val;
         } esc;
-    } u;
+    } data;
 };
 
 NT_API bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2);

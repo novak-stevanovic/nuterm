@@ -41,17 +41,17 @@ void loop_lib()
 
             if(key.type == NT_KEY_UTF32)
             {
-                if(key.utf32.alt == true)
+                if(key.data.utf32.alt == true)
                     if(ENABLE_PRINT) printf("a+");
 
-                if(ENABLE_PRINT) printf("%d", key.utf32.cp);
-                if(key.utf32.cp == 'q')
+                if(ENABLE_PRINT) printf("%d", key.data.utf32.cp);
+                if(key.data.utf32.cp == 'q')
                     loop = false;
 
             }
             else
             {
-                if(ENABLE_PRINT) printf("e%d", key.esc.val);
+                if(ENABLE_PRINT) printf("e%d", key.data.esc.val);
             }
 
             if(ENABLE_PRINT) printf(") | ");
