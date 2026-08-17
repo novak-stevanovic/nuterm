@@ -85,8 +85,6 @@ SRC_CFLAGS_MAKE = -MMD -MP
 SRC_CFLAGS_INCLUDE = -Iinclude $(DEP_CFLAGS)
 
 ifeq ($(DEBUG),1)
-    DEBUG_FLAG = -g
-    OPT_FLAG = -O0
     SRC_CFLAGS_WARN = -Wall -Wpedantic -Wextra
 endif
 
