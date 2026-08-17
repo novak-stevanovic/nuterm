@@ -7,16 +7,16 @@ struct point3d
     ssize_t x, y, z;
 };
 
-static inline ssize_t square_ssize(ssize_t val)
+static inline ssize_t nt__square_ssize(ssize_t val)
 {
     return val * val;
 }
 
-static inline size_t distance_point3d(struct point3d p1, struct point3d p2)
+static inline size_t nt__distance_point3d(struct point3d p1, struct point3d p2)
 {
-    return (square_ssize(p2.x - p1.x) +
-            square_ssize(p2.y - p1.y) +
-            square_ssize(p2.z - p1.z));
+    return (nt__square_ssize(p2.x - p1.x) +
+            nt__square_ssize(p2.y - p1.y) +
+            nt__square_ssize(p2.z - p1.z));
 }
 
 /* Order is defined by ANSI esc sequence standards. */
@@ -31,7 +31,7 @@ const static struct point3d colors[] = {
     { .x = 255, .y = 255, .z = 255 }, // White
 };
 
-static inline int nt_clamp_int(int min, int mid, int max)
+static inline int nt__clamp_int(int min, int mid, int max)
 {
     if(mid < min)
         mid = min;
@@ -47,9 +47,9 @@ static inline int nt_clamp_int(int min, int mid, int max)
 
 NT_API struct nt_rgb nt_rgb_clamp(int r, int g, int b)
 {
-    int r_clamped = nt_clamp_int(0, r, 255);
-    int g_clamped = nt_clamp_int(0, g, 255);
-    int b_clamped = nt_clamp_int(0, b, 255);
+    int r_clamped = nt__clamp_int(0, r, 255);
+    int g_clamped = nt__clamp_int(0, g, 255);
+    int b_clamped = nt__clamp_int(0, b, 255);
 
     return (struct nt_rgb) {
         .r = r_clamped,
@@ -70,7 +70,7 @@ NT_API enum nt_color_c8 nt_rgb_to_c8(uint8_t r, uint8_t g, uint8_t b)
     size_t it_distance;
     for(i = 0; i < count; i++)
     {
-        it_distance = distance_point3d(colors[i], color);
+        it_distance = nt__distance_point3d(colors[i], color);
         if((it_distance < min_distance) || (min_distance == -1))
         {
             min_distance = it_distance;

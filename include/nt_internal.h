@@ -74,18 +74,16 @@ typedef enum nt_term_color_count
  *
  * ERROR CODES:
  * 1) NT_ERR_INIT_TERM_ENV - $TERM is not set. */
-void _nt_term_init(int* out_status);
+int nt__term_init(void);
 
 /* Returns NT_TERM_COUNT if not set. */
-struct nt_term_info _nt_term_get_used();
+struct nt_term_info nt__term_get_used(void);
 
 /* Returns NT_TERM_COLOR_COUNT if not set. */
-nt_term_color_count _nt_term_get_color_count();
+nt_term_color_count nt__term_get_color_count(void);
 
-void _nt_term_deinit();
+void nt__term_deinit(void);
 
-#define NT_SET_OUT(out_param, out_val) \
-    if((out_param) != NULL) ((*out_param)) = out_val;
 
 #ifdef __cplusplus
 }

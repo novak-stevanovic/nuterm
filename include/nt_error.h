@@ -7,10 +7,6 @@ extern "C" {
 
 #include "nt_shared.h"
 
-/* A function that accepts an `out_status` parameter reports success by
- * setting it to 0, and reports failure by setting it to the appropriate
- * error code. */
-
 #ifndef NT_ERR_BASE
 #define NT_ERR_BASE 2000
 #endif // NT_ERR_BASE

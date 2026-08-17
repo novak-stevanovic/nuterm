@@ -28,7 +28,7 @@ void loop_lib()
     bool loop = true;
     while(loop)
     {
-        elapsed = nt_event_wait(&event, 10000, &_status);
+        _status = nt_event_wait(&event, 10000, &elapsed);
         // if(ENABLE_PRINT) printf("(e:%d)", elapsed);
 
         assert(_status == 0);
@@ -128,7 +128,7 @@ void* test_thread_fn(void* _)
         _status = nt_event_new_custom(type, &data, sizeof(long int), &event);
         assert(_status == 0);
         assert(nt_event_is_valid(&event));
-        nt_event_push(&event, &_status);
+        _status = nt_event_push(&event);
         assert(_status == 0);
     }
 
@@ -138,7 +138,8 @@ void* test_thread_fn(void* _)
 int main(int argc, char *argv[])
 {
     int _status;
-    nt_init(&_status);
+    _status = nt_init();
+    assert((_status == 0) || (_status == NT_ERR_TERM_NOT_SUPP));
 
     // pthread_t test_threads[1];
     // long int i;
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
     //
     // void* buff = malloc(100000);
 
-    // nt_buffer_enable(buff, 1000, &_status);
+    // _status = nt_buffer_enable(buff, 1000);
     // assert(_status == NT_SUCCESS);
 
     // const char* str = "Novak";
@@ -159,24 +160,24 @@ int main(int argc, char *argv[])
     // size_t i;
     // for(i = 0; i < 10; i++)
     // {
-    //     nt_buffer_flush(NULL);
-    //     nt_write_str(str, strlen(str), NT_GFX_DEFAULT, &_status);
+    //     nt_buffer_flush();
+    //     _status = nt_write_str(str, strlen(str), NT_GFX_DEFAULT);
     //     assert(_status == NT_SUCCESS);
     // }
-    // nt_mouse_mode_enable(&_status);
+    // _status = nt_mouse_mode_enable();
     //loop_lib();
-    // nt_mouse_mode_disable(&_status);
+    // _status = nt_mouse_mode_disable();
     // nt_buffer_disable(NT_BUFF_FLUSH, NULL);
 
-    nt_alt_screen_enable(NULL);
+    nt_alt_screen_enable();
         
-    nt_cursor_move(5, 5, NULL);
+    nt_cursor_move(5, 5);
     const char* str = "Novak";
-    nt_write_str_unsafe(str, NT_GFX_DEFAULT, NULL);
+    nt_write_str_unsafe(str, NT_GFX_DEFAULT);
 
     while(getchar() != 'q');
 
-    nt_alt_screen_disable(NULL);
+    nt_alt_screen_disable();
 
     nt_deinit();
 

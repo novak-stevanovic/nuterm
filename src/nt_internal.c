@@ -5,8 +5,8 @@
 #include <string.h>
 #include "nt_internal.h"
 
-static nt_term_color_count _color = NT_TERM_COLOR_OTHER;
-static struct nt_term_info _term = {0};
+static nt_term_color_count nt__color = NT_TERM_COLOR_OTHER;
+static struct nt_term_info nt__term = {0};
 
 static char* xterm_esc_key_seqs[] = {
     // F keys
@@ -246,15 +246,14 @@ static struct nt_term_info terms[] = {
     }
 };
 
-void _nt_term_init(int* out_status)
+int nt__term_init(void)
 {
     char* env_term = getenv("TERM");
     char* env_colorterm = getenv("COLORTERM");
 
     if(env_term == NULL)
     {
-        NT_SET_OUT(out_status, NT_ERR_INIT_TERM_ENV);
-        return;
+        return NT_ERR_INIT_TERM_ENV;
     }
 
     size_t i;
@@ -263,7 +262,7 @@ void _nt_term_init(int* out_status)
     {
         if(strstr(env_term, terms[i].name) != NULL)
         {
-            _term = terms[i];
+            nt__term = terms[i];
             found = true;
             break;
         }
@@ -271,35 +270,34 @@ void _nt_term_init(int* out_status)
 
     if(!found)
     {
-        _term = terms[0]; // Assume emulator is compatible with xterm
+        nt__term = terms[0]; // Assume emulator is compatible with xterm
     }
 
     if((env_colorterm != NULL) && (strstr(env_colorterm, "truecolor")))
-        _color = NT_TERM_COLOR_TC;
+        nt__color = NT_TERM_COLOR_TC;
     else
     {
         if(strstr(env_term, "256"))
-            _color = NT_TERM_COLOR_C256;
+            nt__color = NT_TERM_COLOR_C256;
         else
-            _color = NT_TERM_COLOR_C8;
+            nt__color = NT_TERM_COLOR_C8;
     }
 
-    int ret = found ? 0 : NT_ERR_TERM_NOT_SUPP;
-    NT_SET_OUT(out_status, ret);
+    return found ? 0 : NT_ERR_TERM_NOT_SUPP;
 }
 
-struct nt_term_info _nt_term_get_used()
+struct nt_term_info nt__term_get_used(void)
 {
-    return _term;
+    return nt__term;
 }
 
-nt_term_color_count _nt_term_get_color_count()
+nt_term_color_count nt__term_get_color_count(void)
 {
-    return _color;
+    return nt__color;
 }
 
-void _nt_term_deinit()
+void nt__term_deinit(void)
 {
-    _color = NT_TERM_COLOR_OTHER;
-    _term = (struct nt_term_info) {0};
+    nt__color = NT_TERM_COLOR_OTHER;
+    nt__term = (struct nt_term_info) {0};
 }

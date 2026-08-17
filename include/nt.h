@@ -34,12 +34,12 @@ extern "C" {
  * 4) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
  * will assume that the emulator is compatible with xterm,
  * 5) NT_ERR_UNEXPECTED. */
-NT_API void nt_init(int* out_status);
+NT_API int nt_init(void);
 
 /* Destroys the library and reverts terminal settings to old values.
  * Frees resources used by the library. Output will NOT be flushed(if
  * buffering is on). */
-NT_API void nt_deinit();
+NT_API void nt_deinit(void);
 
 /* -------------------------------------------------------------------------- */
 /* TERMINAL FUNCTIONS */
@@ -52,11 +52,11 @@ NT_API void nt_deinit();
 /* BUFFERING */
 /* ------------------------------------------------------ */
 
-typedef enum nt_buffact
+enum nt_buffact
 { 
     NT_BUFF_DISCARD,
     NT_BUFF_FLUSH // flush the contents to stdout
-} nt_buffact;
+};
 
 /* Enables buffering. When `buff` reaches its capacity, its contents will be
  * flushed to stdout. If buffering is already enabled, this function will return
@@ -66,17 +66,18 @@ typedef enum nt_buffact
  * 1) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
  * 2) NT_ERR_ALR_BUFF - buffering is already enabled. */
 
-NT_API void nt_buffer_enable(char* buff, size_t cap, int* out_status);
+NT_API int nt_buffer_enable(char* buff, size_t cap);
 
 /* Disables buffering. `buffact` dictates what happens to the contents of the
  * buffer. If buffering is already disabled, this function has no effect.
- * Buffering is disabled even if flushing fails. Returns used buffer.
+ * Buffering is disabled even if flushing fails. `out_buff` receives the used
+ * buffer when non-NULL.
  *
  * ERROR CODES:
  * 1) NT_ERR_UNEXPECTED - flushing to stdout failed. Subsequent output
  * operations may still be attempted. */
 
-NT_API char* nt_buffer_disable(nt_buffact buffact, int* out_status);
+NT_API int nt_buffer_disable(enum nt_buffact buffact, char** out_buff);
 
 /* Flushes the buffer to stdout if buffering is currently enabled. Buffered
  * contents are discarded after the flush attempt, even if writing fails.
@@ -85,7 +86,7 @@ NT_API char* nt_buffer_disable(nt_buffact buffact, int* out_status);
  * 1) NT_ERR_UNEXPECTED - writing to stdout failed. Subsequent output
  * operations may still be attempted. */
 
-NT_API void nt_buffer_flush(int* out_status);
+NT_API int nt_buffer_flush(void);
 
 /* ------------------------------------------------------ */
 /* CORE */
@@ -99,7 +100,7 @@ NT_API void nt_buffer_flush(int* out_status);
  * is called. 
  *
  * If a style is specified in `gfx` but the terminal doesn't support the style,
- * the status variable will not indicate this.
+ * the return value will not indicate this.
  *
  * ERROR CODES:
  * 1) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
@@ -107,18 +108,18 @@ NT_API void nt_buffer_flush(int* out_status);
  * 2) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
  * operations may still be attempted. */
 
-NT_API void 
-nt_write_str(const char* str, size_t len, struct nt_gfx gfx, int* out_status);
+NT_API int 
+nt_write_str(const char* str, size_t len, struct nt_gfx gfx);
 
-NT_API void
-nt_write_str_unsafe(const char* str, struct nt_gfx gfx, int* out_status);
+NT_API int
+nt_write_str_unsafe(const char* str, struct nt_gfx gfx);
 
 /* Functions below may be used for moving the cursor, or setting the gfx
  * of a program without actually writing anything to the screen. */
 
 /* The functions below share the same status codes:
  *
- * 1) NT_SUCCESS,
+ * 1) 0 - success,
  * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
  * function(not very reliable),
  * 3) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
@@ -126,22 +127,22 @@ nt_write_str_unsafe(const char* str, struct nt_gfx gfx, int* out_status);
  *
  * With buffering enabled, output is buffered. */
 
-NT_API void nt_cursor_hide(int* out_status);
-NT_API void nt_cursor_show(int* out_status);
+NT_API int nt_cursor_hide(void);
+NT_API int nt_cursor_show(void);
 /* Zero-based indexing. When an attempt is made to move the cursor out of bounds,
  * the position is silently capped. */
-NT_API void nt_cursor_move(size_t x, size_t y, int* out_status);
+NT_API int nt_cursor_move(size_t x, size_t y);
 
-NT_API void nt_erase_screen(int* out_status);
-NT_API void nt_erase_line(int* out_status);
-NT_API void nt_erase_scrollback(int* out_status);
+NT_API int nt_erase_screen(void);
+NT_API int nt_erase_line(void);
+NT_API int nt_erase_scrollback(void);
 
-NT_API void nt_alt_screen_enable(int* out_status);
-NT_API void nt_alt_screen_disable(int* out_status);
+NT_API int nt_alt_screen_enable(void);
+NT_API int nt_alt_screen_disable(void);
 
-// Status is always NT_SUCCESS
-NT_API void nt_mouse_mode_enable(int* out_status);
-NT_API void nt_mouse_mode_disable(int* out_status);
+// Returns 0 on success.
+NT_API int nt_mouse_mode_enable(void);
+NT_API int nt_mouse_mode_disable(void);
 
 NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 
@@ -157,20 +158,21 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
  * A resize triggers both a SIGWINCH signal event and a resize event. If several
  * resize events are queued, only the last one is delivered.
  *
- * Returns elapsed time(in milliseconds). If an error occurs, the type of `out_event`
- * will be NT_EVENT_INVALID.
+ * `out_elapsed` receives elapsed time in milliseconds. If an error occurs, the
+ * type of `out_event` will be NT_EVENT_INVALID.
  *
  * ERROR CODES:
- * 1) NT_SUCCESS,
+ * 1) 0 - success,
  * 2) NT_ERR_UNEXPECTED - a hard event I/O failure occurred. After this error,
  * the event subsystem should not be assumed to be usable. */
 
-NT_API unsigned int 
-nt_event_wait(struct nt_event* out_event, unsigned int timeout, int* out_status);
+NT_API int 
+nt_event_wait(struct nt_event* out_event, unsigned int timeout,
+              unsigned int* out_elapsed);
 
 /* Removes queued events until the queue is empty. Stops and reports an error if
  * nt_event_wait() encounters a hard event I/O failure. */
-NT_API void nt_event_queue_drain(int* out_status);
+NT_API int nt_event_queue_drain(void);
 
 /* Pushes event to queue. This will wake the thread which is blocked on
  * `nt_event_wait()`. If the calling thread is the main thread, next call
@@ -185,7 +187,7 @@ NT_API void nt_event_queue_drain(int* out_status);
  * 1) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
  * 2) NT_ERR_UNEXPECTED. */
 
-NT_API void nt_event_push(const struct nt_event* event, int* out_status);
+NT_API int nt_event_push(const struct nt_event* event);
 
 #ifdef __cplusplus
 }
