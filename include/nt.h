@@ -18,176 +18,187 @@
 extern "C" {
 #endif
 
-/* -------------------------------------------------------------------------- */
-/* GENERAL */
-/* -------------------------------------------------------------------------- */
+/* ========================================================================== */
+/* INIT/DEINIT */
+/* ========================================================================== */
 
-/* Initializes the nuterm library. Calling any of the functions from the library
- * without initializing first is undefined behavior.
+/* Initializes the nuterm library. The library must be initialized before use.
  *
  * ERROR CODES:
- * 1) NT_ERR_ALLOC_FAIL - failure to allocate memory needed for internal
- * resources,
- * 2) NT_ERR_INIT_PIPE - pipe() failed and errno was set to ENFILE or EMFILE,
- * 3) NT_ERR_INIT_TERM_ENV - failure to detect terminal due to $TERM not being
- * set,
- * 4) NT_ERR_TERM_NOT_SUPP - terminal emulator not supported - library
- * will assume that the emulator is compatible with xterm,
- * 5) NT_ERR_UNEXPECTED. */
+ * 1) NT_ERR_INIT_PIPE - Failed to create an internal pipe.
+ * 2) NT_ERR_INIT_TERM_ENV - The TERM environment variable is not set.
+ * 3) NT_ERR_TERM_NOT_SUPP - The terminal was not recognized. The library
+ * remains initialized and assumes xterm compatibility.
+ * 4) NT_ERR_UNEXPECTED - Terminal or signal setup failed. */
+
 NT_API int nt_init(void);
 
-/* Destroys the library and reverts terminal settings to old values.
- * Frees resources used by the library. Output will NOT be flushed(if
- * buffering is on). */
+/* ------------------------------------------------------ */
+
+/* Deinitializes the library and restores terminal state. Buffered output is
+ * discarded without being flushed. */
+
 NT_API void nt_deinit(void);
 
-/* -------------------------------------------------------------------------- */
+/* ========================================================================== */
 /* TERMINAL FUNCTIONS */
-/* -------------------------------------------------------------------------- */
-
-/* It is possible to enable buffering to avoid excessive writing to terminal
- * (this includes terminal function codes and text). */
+/* ========================================================================== */
 
 /* ------------------------------------------------------ */
 /* BUFFERING */
 /* ------------------------------------------------------ */
 
 enum nt_buffact
-{ 
+{
     NT_BUFF_DISCARD,
     NT_BUFF_FLUSH // flush the contents to stdout
 };
 
-/* Enables buffering. When `buff` reaches its capacity, its contents will be
- * flushed to stdout. If buffering is already enabled, this function will return
- * with an error code.
+/* ------------------------------------------------------ */
+
+/* Enables output buffering using `buff` with capacity `cap`. The buffer is
+ * flushed automatically when full.
  *
  * ERROR CODES:
- * 1) NT_ERR_INVALID_ARG - `buff` is NULL, `cap` is 0,
- * 2) NT_ERR_ALR_BUFF - buffering is already enabled. */
+ * 1) NT_ERR_INVALID_ARG - `buff` is NULL or `cap` is 0.
+ * 2) NT_ERR_ALR_BUFF - Buffering is already enabled. */
 
 NT_API int nt_buffer_enable(char* buff, size_t cap);
 
-/* Disables buffering. `buffact` dictates what happens to the contents of the
- * buffer. If buffering is already disabled, this function has no effect.
- * Buffering is disabled even if flushing fails. `out_buff` receives the used
- * buffer when non-NULL.
+/* ------------------------------------------------------ */
+
+/* Disables buffering. `buffact` selects whether pending output is discarded or
+ * flushed. If provided, `out_buff` receives the previously used buffer.
  *
  * ERROR CODES:
- * 1) NT_ERR_UNEXPECTED - flushing to stdout failed. Subsequent output
- * operations may still be attempted. */
+ * 1) NT_ERR_UNEXPECTED - Flushing buffered output failed. */
 
 NT_API int nt_buffer_disable(enum nt_buffact buffact, char** out_buff);
 
-/* Flushes the buffer to stdout if buffering is currently enabled. Buffered
- * contents are discarded after the flush attempt, even if writing fails.
+/* ------------------------------------------------------ */
+
+/* Flushes pending buffered output. Attempted contents are discarded even if
+ * writing fails.
  *
  * ERROR CODES:
- * 1) NT_ERR_UNEXPECTED - writing to stdout failed. Subsequent output
- * operations may still be attempted. */
+ * 1) NT_ERR_UNEXPECTED - Writing to stdout failed. */
 
 NT_API int nt_buffer_flush(void);
 
 /* ------------------------------------------------------ */
-/* CORE */
+/* WRITE */
 /* ------------------------------------------------------ */
 
-/* Prints `str` of size `len` to screen. The text printed will have
- * graphical attributes described by struct `gfx` and the text will be printed
- * at current cursor position.
- *
- * If buffering is enabled, the printing will occur only when nt_flush()
- * is called. 
- *
- * If a style is specified in `gfx` but the terminal doesn't support the style,
- * the return value will not indicate this.
+/* Writes `len` bytes from `str` using `gfx` at the current cursor position.
+ * Output is buffered when buffering is enabled.
  *
  * ERROR CODES:
- * 1) NT_ERR_FUNC_NOT_SUPP - one of the functions invoked is not supported
- * by the terminal - resetting gfx, setting color.
- * 2) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
- * operations may still be attempted. */
+ * 1) NT_ERR_FUNC_NOT_SUPP - A required terminal function is unsupported.
+ * 2) NT_ERR_UNEXPECTED - Output could not be completed. */
 
-NT_API int 
+NT_API int
 nt_write_str(const char* str, size_t len, struct nt_gfx gfx);
+
+/* ------------------------------------------------------ */
+
+/* Writes a NUL-terminated string using `gfx`.
+ *
+ * ERROR CODES:
+ * 1) NT_ERR_FUNC_NOT_SUPP - A required terminal function is unsupported.
+ * 2) NT_ERR_UNEXPECTED - Output could not be completed. */
 
 NT_API int
 nt_write_str_unsafe(const char* str, struct nt_gfx gfx);
 
-/* Functions below may be used for moving the cursor, or setting the gfx
- * of a program without actually writing anything to the screen. */
+/* ------------------------------------------------------ */
 
-/* The functions below share the same status codes:
+/* The terminal-control functions below buffer output when buffering is enabled.
  *
- * 1) 0 - success,
- * 2) NT_ERR_FUNC_NOT_SUPP - terminal emulator doesn't support this
- * function(not very reliable),
- * 3) NT_ERR_UNEXPECTED - output could not be completed. Subsequent output
- * operations may still be attempted.
- *
- * With buffering enabled, output is buffered. */
+ * ERROR CODES:
+ * 1) NT_ERR_FUNC_NOT_SUPP - The requested terminal function is unsupported.
+ * 2) NT_ERR_UNEXPECTED - Output could not be completed. */
+
+/* ------------------------------------------------------ */
+/* CURSOR */
+/* ------------------------------------------------------ */
 
 NT_API int nt_cursor_hide(void);
 NT_API int nt_cursor_show(void);
-/* Zero-based indexing. When an attempt is made to move the cursor out of bounds,
- * the position is silently capped. */
+
+/* Moves the cursor to zero-based position (`x`, `y`). */
 NT_API int nt_cursor_move(size_t x, size_t y);
+
+/* ------------------------------------------------------ */
+/* ERASE */
+/* ------------------------------------------------------ */
 
 NT_API int nt_erase_screen(void);
 NT_API int nt_erase_line(void);
 NT_API int nt_erase_scrollback(void);
 
+/* ------------------------------------------------------ */
+/* ALTERNATE SCREEN */
+/* ------------------------------------------------------ */
+
 NT_API int nt_alt_screen_enable(void);
 NT_API int nt_alt_screen_disable(void);
 
-// Returns 0 on success.
+/* ------------------------------------------------------ */
+/* MOUSE */
+/* ------------------------------------------------------ */
+
 NT_API int nt_mouse_mode_enable(void);
 NT_API int nt_mouse_mode_disable(void);
 
+/* ------------------------------------------------------ */
+/* MISC */
+/* ------------------------------------------------------ */
+
+/* Stores the terminal size in `out_width` and `out_height` when provided.
+ * Stores 0 for both values if the terminal size cannot be read. */
+
 NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 
-/* -------------------------------------------------------------------------- */
-/* EVENT */
-/* -------------------------------------------------------------------------- */
+/* ========================================================================== */
+/* LOOP */
+/* ========================================================================== */
 
-#define NT_EVENT_WAIT_FOREVER ((unsigned int)-1)
+#define NT_EVENT_WAIT_FOREVER ((unsigned long)-1)
 
-/* Waits for an event. The thread is blocked until the event occurs. Meant to be
- * used for main loop in TGUI applications. Should be called from the main thread.
+/* Waits up to `timeout` milliseconds for an event. `NT_EVENT_WAIT_FOREVER`
+ * waits indefinitely. `out_elapsed` receives the total elapsed time when
+ * provided.
  *
- * A resize triggers both a SIGWINCH signal event and a resize event. If several
- * resize events are queued, only the last one is delivered.
- *
- * `out_elapsed` receives elapsed time in milliseconds. If an error occurs, the
- * type of `out_event` will be NT_EVENT_INVALID.
+ * If an error occurs, `out_event` is set to NT_EVENT_INVALID when provided.
+ * Queued resize events are coalesced and only the latest resize is delivered.
  *
  * ERROR CODES:
- * 1) 0 - success,
- * 2) NT_ERR_UNEXPECTED - a hard event I/O failure occurred. After this error,
- * the event subsystem should not be assumed to be usable. */
+ * 1) NT_ERR_UNEXPECTED - A hard event I/O failure occurred. */
 
-NT_API int 
-nt_event_wait(struct nt_event* out_event, unsigned int timeout,
-              unsigned int* out_elapsed);
+NT_API int
+nt_event_wait(struct nt_event* out_event, unsigned long timeout,
+              unsigned long* out_elapsed);
 
-/* Removes queued events until the queue is empty. Stops and reports an error if
- * nt_event_wait() encounters a hard event I/O failure. */
+/* ------------------------------------------------------ */
+
+/* Removes all queued events.
+ *
+ * ERROR CODES:
+ * 1) NT_ERR_UNEXPECTED - A hard event I/O failure occurred. */
+
 NT_API int nt_event_queue_drain(void);
 
-/* Pushes event to queue. This will wake the thread which is blocked on
- * `nt_event_wait()`. If the calling thread is the main thread, next call
- * to `nt_event_wait()` will return with the pushed event right away.
+/* ------------------------------------------------------ */
+
+/* Pushes `event` to the event queue and wakes a waiting thread. Thread-safe.
  *
- * It is possible to push built-in library events(NT_EVENT_KEY, for example).
- * Make sure to provide the correct payload and handle such situations properly.
- *
- * Thread-safe.
- 
  * ERROR CODES:
- * 1) NT_ERR_INVALID_ARG - `event` did not pass nt_event_is_valid() check,
- * 2) NT_ERR_UNEXPECTED. */
+ * 1) NT_ERR_INVALID_ARG - `event` is NULL or invalid.
+ * 2) NT_ERR_UNEXPECTED - Writing the event to the queue failed. */
 
 NT_API int nt_event_push(const struct nt_event* event);
+
+/* ========================================================================== */
 
 #ifdef __cplusplus
 }

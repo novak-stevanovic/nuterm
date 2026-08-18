@@ -42,7 +42,10 @@ extern "C" {
 #define UC_UNICODE_SURROGATE_START 0xD800
 #define UC_UNICODE_SURROGATE_END 0xDFFF
 
+#ifndef UC_ERR_BASE
 #define UC_ERR_BASE 3000
+#endif // UC_ERR_BASE
+
 #define UC_ERR_INV_ARG (UC_ERR_BASE + 1)
 #define UC_ERR_NO_CAP (UC_ERR_BASE + 2)
 #define UC_ERR_INV_SIZE (UC_ERR_BASE + 3)
