@@ -108,7 +108,7 @@ enum nt_key_type
     NT_KEY_ESC
 };
 
-struct nt_key_event
+struct nt_key
 {
     enum nt_key_type type;
     union
@@ -126,19 +126,14 @@ struct nt_key_event
     } data;
 };
 
-NT_API bool nt_key_event_are_eql(struct nt_key_event key1,
-                                 struct nt_key_event key2);
+NT_API bool nt_key_are_eql(struct nt_key key1, struct nt_key key2);
 
-NT_API struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt);
-NT_API struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key);
+NT_API struct nt_key nt_key_utf32_new(uint32_t codepoint, bool alt);
+NT_API struct nt_key nt_key_esc_new(enum nt_esc_key esc_key);
 
-NT_API bool nt_key_event_utf32_check_alt(struct nt_key_event key,
-                                         uint32_t codepoint, bool alt);
-NT_API bool nt_key_event_utf32_check(struct nt_key_event key,
-                                     uint32_t codepoint);
-
-NT_API bool nt_key_event_esc_check(struct nt_key_event key,
-                                   enum nt_esc_key esc_key);
+NT_API bool nt_key_utf32_check_alt(struct nt_key key, uint32_t codepoint, bool alt);
+NT_API bool nt_key_utf32_check(struct nt_key key, uint32_t codepoint);
+NT_API bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key);
 
 /* -------------------------------------------------------------------------- */
 /* NT_MOUSE_EVENT */
@@ -153,7 +148,7 @@ enum nt_mouse_type
     NT_MOUSE_SCROLL_DOWN
 };
 
-struct nt_mouse_event
+struct nt_mouse
 {
     enum nt_mouse_type type;
     size_t x, y; // zero-based
@@ -163,7 +158,7 @@ struct nt_mouse_event
 /* NT_RESIZE_EVENT */
 /* -------------------------------------------------------------------------- */
 
-struct nt_resize_event
+struct nt_resize
 {
     size_t new_x, new_y;
 };

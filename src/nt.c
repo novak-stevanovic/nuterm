@@ -1050,7 +1050,7 @@ static int nt__process_resize(struct nt_event* out_event, bool* out_ignore)
             return NT_ERR_UNEXPECTED;
     }
 
-    struct nt_resize_event rsz;
+    struct nt_resize rsz;
     memset(&rsz, 0, sizeof(rsz));
     nt_get_term_size(&rsz.new_x, &rsz.new_y);
     return nt__event_new(NT_EVENT_RESIZE, &rsz, sizeof(rsz), out_event);
@@ -1153,7 +1153,7 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
 
                 if(poll_status == 0) // just ESC
                 {
-                    struct nt_key_event key = nt_key_event_utf32_new(27, false);
+                    struct nt_key key = nt_key_utf32_new(27, false);
                     return nt__event_new(NT_EVENT_KEY, &key, sizeof(key), out_event);
                 }
 
@@ -1177,7 +1177,7 @@ static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore)
 
                     if(poll_status == 0) // ALT + BUFF[read_count]
                     {
-                        struct nt_key_event key = nt_key_event_utf32_new(buff[1], true);
+                        struct nt_key key = nt_key_utf32_new(buff[1], true);
                         return nt__event_new(NT_EVENT_KEY, &key, sizeof(key), out_event);
                     }
                     if(!(poll_fds[STDIN_POLL_FD].revents & POLLIN))
@@ -1255,7 +1255,7 @@ static int nt__process_stdin_utf32(
     if(status != 0)
         return NT_ERR_UNEXPECTED;
 
-    struct nt_key_event key_event = nt_key_event_utf32_new(utf32, alt);
+    struct nt_key key_event = nt_key_utf32_new(utf32, alt);
     return nt__event_new(NT_EVENT_KEY, &key_event, sizeof(key_event), out_event);
 }
 
@@ -1275,7 +1275,7 @@ static enum process_mouse_result
 nt__process_stdin_esc_mouse(
         uint8_t* buff,
         size_t read_count,
-        struct nt_mouse_event* out_event);
+        struct nt_mouse* out_event);
 
 static int nt__process_stdin_esc(
         uint8_t* buff,
@@ -1288,7 +1288,7 @@ static int nt__process_stdin_esc(
 
     buff[read_count] = 0;
 
-    struct nt_mouse_event mouse_event;
+    struct nt_mouse mouse_event;
     enum process_mouse_result mouse_rv = nt__process_stdin_esc_mouse(
             buff, read_count, &mouse_event);
     if(mouse_rv == MOUSE_EVENT_SUPPORTED)
@@ -1304,19 +1304,19 @@ static int nt__process_stdin_esc(
     }
 
     int i;
-    struct nt_key_event key;
+    struct nt_key key;
     struct nt_term_info term = nt__term_get_used();
     for(i = 0; i < NT_ESC_KEY_OTHER; i++)
     {
         if(strcmp((char*)buff, term.esc_key_seqs[i]) == 0)
         {
-            key = nt_key_event_esc_new(i);
+            key = nt_key_esc_new(i);
             return nt__event_new(
                     NT_EVENT_KEY, &key, sizeof(key), out_event);
         }
     }
 
-    key = nt_key_event_esc_new(NT_ESC_KEY_OTHER);
+    key = nt_key_esc_new(NT_ESC_KEY_OTHER);
     return nt__event_new(NT_EVENT_KEY, &key, sizeof(key), out_event);
 }
 
@@ -1326,7 +1326,7 @@ static enum process_mouse_result
 nt__process_stdin_esc_mouse(
         uint8_t* buff,
         size_t read_count,
-        struct nt_mouse_event* out_event)
+        struct nt_mouse* out_event)
 {
     if(!out_event) return NOT_MOUSE_EVENT;
     memset(out_event, 0, sizeof(*out_event));

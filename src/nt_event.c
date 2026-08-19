@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2)
+bool nt_key_are_eql(struct nt_key key1, struct nt_key key2)
 {
     if((key1.type == NT_KEY_UTF32) && (key2.type == NT_KEY_UTF32))
         return ((key1.data.utf32.cp == key2.data.utf32.cp) && (key1.data.utf32.alt == key2.data.utf32.alt));
@@ -14,9 +14,9 @@ bool nt_key_event_are_eql(struct nt_key_event key1, struct nt_key_event key2)
         return false;
 }
 
-struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt)
+struct nt_key nt_key_utf32_new(uint32_t codepoint, bool alt)
 {
-    struct nt_key_event event;
+    struct nt_key event;
     memset(&event, 0, sizeof(event));
 
     event.type = NT_KEY_UTF32;
@@ -26,9 +26,9 @@ struct nt_key_event nt_key_event_utf32_new(uint32_t codepoint, bool alt)
     return event;
 }
 
-struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key)
+struct nt_key nt_key_esc_new(enum nt_esc_key esc_key)
 {
-    struct nt_key_event event;
+    struct nt_key event;
     memset(&event, 0, sizeof(event));
 
     event.type = NT_KEY_ESC;
@@ -37,18 +37,18 @@ struct nt_key_event nt_key_event_esc_new(enum nt_esc_key esc_key)
     return event;
 }
 
-bool nt_key_event_utf32_check_alt(struct nt_key_event key, uint32_t codepoint, bool alt)
+bool nt_key_utf32_check_alt(struct nt_key key, uint32_t codepoint, bool alt)
 {
     return ((key.type == NT_KEY_UTF32) && (key.data.utf32.cp == codepoint) &&
             (key.data.utf32.alt == alt));
 }
 
-bool nt_key_event_utf32_check(struct nt_key_event key, uint32_t codepoint)
+bool nt_key_utf32_check(struct nt_key key, uint32_t codepoint)
 {
     return ((key.type == NT_KEY_UTF32) && (key.data.utf32.cp == codepoint));
 }
 
-bool nt_key_event_esc_check(struct nt_key_event key, enum nt_esc_key esc_key)
+bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key)
 {
     return ((key.type == NT_KEY_ESC) && (key.data.esc.val == esc_key));
 }

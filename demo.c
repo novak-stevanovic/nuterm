@@ -23,7 +23,7 @@ void loop_basic()
 void loop_lib()
 {
     int _status;
-    unsigned int elapsed;
+    unsigned long elapsed;
     struct nt_event event;
     bool loop = true;
     while(loop)
@@ -36,7 +36,7 @@ void loop_lib()
         {
             if(ENABLE_PRINT) printf("K(");
 
-            struct nt_key_event key;
+            struct nt_key key;
             NT_EVENT_FILL_DATA(event, &key);
 
             if(key.type == NT_KEY_UTF32)
@@ -59,7 +59,7 @@ void loop_lib()
         }
         else if(event.type == NT_EVENT_MOUSE)
         {
-            struct nt_mouse_event mouse_event;
+            struct nt_mouse mouse_event;
             NT_EVENT_FILL_DATA(event, &mouse_event);
             if(ENABLE_PRINT) printf("M(%d, %zu, %zu))", mouse_event.type,
                     mouse_event.x, mouse_event.y);
