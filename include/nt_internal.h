@@ -8,10 +8,6 @@
 #include "nt_shared.h"
 #include "nt_error.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Internally used. */
 enum nt_esc_func
 {
@@ -80,8 +76,5 @@ nt_term_color_count nt__term_get_color_count(void);
 
 void nt__term_deinit(void);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif // NT_INTERNAL_H

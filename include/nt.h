@@ -5,6 +5,10 @@
 #ifndef NT_H
 #define NT_H
 
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#error "C99 or newer is required"
+#endif /* C99 check */
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -12,10 +16,6 @@
 #include "nt_event.h"
 #include "nt_gfx.h"
 #include "nt_error.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* ========================================================================== */
 /* INIT/DEINIT */
@@ -198,9 +198,5 @@ NT_API int nt_event_queue_drain(void);
 NT_API int nt_event_push(const struct nt_event* event);
 
 /* ========================================================================== */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // NT_H

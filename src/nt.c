@@ -70,7 +70,7 @@ static void nt__clear_pending_sigpipe(void)
 
 static int nt__write_all(int fd, const void* data, size_t size)
 {
-    const uint8_t* it = data;
+    const char* it = data;
 
     while(size > 0)
     {
@@ -150,32 +150,6 @@ static int nt__poll_retry(struct pollfd* fds, nfds_t count, int timeout)
     while((status < 0) && (errno == EINTR));
 
     return status;
-}
-
-static unsigned long nt__elapsed_ms(
-        const struct timespec* start,
-        const struct timespec* end)
-{
-    unsigned long long sec;
-    long nsec = end->tv_nsec - start->tv_nsec;
-
-    sec = (unsigned long long)(end->tv_sec - start->tv_sec);
-    if(nsec < 0)
-    {
-        --sec;
-        nsec += 1000000000L;
-    }
-
-    if(sec > (ULONG_MAX / 1000UL))
-        return ULONG_MAX;
-
-    unsigned long elapsed = (unsigned long)sec * 1000UL;
-    unsigned long nsec_ms = (unsigned long)(nsec / 1000000L);
-
-    if(nsec_ms > (ULONG_MAX - elapsed))
-        return ULONG_MAX;
-
-    return elapsed + nsec_ms;
 }
 
 static inline int nt__write_to_stdout(const char* str, size_t str_len)

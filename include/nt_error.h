@@ -1,9 +1,9 @@
 #ifndef NT_ERROR_H
 #define NT_ERROR_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#error "C99 or newer is required"
+#endif /* C99 check */
 
 #include "nt_shared.h"
 
@@ -21,9 +21,5 @@ extern "C" {
 #define NT_ERR_INVALID_UTF32 (NT_ERR_BASE + 8)
 #define NT_ERR_OUT_OF_BOUNDS (NT_ERR_BASE + 9)
 #define NT_ERR_ALR_BUFF (NT_ERR_BASE + 10)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // NT_ERROR_H

@@ -5,9 +5,9 @@
 #ifndef NT_GFX_H
 #define NT_GFX_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#error "C99 or newer is required"
+#endif /* C99 check */
 
 #include "nt_shared.h"
 #include <stdbool.h>
@@ -135,9 +135,5 @@ nt_gfx_style_reverse(struct nt_gfx gfx)
 
     return gfx;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // NT_GFX_H

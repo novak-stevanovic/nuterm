@@ -44,6 +44,9 @@ DEBUG ?= 0
 ifeq ($(DEBUG),1)
     DEBUG_FLAG = -g
     OPT_FLAG = -O0
+    C_STD ?= c99
+else
+    C_STD ?= c11
 endif
 
 # -----------------------------------------------------------------------------
@@ -77,7 +80,7 @@ endif
 # Source Flags
 # ---------------------------------------------------------
 
-SRC_CFLAGS_STD = -std=c99
+SRC_CFLAGS_STD = -std=$(C_STD)
 SRC_CFLAGS_DEBUG = $(DEBUG_FLAG)
 SRC_CFLAGS_OPTIMIZATION = $(OPT_FLAG)
 SRC_CFLAGS_WARN = -Wall
@@ -100,7 +103,7 @@ $(SRC_CFLAGS_WARN) $(SRC_CFLAGS_DEBUG) $(SRC_CFLAGS_OPTIMIZATION)
 # Test Flags
 # ---------------------------------------------------------
 
-DEMO_CFLAGS_STD = -std=c99
+DEMO_CFLAGS_STD = -std=$(C_STD)
 DEMO_CFLAGS_DEBUG = $(DEBUG_FLAG)
 DEMO_CFLAGS_OPTIMIZATION = -O0
 DEMO_CFLAGS_WARN = -Wall

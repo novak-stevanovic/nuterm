@@ -5,9 +5,9 @@
 #ifndef NT_EVENT_H
 #define NT_EVENT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#error "C99 or newer is required"
+#endif /* C99 check */
 
 #include "nt_shared.h"
 #include <stdbool.h>
@@ -162,9 +162,5 @@ struct nt_resize
 {
     size_t new_x, new_y;
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // NT_EVENT_H
