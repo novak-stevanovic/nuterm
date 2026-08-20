@@ -46,7 +46,7 @@ struct nt_event
     union
     {
         char data[NT_EVENT_DATA_MAX_SIZE];
-        max_align_t _align;
+        nt__max_align_t _align;
     } u;
     uint32_t type; // only 1 bit set
     uint8_t data_size;
@@ -131,9 +131,9 @@ NT_API bool nt_key_are_eql(struct nt_key key1, struct nt_key key2);
 NT_API struct nt_key nt_key_utf32_new(uint32_t codepoint, bool alt);
 NT_API struct nt_key nt_key_esc_new(enum nt_esc_key esc_key);
 
-NT_API bool nt_key_utf32_check_alt(struct nt_key key, uint32_t codepoint, bool alt);
-NT_API bool nt_key_utf32_check(struct nt_key key, uint32_t codepoint);
-NT_API bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key);
+NT_API bool nt_key_utf32_match_alt(struct nt_key key, uint32_t codepoint, bool alt);
+NT_API bool nt_key_utf32_match(struct nt_key key, uint32_t codepoint);
+NT_API bool nt_key_esc_match(struct nt_key key, enum nt_esc_key esc_key);
 
 /* -------------------------------------------------------------------------- */
 /* NT_MOUSE_EVENT */

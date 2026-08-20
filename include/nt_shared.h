@@ -8,11 +8,11 @@ extern "C" {
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #include <stddef.h>
 #else
-typedef union max_align_t {
+typedef union nt__max_align {
     long double ld;
     void* p;
     long long ll;
-} max_align_t;
+} nt__max_align_t;
 #endif
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)

@@ -37,18 +37,18 @@ struct nt_key nt_key_esc_new(enum nt_esc_key esc_key)
     return event;
 }
 
-bool nt_key_utf32_check_alt(struct nt_key key, uint32_t codepoint, bool alt)
+bool nt_key_utf32_match_alt(struct nt_key key, uint32_t codepoint, bool alt)
 {
     return ((key.type == NT_KEY_UTF32) && (key.data.utf32.cp == codepoint) &&
             (key.data.utf32.alt == alt));
 }
 
-bool nt_key_utf32_check(struct nt_key key, uint32_t codepoint)
+bool nt_key_utf32_match(struct nt_key key, uint32_t codepoint)
 {
     return ((key.type == NT_KEY_UTF32) && (key.data.utf32.cp == codepoint));
 }
 
-bool nt_key_esc_check(struct nt_key key, enum nt_esc_key esc_key)
+bool nt_key_esc_match(struct nt_key key, enum nt_esc_key esc_key)
 {
     return ((key.type == NT_KEY_ESC) && (key.data.esc.val == esc_key));
 }
