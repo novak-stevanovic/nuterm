@@ -1,10 +1,6 @@
 #ifndef NT_ERROR_H
 #define NT_ERROR_H
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-#error "C99 or newer is required"
-#endif /* C99 check */
-
 #include "nt_shared.h"
 
 #ifndef NT_ERR_BASE

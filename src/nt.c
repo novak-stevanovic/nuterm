@@ -118,7 +118,7 @@ static int nt__write_pipe_event(int fd, const void* data, size_t size)
 
 static int nt__read_exact(int fd, void* data, size_t size)
 {
-    uint8_t* it = data;
+    char* it = data;
 
     while(size > 0)
     {
@@ -822,11 +822,7 @@ int nt_write_str_unsafe(const char* str, struct nt_gfx gfx)
 /* EVENT */
 /* -------------------------------------------------------------------------- */
 
-struct nt_event_header
-{
-    uint8_t type;
-    uint8_t data_size;
-};
+#define NT__EVENT_HEADER_SIZE 2
 
 /* Called by nt_event_wait() internally. */
 static int nt__process_stdin(struct nt_event* out_event, bool* out_ignore);
@@ -872,12 +868,27 @@ int nt_event_wait(
 
     while(true)
     {
-        clock_gettime(CLOCK_REALTIME, &time1);
+        if(clock_gettime(CLOCK_MONOTONIC, &time1) != 0)
+            return NT_ERR_UNEXPECTED;
+
         poll_status = nt__poll_retry(poll_fds, POLL_FD_COUNT, (int)timeout);
-        clock_gettime(CLOCK_REALTIME, &time2);
-        elapsed = ((time2.tv_sec - time1.tv_sec) * 1e3) +
-                  ((time2.tv_nsec - time1.tv_nsec) / 1e6);
-        elapsed = (elapsed <= timeout) ? elapsed : timeout;
+
+        if(clock_gettime(CLOCK_MONOTONIC, &time2) != 0)
+            return NT_ERR_UNEXPECTED;
+
+        time_t sec = time2.tv_sec - time1.tv_sec;
+        long nsec = time2.tv_nsec - time1.tv_nsec;
+        if(nsec < 0)
+        {
+            sec--;
+            nsec += 1000000000L;
+        }
+
+        unsigned long long elapsed_ms =
+            ((unsigned long long)sec * 1000ULL) +
+            ((unsigned long long)nsec / 1000000ULL);
+
+        elapsed = (elapsed_ms <= timeout) ? (unsigned int)elapsed_ms : timeout;
 
         if(out_elapsed != NULL)
             *out_elapsed = elapsed;
@@ -959,22 +970,22 @@ int nt_event_push(const struct nt_event* event)
     uint8_t type;
     for(i = 0; i < sizeof(uint32_t) * 8; i++)
     {
-        if(event->type & (1u << i))
+        if(event->type & (((uint32_t)1) << i))
             break;
     }
     type = i;
 
     // Prepare buffer for writing
-    uint8_t buff[sizeof(struct nt_event_header) + NT_EVENT_DATA_MAX_SIZE] = {0};
+    uint8_t buff[NT__EVENT_HEADER_SIZE + NT_EVENT_DATA_MAX_SIZE] = {0};
     buff[0] = type;
     buff[1] = event->data_size;
 
     // If there's data, write it to buffer
     if(event->data_size > 0)
-        memcpy(buff + 2, event->u.data, event->data_size);
+        memcpy(buff + NT__EVENT_HEADER_SIZE, event->u.data, event->data_size);
 
     // Write to the pipe. The whole event must stay one atomic write.
-    size_t write_size = sizeof(struct nt_event_header) + event->data_size;
+    size_t write_size = NT__EVENT_HEADER_SIZE + event->data_size;
     return nt__write_pipe_event(custom_event_pipe[1], buff, write_size);
 }
 
@@ -1030,22 +1041,24 @@ static int nt__process_custom(struct nt_event* out_event, bool* out_ignore)
         *out_ignore = false;
 
     // Read header to determine type and data_size.
-    struct nt_event_header header = {0};
-    if(nt__read_exact(custom_event_pipe[0], &header, sizeof(header)) != 0)
+    uint8_t header[NT__EVENT_HEADER_SIZE] = {0};
+    if(nt__read_exact(custom_event_pipe[0], header, sizeof(header)) != 0)
         return NT_ERR_UNEXPECTED;
 
-    if((header.type >= 32) || (header.data_size > NT_EVENT_DATA_MAX_SIZE))
+    uint8_t type_idx = header[0];
+    uint8_t data_size = header[1];
+
+    if((type_idx >= 32) || (data_size > NT_EVENT_DATA_MAX_SIZE))
         return NT_ERR_UNEXPECTED;
 
     uint8_t buff[NT_EVENT_DATA_MAX_SIZE] = {0};
-    if((header.data_size > 0) &&
-       (nt__read_exact(custom_event_pipe[0], buff, header.data_size) != 0))
+    if((data_size > 0) && (nt__read_exact(custom_event_pipe[0], buff, data_size) != 0))
     {
         return NT_ERR_UNEXPECTED;
     }
 
-    uint32_t type = (1u << header.type);
-    return nt__event_new(type, buff, header.data_size, out_event);
+    uint32_t type = ((uint32_t)1) << type_idx;
+    return nt__event_new(type, buff, data_size, out_event);
 }
 
 /* ------------------------------------------------------ */

@@ -5,10 +5,6 @@
 #ifndef NT_EVENT_H
 #define NT_EVENT_H
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-#error "C99 or newer is required"
-#endif /* C99 check */
-
 #include "nt_shared.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -56,6 +52,7 @@ struct nt_event
     memcpy((out_ptr), event.u.data, sizeof(*(out_ptr)))
 
 /* Creates an event with `type` and copies `data_size` bytes from `data`.
+ * `type` must have exactly one bit or the function will return an invalid event.
  *
  * ERROR CODES:
  * 1) NT_ERR_INVALID_ARG - `out_event` is NULL, `type` is invalid, payload size

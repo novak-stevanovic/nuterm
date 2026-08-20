@@ -30,13 +30,17 @@
 #ifndef UCONV_H
 #define UCONV_H
 
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#error "C99 or newer is required"
+#endif /* C99 check */
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-#error "C99 or newer is required"
-#endif /* C99 check */
+#if !defined(UINT32_MAX) || !defined(UINT8_MAX)
+#error "This library requires uint32_t and uint8_t support"
+#endif
 
 #define UC_UNICODE_MAX 0x10FFFF
 #define UC_UNICODE_SURROGATE_START 0xD800
