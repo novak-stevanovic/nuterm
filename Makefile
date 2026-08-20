@@ -21,11 +21,11 @@ DEBUG ?= 0
 # RELEASE BUILD
 # ---------------------------------------------------------
 
-SRC_CFLAGS_REL := -Iinclude -std=c11 -O3 -flto -Wall -Wfatal-errors -MMD -MP
+SRC_CFLAGS_REL := -Iinclude -std=c11 -D_POSIX_C_SOURCE=200809L -O3 -flto -Wall -Wfatal-errors -MMD -MP -pthread
 SRC_CFLAGS_SO_REL := -fPIC
 SRC_CFLAGS_AR_REL :=
 
-SO_CFLAGS_REL := -flto
+SO_CFLAGS_REL := -flto -pthread
 SO_LIBS_REL :=
 
 AR_FLAGS_REL := rcs
@@ -34,11 +34,11 @@ AR_FLAGS_REL := rcs
 # DEBUG BUILD
 # ---------------------------------------------------------
 
-SRC_CFLAGS_DEB := -Iinclude -std=c99 -O0 -Wall -Wextra -Wpedantic -g -MMD -MP # -fsanitize=address
+SRC_CFLAGS_DEB := -Iinclude -std=c99 -D_POSIX_C_SOURCE=200809L -O0 -Wall -Wextra -Wpedantic -g -MMD -MP -pthread # -fsanitize=address
 SRC_CFLAGS_SO_DEB := -fPIC
 SRC_CFLAGS_AR_DEB :=
 
-SO_CFLAGS_DEB :=
+SO_CFLAGS_DEB := -pthread
 SO_LIBS_DEB :=
 
 AR_FLAGS_DEB := rcs
@@ -47,8 +47,8 @@ AR_FLAGS_DEB := rcs
 # demo (links with .so)
 # -----------------------------------------------------------------------------
 
-DEMO_CFLAGS := -std=c99 -O0 -Wall -Wfatal-errors -Iinclude
-DEMO_LIBS := -Wl,-rpath,'$$ORIGIN' -L. -l$(LIB)
+DEMO_CFLAGS := -std=c99 -D_POSIX_C_SOURCE=200809L -O0 -Wall -Wfatal-errors -Iinclude -pthread
+DEMO_LIBS := -Wl,-rpath,'$$ORIGIN' -L. -l$(LIB) -pthread
 
 # =============================================================================
 # PRIVATE
@@ -102,7 +102,7 @@ PC_DESCRIPTION := Terminal abstraction layer library
 PC_VERSION := 1.0.0
 
 PC_LIBS := -L$${libdir} -l$(LIB)
-PC_LIBS_PRIVATE :=
+PC_LIBS_PRIVATE := -pthread
 PC_CFLAGS := -I$${includedir}/$(LIB)
 
 PC_REQUIRES :=

@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 
 #define UCONV_IMPLEMENTATION
 #include "uconv.h"
