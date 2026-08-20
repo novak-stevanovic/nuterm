@@ -7,7 +7,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <sys/types.h>
 
 #include "nt_shared.h"
 #include "nt_event.h"
@@ -163,7 +162,7 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
 /* LOOP */
 /* ========================================================================== */
 
-#define NT_EVENT_WAIT_FOREVER ((unsigned long)-1)
+#define NT_EVENT_WAIT_FOREVER ((unsigned int)-1)
 
 /* Waits up to `timeout` milliseconds for an event. `NT_EVENT_WAIT_FOREVER`
  * waits indefinitely. `out_elapsed` receives the total elapsed time when
@@ -176,8 +175,8 @@ NT_API void nt_get_term_size(size_t* out_width, size_t* out_height);
  * 1) NT_ERR_UNEXPECTED - A hard event I/O failure occurred. */
 
 NT_API int
-nt_event_wait(struct nt_event* out_event, unsigned long timeout,
-              unsigned long* out_elapsed);
+nt_event_wait(struct nt_event* out_event, unsigned int timeout,
+              unsigned int* out_elapsed);
 
 /* ------------------------------------------------------ */
 

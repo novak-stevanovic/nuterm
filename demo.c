@@ -23,7 +23,7 @@ void loop_basic()
 void loop_lib()
 {
     int _status;
-    unsigned long elapsed;
+    unsigned int elapsed;
     struct nt_event event;
     bool loop = true;
     while(loop)

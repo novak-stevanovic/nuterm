@@ -876,15 +876,12 @@ static int nt__event_new(
 
 int nt_event_wait(
         struct nt_event* out_event,
-        unsigned long timeout,
-        unsigned long* out_elapsed)
+        unsigned int timeout,
+        unsigned int* out_elapsed)
 {
     struct timespec time1, time2;
-    unsigned long remaining = timeout;
-    unsigned long total_elapsed = 0;
-    unsigned long elapsed;
-    int poll_timeout;
     int poll_status;
+    unsigned int elapsed;
     int status;
 
     struct nt_event event = NT_EVENT_EMPTY;
@@ -892,7 +889,6 @@ int nt_event_wait(
     if(nt_event_new_custom(NT_EVENT_TIMEOUT, NULL, 0, &timeout_event) != 0)
         return NT_ERR_UNEXPECTED;
 
-    bool wait_forever = timeout == NT_EVENT_WAIT_FOREVER;
     bool ignore = false;
 
     if(out_event != NULL)
@@ -902,45 +898,27 @@ int nt_event_wait(
 
     while(true)
     {
-        if(wait_forever)
-            poll_timeout = -1;
-        else if(remaining > (unsigned long)INT_MAX)
-            poll_timeout = INT_MAX;
-        else
-            poll_timeout = (int)remaining;
-
-        clock_gettime(CLOCK_MONOTONIC, &time1);
-        poll_status = nt__poll_retry(poll_fds, POLL_FD_COUNT, poll_timeout);
-        clock_gettime(CLOCK_MONOTONIC, &time2);
-
-        elapsed = nt__elapsed_ms(&time1, &time2);
-
-        if(!wait_forever && (elapsed > remaining))
-            elapsed = remaining;
-
-        if(elapsed > (ULONG_MAX - total_elapsed))
-            total_elapsed = ULONG_MAX;
-        else
-            total_elapsed += elapsed;
+        clock_gettime(CLOCK_REALTIME, &time1);
+        poll_status = nt__poll_retry(poll_fds, POLL_FD_COUNT, (int)timeout);
+        clock_gettime(CLOCK_REALTIME, &time2);
+        elapsed = ((time2.tv_sec - time1.tv_sec) * 1e3) +
+                  ((time2.tv_nsec - time1.tv_nsec) / 1e6);
+        elapsed = (elapsed <= timeout) ? elapsed : timeout;
 
         if(out_elapsed != NULL)
-            *out_elapsed = total_elapsed;
+            *out_elapsed = elapsed;
 
         if(poll_status == -1)
             return NT_ERR_UNEXPECTED;
 
-        if(!wait_forever)
-            remaining -= elapsed;
-
         if(poll_status == 0)
         {
-            if(!wait_forever && (remaining > 0))
-                continue;
-
             if(out_event != NULL)
                 *out_event = timeout_event;
             return 0;
         }
+
+        timeout -= elapsed; // for the next poll(), if ignore == true
 
         if(poll_fds[STDIN_POLL_FD].revents & POLLIN)
         {
