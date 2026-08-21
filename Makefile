@@ -47,7 +47,7 @@ AR_FLAGS_DEB := rcs
 # demo (links with .so)
 # -----------------------------------------------------------------------------
 
-DEMO_CFLAGS := -std=c99 -D_POSIX_C_SOURCE=200809L -O0 -Wall -Wfatal-errors -Iinclude -pthread
+DEMO_CFLAGS := -std=c99 -D_POSIX_C_SOURCE=200809L -O0 -Wall -Wfatal-errors -Iinclude -pthread -g
 DEMO_LIBS := -Wl,-rpath,'$$ORIGIN' -L. -l$(LIB) -pthread
 
 # =============================================================================
